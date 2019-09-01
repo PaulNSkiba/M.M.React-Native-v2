@@ -12,7 +12,7 @@ import { bindActionCreators } from 'redux';
 // import { addFriend } from './FriendActions';
 // import { LOGINUSER_URL } from './config/config'
 import { instanceAxios, mapStateToProps /*, langLibrary as langLibraryF*/ } from '../../js/helpersLight'
-import { LOGINUSER_URL } from '../../config/config'
+import { LOGINUSER_URL, version } from '../../config/config'
 import { userLoggedIn, userLoggedInByToken, userLoggedOut } from '../../actions/userAuthActions'
 // import { instanceAxios, mapStateToProps /*, langLibrary as langLibraryF*/ } from './js/helpersLight'
 import styles from '../../css/styles'
@@ -45,11 +45,18 @@ class HeaderBlock extends React.Component {
                 <Title style={styles.myTitle}>My.Marks</Title>
             </Body>
             <Right>
-                <Button transparent>
+                <View style={{positon:"relative"}}>
+                    <View >
+                        <Text style={styles.versionNumber}>{version}</Text>
+                    </View>
             {/*<Icon style={styles.menuIcon} name='menu' />*/}
-                    {this.props.userSetup.userID?<Text>{this.props.userSetup.userName}  </Text>:null}
-                    <Icon style={styles.menuIcon} name='md-person' onPress={()=>this.props.updateState('showLogin')}/>
-                </Button>
+                    <View >
+                        <Button transparent>
+                            {this.props.userSetup.userID?<Text>{this.props.userSetup.userName}  </Text>:null}
+                            <Icon style={styles.menuIcon} name='md-person' onPress={()=>this.props.updateState('showLogin')}/>
+                        </Button>
+                    </View>
+                </View>
             </Right>
         </Header>
         )

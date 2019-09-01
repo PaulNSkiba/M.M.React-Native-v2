@@ -121,10 +121,11 @@ export default styles = StyleSheet.create({
         fontSize : 20,
         alignSelf : "flex-end",
         // height: 25,
-        margin : 10,
+        marginTop : 10,
+        marginRight : 3,
         // padding : 2,
         // borderRadius: 5,
-        width: "9%",
+        width: "10%",
         // borderColor : "darkgrey",
     },
     homeworkPlus : {
@@ -205,6 +206,14 @@ export default styles = StyleSheet.create({
     },
     menuIcon : {
         color : "#555a6e",
+    },
+    versionNumber : {
+        position:"absolute",
+        fontSize : 10,
+        right : -5,
+        top : -5,
+        // borderWidth: 0.5,
+        // borderColor : "black",
     },
     leftArrow : {
         color : "#555a6e",
@@ -341,6 +350,7 @@ export default styles = StyleSheet.create({
         bottom : 2,
         alignSelf: 'flex-end',
         color : "#A9A9A9",
+        fontSize : 10,
         // font-size : 0.7em;
     },
     btnAddTimeDone  : {
@@ -349,6 +359,7 @@ export default styles = StyleSheet.create({
         bottom : 2,
         alignSelf: 'flex-end',
         color : "#526ef3",
+        fontSize : 10,
     // font-size : 0.7em;
     },
     msgLeftIshw : {

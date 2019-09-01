@@ -3,8 +3,10 @@
  */
 import axios from 'axios';
 import { store } from '../store/configureStore'
-import {AUTH_URL} from '../config/config'
-
+import {AUTH_URL, API_URL, BASE_HOST, WEBSOCKETPORT, LOCALPUSHERPWD} from '../config/config'
+import Echo from 'laravel-echo'
+import Pusher from 'pusher-js/react-native'
+window.Pusher = Pusher
 /* eslint-disable */
 
 
@@ -541,4 +543,5 @@ export const prepareMessageToFormat=(msg, returnObject)=>{
     // console.log('obj', JSON.stringify(obj))
     return returnObject?obj:JSON.stringify(obj)
 }
+
 /* eslint-disable */

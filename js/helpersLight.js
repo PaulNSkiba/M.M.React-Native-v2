@@ -3,7 +3,10 @@
  */
 import { store } from '../store/configureStore'
 import axios from 'axios';
-import { AUTH_URL } from '../config/config'
+import {AUTH_URL, API_URL, BASE_HOST, WEBSOCKETPORT, LOCALPUSHERPWD} from '../config/config'
+import Echo from 'laravel-echo'
+import Pusher from 'pusher-js/react-native'
+window.Pusher = Pusher
 
 export let arrOfWeekDays = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб']
 // AddDay function (format MM-DD-YYY)
@@ -447,4 +450,27 @@ export function dateDiff(date1, date2) {
     let dt1 = new Date(date1);
     let dt2 = new Date(date2);
     return Math.floor((Date.UTC(dt2.getFullYear(), dt2.getMonth(), dt2.getDate()) - Date.UTC(dt1.getFullYear(), dt1.getMonth(), dt1.getDate()) ) /(1000 * 60 * 60 * 24));
+}
+export const echoClient = (token, chatSSL) => {
+    return new Echo(
+        {
+            broadcaster: 'pusher',
+            key: LOCALPUSHERPWD,
+            cluster: 'mt1',
+            wsHost: BASE_HOST,
+            wsPort: WEBSOCKETPORT,
+            wssPort: WEBSOCKETPORT,
+            disableStats: true,
+            enabledTransports: chatSSL ? ['ws', 'wss'] : ['ws'],
+            encrypted: chatSSL,
+            authEndpoint: AUTH_URL + '/broadcasting/auth',
+            namespace: "App.Events",
+            auth: {
+                headers: {
+                    'V-Auth': true,
+                    Authorization: `Bearer ${token}`,
+                }
+            }
+        }
+    )
 }

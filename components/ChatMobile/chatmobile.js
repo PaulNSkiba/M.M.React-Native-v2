@@ -17,7 +17,7 @@ import arrow_down from '../../img/ARROW_DOWN.png'
 import arrow_up from '../../img/ARROW_UP.png'
 import { API_URL, BASE_HOST, WEBSOCKETPORT, LOCALPUSHERPWD, HOMEWORK_ADD_URL,
         instanceLocator, testToken, chatUserName } from '../../config/config'
-import {AddDay, arrOfWeekDays, dateDiff, toYYYYMMDD, instanceAxios, mapStateToProps, prepareMessageToFormat} from '../../js/helpersLight'
+import {AddDay, arrOfWeekDays, dateDiff, toYYYYMMDD, instanceAxios, mapStateToProps, prepareMessageToFormat, echoClient} from '../../js/helpersLight'
 
 // import addMsg from '../../img/addMsg.svg'
 
@@ -26,6 +26,7 @@ import { Picker, emojiIndex } from 'emoji-mart';
 import Pusher from 'pusher-js/react-native'
 import Echo from 'laravel-echo'
 import styles from '../../css/styles'
+import Socketio from 'socket.io-client'
 
 window.Pusher = Pusher
 // import { default as uniqid } from 'uniqid'
@@ -60,6 +61,7 @@ class ChatMobile extends Component {
             newMessage: '',
             messagesNew : [],
             Echo : {},
+            Echo2 : {},
             typingUsers : new Map(),
             localChatMessages : [],
             curMessage : '',
@@ -85,6 +87,7 @@ class ChatMobile extends Component {
         instanceAxios().get(API_URL +`chat/get/${classID}`, [], null)
             .then(resp => {
                 this.setState({localChatMessages : resp.data})
+                console.log("Загружено!")
                 // this.props.onReduxUpdate("ADD_CHAT_MESSAGES", resp.data)
             })
             .catch(error => {
@@ -110,82 +113,112 @@ class ChatMobile extends Component {
         this.inputMessage.value = this.inputMessage.value + emoji.native
     }
     initLocalPusher=()=>{
-        let {token} = store.getState().user
-        let {chatSSL} = this.props.userSetup
+        // let {token} = store.getState().user
+        // console.log("initLocalPusher: token", token)
+        // let {chatSSL} = this.props.userSetup
 
-        let echo = new Echo(
-            {
-                broadcaster : 'pusher',
-                key : LOCALPUSHERPWD,
-                cluster : 'mt1',
-                wsHost : BASE_HOST,
-                wsPort : WEBSOCKETPORT,
-                wssPort: WEBSOCKETPORT,
-                disableStats: true,
-                enabledTransports: chatSSL?['ws', 'wss']:['ws'],
-                encrypted: chatSSL,
-                auth: {
-                    headers: {
-                        'V-Auth': true,
-                        Authorization: `Bearer ${token}`,
-                    }
-                }
-            }
-        )
+        const {chatSSL} = this.props.userSetup
 
+        // const larasocket = pusherClient(store.getState().user.token, chatSSL)
+        const echo = echoClient(store.getState().user.token, chatSSL)
+
+        echo.connector.pusher.logToConsole = true
+        echo.connector.pusher.log = (msg) => {console.log(msg);};
+        echo.connect()
+        // let echo = new Echo(
+        //     {
+        //         broadcaster : 'pusher',
+        //         key : LOCALPUSHERPWD,
+        //         cluster : 'mt1',
+        //         wsHost : BASE_HOST,
+        //         wsPort : 6001, //WEBSOCKETPORT,
+        //         wssPort: 6001, //WEBSOCKETPORT,
+        //         disableStats: true,
+        //         enabledTransports: chatSSL?['ws', 'wss']:['ws'],
+        //         encrypted: chatSSL,
+        //         // client : new Pusher(),
+        //         // client: Socketio,
+        //         auth: {
+        //             headers: {
+        //                 'V-Auth': true,
+        //                 Authorization: `Bearer ${token}`,
+        //             }
+        //         }
+        //     }
+        // )
         let channelName = 'class.'+this.props.userSetup.classID
+
+        // let echo2 = new Echo({
+        //     broadcaster: 'pusher',
+        //     host: 'wss://mymarks.info:6002',
+        //     client: Socketio,
+        //     auth: {
+        //         headers: {
+        //             'Authorization': `Bearer ${token}`,
+        //         },
+        //     },
+        // });
+        //
+        // echo2.private(channelName)
+        //     .listen('ChatMessageSSL', event => {
+        //         //Handle event
+        //         console.log("Messages")
+        //     });
+
         this.setState({Echo: echo})
-        console.log('websocket', echo, channelName)
-        if (chatSSL)
-        echo.private(channelName)
-            .listen('ChatMessageSSL', (e) => {
-                console.log("FILTER-SSL")
-                let msg = prepareMessageToFormat(e.message), msgorig = e.message, isSideMsg = true
-                let localChat =   this.state.localChatMessages,
-                    arrChat = []
-                // console.log("FILTER-NOT-SSL", this.state.localChatMessages)
-                arrChat = localChat.map(
-                    item=>
-                    {
-                        // console.log("map", item, JSON.parse(msg))
-                        if (this.state.messagesNew.includes(item.uniqid)) {
-                            // Для своих новых
-                            if (JSON.parse(msg).uniqid === item.uniqid) {
-                                // console.log("MSGORIG", msgorig, msgorig.id)
-                                isSideMsg = false
-                                let obj = item
-                                obj.id = msgorig.id
-                                return obj
+
+        console.log('websocket', echo, channelName, chatSSL)
+        if (chatSSL) {
+            console.log('websocket-listening', echo)
+            echo.private(channelName)
+                .listen('ChatMessageSSL', (e) => {
+                    console.log("FILTER-SSL")
+                    let msg = prepareMessageToFormat(e.message), msgorig = e.message, isSideMsg = true
+                    let localChat = this.state.localChatMessages,
+                        arrChat = []
+                    // console.log("FILTER-NOT-SSL", this.state.localChatMessages)
+                    arrChat = localChat.map(
+                        item => {
+                            // console.log("map", item, JSON.parse(msg))
+                            if (this.state.messagesNew.includes(item.uniqid)) {
+                                // Для своих новых
+                                if (JSON.parse(msg).uniqid === item.uniqid) {
+                                    // console.log("MSGORIG", msgorig, msgorig.id)
+                                    isSideMsg = false
+                                    let obj = item
+                                    obj.id = msgorig.id
+                                    return obj
+                                }
+                                else {
+                                    return item
+                                }
                             }
                             else {
                                 return item
                             }
                         }
-                        else {
-                            return item
-                        }
-                    }
-                )
-                 // Если новое и стороннее!!!
-                if  (isSideMsg) arrChat.push(msgorig)
+                    )
+                    // Если новое и стороннее!!!
+                    if (isSideMsg) arrChat.push(msgorig)
 
-                this.setState({
-                    localChatMessages : arrChat,
-                    messages: [...arrChat, msg],
-                    messagesNew : this.state.messagesNew.filter(item=>!(item.uniqid===JSON.parse(msg).uniqid))
+                    this.setState({
+                        localChatMessages: arrChat,
+                        messages: [...arrChat, msg],
+                        messagesNew: this.state.messagesNew.filter(item => !(item.uniqid === JSON.parse(msg).uniqid))
+                    })
+                    // this.props.onReduxUpdate("ADD_CHAT_MESSAGES", arrChat)
+                    // this.props.updatemessage(msg)
                 })
-                // this.props.onReduxUpdate("ADD_CHAT_MESSAGES", arrChat)
-                this.props.updatemessage(msg)
-            })
-            .listenForWhisper('typing', (e) => {
-                if (!this.state.typingUsers.has(e.name)) {
-                    let mp = this.state.typingUsers
-                    mp.set(e.name, new Date())
-                    console.log('SetTypingState', e.name);
-                    this.setState({typingUsers: mp})
-                }
-                console.log('typing', e.name);
-            })
+                .listenForWhisper('typing', (e) => {
+                    if (!this.state.typingUsers.has(e.name)) {
+                        let mp = this.state.typingUsers
+                        mp.set(e.name, new Date())
+                        console.log('SetTypingState', e.name);
+                        this.setState({typingUsers: mp})
+                    }
+                    console.log('typing', e.name);
+                })
+        }
         else
             echo.channel(channelName)
                 .listen('ChatMessage', (e) => {
@@ -227,7 +260,7 @@ class ChatMobile extends Component {
                     messagesNew : this.state.messagesNew.filter(item=>!(item.uniqid===JSON.parse(msg).uniqid))
                 })
                     // this.props.onReduxUpdate("ADD_CHAT_MESSAGES", newArr)
-                    this.props.updatemessage(msg)
+                    // this.props.updatemessage(msg)
             })
         }
 
@@ -304,13 +337,15 @@ class ChatMobile extends Component {
     }
 
     prepareJSON=()=>{
+        console.log("prepareJSON", this.inputMessage.value, this.state.selSubjkey)
         let {classID, userName, userID, studentId, studentName} = this.props.userSetup
+        let text = this.state.curMessage
         let obj = {}
         switch (this.props.isnew) {
             case true :
                 obj.id = 0;
                 obj.class_id = classID;
-                obj.message = this.inputMessage.value;
+                obj.message = text//this.inputMessage.value;
                 obj.msg_date = toYYYYMMDD(new Date());
                 obj.msg_time = (new Date()).toLocaleTimeString().slice(0, 5);
                 if (!(this.state.selSubjkey === null)) {
@@ -328,7 +363,7 @@ class ChatMobile extends Component {
                 break;
             default :
                 obj.senderId = chatUserName
-                obj.text = this.inputMessage.value
+                obj.text = text//this.inputMessage.value
                 obj.time = (new Date()).toLocaleTimeString().slice(0, 5)
                 obj.userID = userID
                 obj.userName = userName
@@ -340,8 +375,9 @@ class ChatMobile extends Component {
                 }
                 break;
         }
-        // console.log("prepareJSON", obj, JSON.stringify(obj))
+        console.log("prepareJSON", obj, JSON.stringify(obj))
         this.inputMessage.value = ''
+        this.setState({curMessage:""})
         this.setState({
             selSubject: false,
             selDate: false,
@@ -377,20 +413,22 @@ class ChatMobile extends Component {
             this.setState({messages: [...this.state.messages, objForState]})
         }
         this.sendMessage(obj, 0)
+        if (!(this.state.selSubjkey === null))
         this.addHomeWork(this.props.isnew?JSON.parse(obj).message:JSON.parse(obj).text)
     }
     _handleKeyDown = (e) => {
         console.log("_handleKeyDown", e.nativeEvent.key, e.nativeEvent)
-        return
         let key = e.nativeEvent.key
 
         if (this.props.isnew) {
+            
             let channelName = 'class.'+this.props.userSetup.classID
             this.state.Echo.private(channelName)
                 .whisper('typing', {
                         name: this.props.userSetup.userName
                     })
         }
+        return
         if (key === 'Enter') {
             e.preventDefault();
             let obj = this.prepareJSON()
@@ -722,7 +760,8 @@ class ChatMobile extends Component {
                                       onKeyPress={this._handleKeyDown}
                                       onChangeText={text=>this.onChangeText('curMessage', text)}
                                       placeholder="Введите сообщение..."  type="text"
-                                      // ref={input=>{this.inputMessage=input}}
+                                      ref={input=>{this.inputMessage=input}}
+                                      value={this.state.curMessage}
                             />
                             </View>
                             {/*<View style={{flex: 1}}>*/}
@@ -739,16 +778,16 @@ class ChatMobile extends Component {
                                 {/*onPress={this.addMessage}*/}
                                 {/**/}
                             {/*/>*/}
-                            <Button iconRight light style={styles.btnAddMessage}>
-                                {/*<Text>Next</Text>*/}
-                                {/*<Icon name='rightcircle' />*/}
+                            <View style={styles.btnAddMessage}>
                                 <Icon
-                                    raised
-                                    name='heartbeat'
-                                    type='font-awesome'
-                                    color='#f50'
-                                    onPress={() => console.log('hello')} />
-                            </Button>
+                                    // raised
+                                    name='rightcircle'
+                                    type='antdesign'
+                                    color='#898989'
+                                    size={40}
+                                    onPress={this.addMessage} />
+                            </View>
+
                             {/*</View>*/}
                             {/*{!this.state.isServiceChat?<View style={styles.homeworkPlus} onClick={()=>{this.setState({hwPlus : !this.state.hwPlus})}}><Text>{this.state.hwPlus?"+":"-"} Домашка</Text></View>:""}*/}
 

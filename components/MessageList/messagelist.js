@@ -3,14 +3,14 @@
  */
 import React, { Component } from 'react'
 // import ScrollToBottom from 'react-scroll-to-bottom';
-import { StyleSheet, Text, View, Image, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, Image, ScrollView, TouchableHighlight } from 'react-native';
 import {    Container, Header, Left, Body, Right, Button,
     Icon, Title, Content,  Footer, FooterTab, Badge,
     Form, Item, Input, Label, Textarea} from 'native-base';
 // import MicrolinkCard from '@microlink/react';
 import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat} from '../../js/helpersLight'
 import { connect } from 'react-redux'
-import InvertibleScrollView from 'react-native-invertible-scroll-view';
+// import InvertibleScrollView from 'react-native-invertible-scroll-view';
 // import { css } from 'glamor';
 
 
@@ -33,7 +33,13 @@ class MessageList extends Component {
         this.onSaveMsgClick=this.onSaveMsgClick.bind(this)
         this.onCancelMsgClick=this.onCancelMsgClick.bind(this)
         this.onDelMsgClick=this.onDelMsgClick.bind(this)
+        this.onLongPressMessage=this.onLongPressMessage.bind(this)
     }
+    // componentDidMount() {
+    //
+    //     console.log("componentDidMount")
+    //     // this.refs.scrollView.scrollToEnd({animated: false})
+    // }
     onSaveMsgClick=async (e)=>{
         console.log("onSaveMsgClick", this.textareaValue.value, Number(e.target.id.replace("btn-save-", '')), this.props.isnew)
         if (this.props.isnew) {
@@ -62,6 +68,11 @@ class MessageList extends Component {
         if (e.target.nodeName!=="DIV") return
         // console.log("onMessageDblClick", "e.target.id:", e.target.id, "key", key, "this.state.editKey", this.state.editKey)
         if (Number(key)!==this.state.editKey) this.setState({editKey : Number(key)})
+    }
+    onLongPressMessage=(id)=>{
+        // console.log(e, e.nativeEvent)
+        alert(id)
+        // alert(e.nativeEvent.id)
     }
     render() {
 
@@ -167,10 +178,18 @@ class MessageList extends Component {
             messages = this.props.messages
         // console.log('MESSAGES', this.props.localmessages, messages)
 
+
         return (
 
             <View style={styles.msgList}>
-                <ScrollView>
+                <ScrollView
+                    ref="scrollView"
+                    onContentSizeChange={( contentWidth, contentHeight ) => {
+                        // this._contentHeight = contentHeight
+                        console.log("onContentSizeChange", contentHeight)
+                        this.refs.scrollView.scrollToEnd()
+                    }}
+                >
                 {/*<InvertibleScrollView inverted*/}
                                       {/*ref={ref => { this.scrollView = ref; }}*/}
                                       {/*onContentSizeChange={() => {*/}
@@ -178,7 +197,7 @@ class MessageList extends Component {
                                       {/*}}>*/}
                     {messages.length?
                         messages.map((message, i) =>{
-                                console.log("MESSAGE", message)
+                                // console.log("MESSAGE", message)
                                 let msg = this.props.isnew?prepareMessageToFormat(message, true):JSON.parse(message)
                                 const urlMatches = msg.text.match(/\b(http|https)?:\/\/\S+/gi) || [];
                                 let { text } = msg;
@@ -197,63 +216,69 @@ class MessageList extends Component {
                                 let ownMsg = (username===this.props.userSetup.userName)
 
                                 return (this.props.hwdate===null||(!(this.props.hwdate===null)&&((new Date(this.props.hwdate)).toLocaleDateString()===(new Date(msg.hwdate)).toLocaleDateString())))?
-                                    <View key={i} id={"msg-"+msg.id} className={"message-block"} onClick={()=>i!==this.state.editKey?this.setState({editKey:-1}):null} onDoubleClick={(e)=>this.onMessageDblClick(e)}>
 
-                                        {/*style={this.state.editKey===i?{color:"white", backgroundColor : "white", border: "white 2px solid"}:null}*/}
-                                        <View key={msg.id}
-                                            style={ownMsg?
-                                            (hw.length?[styles.msgRightSide, styles.homeworkBorder]:[styles.msgRightSide, styles.homeworkNoBorder]):
-                                            (hw.length?[styles.msgLeftSide, styles.homeworkBorder]:[styles.msgLeftSide, styles.homeworkNoBorder])}>
+                                        <View key={i} id={"msg-"+msg.id} className={"message-block"}
+                                              onClick={()=>i!==this.state.editKey?this.setState({editKey:-1}):null}
+                                              onDoubleClick={(e)=>this.onMessageDblClick(e)}>
+                                            <TouchableHighlight key={i} id={"msgarea-"+msg.id} onLongPress={()=>this.onLongPressMessage(msg.id)}>
+                                            {/*style={this.state.editKey===i?{color:"white", backgroundColor : "white", border: "white 2px solid"}:null}*/}
+                                            <View key={msg.id}
+                                                style={ownMsg?
+                                                (hw.length?[styles.msgRightSide, styles.homeworkBorder]:[styles.msgRightSide, styles.homeworkNoBorder]):
+                                                (hw.length?[styles.msgLeftSide, styles.homeworkBorder]:[styles.msgLeftSide, styles.homeworkNoBorder])}>
 
-                                            {/*{this.state.editKey===i?<Textarea className={ownMsg?"message-block-edit-right":"message-block-edit-left"} ref={input=>{this.textareaValue=input}} defaultValue={msg.text}*/}
-                                            {/*onKeyPress={this.OnKeyPressTextArea} onChange={this.OnChangeTextArea}>*/}
-                                            {/*</Textarea>:null}*/}
-                                            {/*{this.state.editKey === i ?*/}
-                                            {/*<View className="mym-msg-block-buttons">*/}
-                                            {/*<View id={"btn-hw-"+msg.id} onClick={this.onAddHomwworkMsgClick} className="mym-msg-block-hw">Домашка</View>*/}
-                                            {/*<View id={"btn-save-"+msg.id} onClick={this.onSaveMsgClick} className="mym-msg-block-save">Сохранить</View>*/}
-                                            {/*<View id={"btn-cancel-"+msg.id} onClick={this.onCancelMsgClick} className="mym-msg-block-cancel">Отмена </View >*/}
-                                            {/*<View id={"btn-del-"+msg.id} onClick={this.onDelMsgClick} className="mym-msg-block-delete">Удалить</View>*/}
-                                            {/*</View>*/}
-                                            {/*:null}*/}
+                                                {/*{this.state.editKey===i?<Textarea className={ownMsg?"message-block-edit-right":"message-block-edit-left"} ref={input=>{this.textareaValue=input}} defaultValue={msg.text}*/}
+                                                {/*onKeyPress={this.OnKeyPressTextArea} onChange={this.OnChangeTextArea}>*/}
+                                                {/*</Textarea>:null}*/}
+                                                {/*{this.state.editKey === i ?*/}
+                                                {/*<View className="mym-msg-block-buttons">*/}
+                                                {/*<View id={"btn-hw-"+msg.id} onClick={this.onAddHomwworkMsgClick} className="mym-msg-block-hw">Домашка</View>*/}
+                                                {/*<View id={"btn-save-"+msg.id} onClick={this.onSaveMsgClick} className="mym-msg-block-save">Сохранить</View>*/}
+                                                {/*<View id={"btn-cancel-"+msg.id} onClick={this.onCancelMsgClick} className="mym-msg-block-cancel">Отмена </View >*/}
+                                                {/*<View id={"btn-del-"+msg.id} onClick={this.onDelMsgClick} className="mym-msg-block-delete">Удалить</View>*/}
+                                                {/*</View>*/}
+                                                {/*:null}*/}
 
-                                            {/*style={this.state.editKey===i?{visibility:"hidden"}:null}*/}
-                                            <View key={'id'+i} style={ownMsg?styles.msgRightAuthor:styles.msgLeftAuthor} ><Text>{username}</Text></View>
+                                                {/*style={this.state.editKey===i?{visibility:"hidden"}:null}*/}
+                                                <View key={'id'+i} style={ownMsg?styles.msgRightAuthor:styles.msgLeftAuthor} ><Text>{username}</Text></View>
 
-                                            {/*{urlMatches.length > 0 ? (*/}
-                                            {/*<View key={'msg'+i} id={"msg-text-"+i} style={this.state.editKey===i?{visibility:"hidden"}:null} className="msg-text">*/}
-                                            {/*<span*/}
-                                            {/*dangerouslySetInnerHTML={{*/}
-                                            {/*__html: text,*/}
-                                            {/*}}*/}
-                                            {/*/>*/}
+                                                {/*{urlMatches.length > 0 ? (*/}
+                                                {/*<View key={'msg'+i} id={"msg-text-"+i} style={this.state.editKey===i?{visibility:"hidden"}:null} className="msg-text">*/}
+                                                {/*<span*/}
+                                                {/*dangerouslySetInnerHTML={{*/}
+                                                {/*__html: text,*/}
+                                                {/*}}*/}
+                                                {/*/>*/}
 
-                                            {/*{LinkPreviews}*/}
-                                            {/*</View>*/}
-                                            {/*) : (*/}
+                                                {/*{LinkPreviews}*/}
+                                                {/*</View>*/}
+                                                {/*) : (*/}
 
-                                            {/* style={this.state.editKey===i?{visibility:"hidden"}:null} */}
-                                                <View key={'msg'+i} id={"msg-text-"+i} style={styles.msgText}>
-                                                <Text>{msg.text}</Text>
+                                                {/* style={this.state.editKey===i?{visibility:"hidden"}:null} */}
+                                                    <View key={'msg'+i} id={"msg-text-"+i} style={styles.msgText}>
+                                                        <Text>{msg.text}</Text>
+                                                    </View>
+                                                {/*    )} */}
+                                                {/*style={this.state.editKey===i?{visibility:"hidden"}:null}*/}
+                                                <View style={msg.id?styles.btnAddTimeDone:styles.btnAddTime}>
+                                                    <Text style={msg.id?styles.btnAddTimeDone:styles.btnAddTime}>{msg.time}</Text>
                                                 </View>
-                                            {/*    )} */}
-                                            {/*style={this.state.editKey===i?{visibility:"hidden"}:null}*/}
-                                            <View style={msg.id?styles.btnAddTimeDone:styles.btnAddTime}>
-                                                <Text>{msg.time}</Text>
+
+                                                {/*style={this.state.editKey===i?{visibility:"hidden"}:null}*/}
+                                                {hw.length?<View key={'idhw'+i} style={ownMsg?[styles.msgRightIshw, {color : 'white'}]:[styles.msgLeftIshw, {color : 'white'}]}>
+                                                    <Text style={{color : 'white'}}>{hw}</Text>
+                                                </View>:null}
+
                                             </View>
-
-                                            {/*style={this.state.editKey===i?{visibility:"hidden"}:null}*/}
-                                            {hw.length?<View key={'idhw'+i} style={ownMsg?[styles.msgRightIshw, {color : 'white'}]:[styles.msgLeftIshw, {color : 'white'}]}>
-                                                <Text style={{color : 'white'}}>{hw}</Text>
-                                            </View>:null}
-
+                                            </TouchableHighlight>
                                         </View>
-                                    </View>:null
+                                    :null
 
 
                             }
                         ):null}
                 </ScrollView>
+
                 {/*</InvertibleScrollView>*/}
             </View>
         )
