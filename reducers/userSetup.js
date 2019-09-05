@@ -26,7 +26,8 @@ const initialState = (check)=>{
             stats2 : [], stats3 : [], mark_date : {date : new Date()},
             avgclassmarks : [], loading : -1, stepsLeft : 6,
             chatSessionID : '', classObj : { chatroom_id : 0},
-            newMsgCount : 0, countryCode : "EN", langLibrary : {}, chatSSL : true, localChatMessages : [], isMobile : true,
+            newMsgCount : 0, countryCode : "EN", langLibrary : {}, chatSSL : true,
+            localChatMessages : [], isMobile : true,
         }
     return obj
 }

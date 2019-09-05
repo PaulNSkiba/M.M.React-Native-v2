@@ -3,12 +3,14 @@
  */
 import React, { Component } from 'react'
 // import ScrollToBottom from 'react-scroll-to-bottom';
-import { StyleSheet, Text, View, Image, ScrollView, TouchableHighlight } from 'react-native';
+import { StyleSheet, Text, View, Image, ScrollView,
+        TouchableHighlight, Modal, Radio, TouchableOpacity } from 'react-native';
 import {    Container, Header, Left, Body, Right, Button,
-    Icon, Title, Content,  Footer, FooterTab, Badge,
-    Form, Item, Input, Label, Textarea} from 'native-base';
+    Icon, Title, Content,  Footer, FooterTab, TabHeading, Tabs, Tab, Badge,
+    Form, Item, Input, Label, Textarea, CheckBox, ListItem } from 'native-base';
+import RadioForm from 'react-native-radio-form';
 // import MicrolinkCard from '@microlink/react';
-import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat} from '../../js/helpersLight'
+import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, AddDay, toYYYYMMDD} from '../../js/helpersLight'
 import { connect } from 'react-redux'
 // import InvertibleScrollView from 'react-native-invertible-scroll-view';
 // import { css } from 'glamor';
@@ -28,7 +30,13 @@ class MessageList extends Component {
         this.state = {
             messages : this.props.messages,
             editKey: -1,
-            }
+            modalVisible : false,
+            checkSchedule : true,
+            selSubject : {value : 0},
+            selDate : {value : -3},
+            currentHomeworkID : 0,
+            };
+
         this.onMessageDblClick = this.onMessageDblClick.bind(this)
         this.onSaveMsgClick=this.onSaveMsgClick.bind(this)
         this.onCancelMsgClick=this.onCancelMsgClick.bind(this)
@@ -71,8 +79,48 @@ class MessageList extends Component {
     }
     onLongPressMessage=(id)=>{
         // console.log(e, e.nativeEvent)
-        alert(id)
+        this.setState({modalVisible : true, currentHomeworkID : id})
+        //alert(id)
         // alert(e.nativeEvent.id)
+    }
+    setModalVisible(visible, setHomework) {
+        let {selSubject, selDate, currentHomeworkID} = this.state
+        this.setState({modalVisible: visible});
+        if (setHomework) {
+            let messages = []
+            if (this.props.isnew)
+                messages = this.props.localmessages //this.props.chat.localChatMessages.map(item=>prepareMessageToFormat(item))
+            else
+                messages = this.props.messages
+
+            if (this.props.isnew) {
+                let subject = this.props.userSetup.selectedSubjects.filter(item=>item.id===selSubject.value)[0]
+                // console.log("setModalVisible", selSubject, subject, this.props.userSetup.selectedSubjects)
+                let newmessages = messages.map(item=>{
+                    if (item.id===currentHomeworkID) {
+                        item.homework_subj_id = selSubject.value
+                        item.homework_date = toYYYYMMDD(AddDay(new Date(), selDate.value));
+                        item.homework_subj_name = subject.subj_name_ua
+                        item.homework_subj_key = subject.subj_key
+                    }
+                    return item
+                })
+                // ToDO: Записать в БД изменение домашки
+                console.log("newmessages", newmessages)
+                this.props.updatemessages(newmessages)
+                this.setState({selSubjects : 0, selDate : -3})
+                // this.props.onReduxUpdate(, newmessages)
+            }
+            console.log("messages", messages)
+        }
+    }
+    onSelectSubject=item=>{
+        this.setState({selSubject : item})
+        // console.log(item.value)
+    }
+    onSelectDay=item=>{
+        this.setState({selDate : item})
+        // console.log(item.value)
     }
     render() {
 
@@ -178,10 +226,133 @@ class MessageList extends Component {
             messages = this.props.messages
         // console.log('MESSAGES', this.props.localmessages, messages)
 
-
+        // const mockData = [
+        //     {
+        //         label: 'label1',
+        //         value: 'fi'
+        //     },
+        //     {
+        //         label: 'label2',
+        //         value: 'se'
+        //     },
+        //     {
+        //         label: 'label3',
+        //         value: 'th'
+        //     }
+        // ];
+        const mockData = this.props.userSetup.selectedSubjects.map(item=>{
+            return {
+                    label : item.subj_name_ua,
+                    value : item.id
+            }
+        })
+        const daysArr = [
+            {   label : "Позавчера", value : -2},
+            {   label : "Вчера", value : -1},
+            {   label : "Сегодня", value : 0},
+            {   label : "Завтра", value : 1},
+            {   label : "Послезавтра", value : 2}]
         return (
 
             <View style={styles.msgList}>
+                <Modal
+                    animationType="slide"
+                    transparent={false}
+                    visible={this.state.modalVisible}
+                    onRequestClose={() => {
+                        Alert.alert('Modal has been closed.');
+                    }}>
+                    <View style={styles.modalView}>
+                        {/*<Header hasTabs/>*/}
+                        {/*<Header>*/}
+
+                            {/*</Header>*/}
+                        {/*style={styles.tabHeader}*/}
+                        <Tabs>
+                            <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text style={{color : "#fff"}}>ПРЕДМЕТ</Text></TabHeading>}>
+                                <View style={styles.homeworkSubjectList}>
+                                    <RadioForm
+                                        // style={{ paddingBottom : 20 }}
+                                        dataSource={mockData}
+                                        itemShowKey="label"
+                                        itemRealKey="value"
+                                        circleSize={16}
+                                        initial={0}
+                                        formHorizontal={false}
+                                        labelHorizontal={true}
+                                        onPress={(item) => this.onSelectSubject(item)}
+                                    />
+                                </View>
+                            </Tab>
+                            <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text style={{color : "#fff"}}>НА КОГДА</Text></TabHeading>}>
+                                <View style={styles.homeworkSubjectList}>
+                                    <RadioForm
+                                        // style={{ paddingBottom : 20 }}
+                                        dataSource={daysArr}
+                                        itemShowKey="label"
+                                        itemRealKey="value"
+                                        circleSize={16}
+                                        initial={0}
+                                        formHorizontal={false}
+                                        labelHorizontal={true}
+                                        onPress={(item) => this.onSelectDay(item)}
+                                    />
+                                </View>
+                            </Tab>
+                            <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text style={{color : "#fff"}}>ЧТО ЗАДАЛИ</Text></TabHeading>}>
+                                <View /* style={styles.homeworkDayList} */ >
+                                </View>
+                            </Tab>
+                        </Tabs>
+                        {/*<Container style={styles.homeworkContainer}>*/}
+
+                            {/**/}
+                            {/*/!*<Text>List of days and subjects</Text>*!/*/}
+                            {/*/!*<View style={{flex : 1}}>*!/*/}
+                            {/*/!*<ChatBlock showLogin={this.state.showLogin} updateState={this.updateState}/>*!/*/}
+                            {/*/!*</View>*!/*/}
+                        {/*</Container>*/}
+                        <ListItem style={styles.modalHeader}>
+                            <Text style={styles.modalHeaderText}>
+                                {this.state.selSubject.value?this.state.selSubject.label:null}
+                                {this.state.selDate.value>-3?` на ${this.state.selDate.label}`:null}
+                            </Text>
+                        </ListItem>
+                        <ListItem className={styles.editHomeworkCheckbox}>
+                            <CheckBox checked={this.state.checkSchedule} onPress={()=>{this.setState({checkSchedule:!this.state.checkSchedule})}} color="#b40530"/>
+                            <Body>
+                                <Text>  Предлагать день домашки cогласно расписанию</Text>
+                            </Body>
+                        </ListItem>
+                        <Footer style={styles.header}>
+
+                            <FooterTab style={styles.header}>
+                                <Button style={this.state.selSubject.value&&this.state.selDate.value>-3?styles.btnHomework:styles.btnHomeworkDisabled} vertical
+                                        onPress={this.state.selSubject.value&&this.state.selDate.value>-3?()=>this.setModalVisible(!this.state.modalVisible, true):null}>
+                                    {/*<Icon active name="ios-bookmarks" />*/}
+                                    <Text style={styles.btnHomeworkText}>ДОБАВИТЬ</Text>
+                                </Button>
+                                <Button style={styles.btnClose} vertical /*active={this.state.selectedFooter===2}*/ onPress={()=>this.setModalVisible(!this.state.modalVisible, false)}>
+                                    {/*<Icon active name="ios-bookmarks" />*/}
+                                    <Text style={styles.btnCloseText}>ВЫХОД</Text>
+                                </Button>
+                            </FooterTab>
+                        </Footer>
+                        {/*<View style={styles.homeworkSettings}>*/}
+
+                            {/*/!*<Text>Hello World!</Text>*!/*/}
+                            {/*/!*<TouchableHighlight*!/*/}
+                                {/*/!*onPress={() => {this.setModalVisible(!this.state.modalVisible);}}>*!/*/}
+                                {/*/!*<Text>Hide Modal</Text>*!/*/}
+                            {/*/!*</TouchableHighlight>*!/*/}
+                        {/*</View>*/}
+                        {/*<View style={styles.doneButtons}>*/}
+                            {/*<Button onPress={()=>{this.setModalVisible(!this.state.modalVisible);}}>*/}
+                                {/*<Text>Закрыть</Text>*/}
+                            {/*</Button>*/}
+                        {/*</View>*/}
+                    </View>
+                </Modal>
                 <ScrollView
                     ref="scrollView"
                     onContentSizeChange={( contentWidth, contentHeight ) => {
@@ -240,7 +411,7 @@ class MessageList extends Component {
                                                 {/*:null}*/}
 
                                                 {/*style={this.state.editKey===i?{visibility:"hidden"}:null}*/}
-                                                <View key={'id'+i} style={ownMsg?styles.msgRightAuthor:styles.msgLeftAuthor} ><Text>{username}</Text></View>
+                                                <View key={'id'+i} style={ownMsg?styles.msgRightAuthor:styles.msgLeftAuthor} ><Text style={styles.msgAuthorText}>{username}</Text></View>
 
                                                 {/*{urlMatches.length > 0 ? (*/}
                                                 {/*<View key={'msg'+i} id={"msg-text-"+i} style={this.state.editKey===i?{visibility:"hidden"}:null} className="msg-text">*/}
@@ -285,4 +456,9 @@ class MessageList extends Component {
     }
 }
 
-export default connect(mapStateToProps, {})(MessageList)
+const mapDispatchToProps = dispatch => {
+    return ({
+        onReduxUpdate : (key, payload) => dispatch({type: key, payload: payload}),
+    })
+}
+export default connect(mapStateToProps, mapDispatchToProps)(MessageList)

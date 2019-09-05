@@ -133,6 +133,7 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
+		missingDimensionStrategy 'react-native-camera', 'general'
     }
     splits {
         abi {
@@ -185,6 +186,9 @@ android {
         pickFirst '**/x86/libjsc.so'
         pickFirst '**/armeabi-v7a/libjsc.so'
     }
+	configurations.all {
+    resolutionStrategy.force 'com.google.android.gms:play-services-base:16.1.0', 'com.google.android.gms:play-services-basement:16.2.0', 'com.google.android.gms:play-services-stats:16.0.1'
+	}
 }
 
 dependencies {

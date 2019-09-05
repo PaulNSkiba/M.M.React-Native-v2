@@ -9,6 +9,7 @@ import Pusher from 'pusher-js/react-native'
 window.Pusher = Pusher
 
 export let arrOfWeekDays = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб']
+
 // AddDay function (format MM-DD-YYY)
 export function AddDay(strDate,intNum)
 {

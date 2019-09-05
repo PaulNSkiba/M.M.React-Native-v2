@@ -4,7 +4,7 @@
 import React, { Component } from 'react'
 import { connect } from 'react-redux'
 import { store } from '../../store/configureStore'
-import { StyleSheet, Text, View, Image } from 'react-native';
+import { StyleSheet, Text, View, Image, Modal } from 'react-native';
 import { Icon } from 'react-native-elements'
 
 import {    Container, Header, Left, Body, Right, Button,
@@ -65,6 +65,7 @@ class ChatMobile extends Component {
             typingUsers : new Map(),
             localChatMessages : [],
             curMessage : '',
+            modalVisible: false,
         }
         this.now = new Date()
         this.roomId = this.props.userSetup.classObj.chatroom_id // this.props.chatroomID //
@@ -650,7 +651,6 @@ class ChatMobile extends Component {
         console.log(this.props.subjs)
         return this.props.subjs.map((item, i)=><div key={i} onClick={()=>{this.setState({selSubjname : item.subj_name_ua, selSubjkey : item.subj_key, selSubject : true, subjUp: !this.state.subjUp})}} className="add-msg-homework-subject" id={item.subj_key}>{item.subj_name_ua}</div>)
     }
-
     handleKeyPress=(event)=> {
         if (event.key === 'Enter') {
             event.preventDefault();
@@ -682,6 +682,9 @@ class ChatMobile extends Component {
         // alert(key, val)
         // this.props.updateState()
     }
+    updateLocalMessages=(messages)=>{
+        this.setState({localChatMessages : messages})
+    }
     render() {
         const {
             showEmojiPicker,
@@ -690,7 +693,6 @@ class ChatMobile extends Component {
 
         console.log("RENDER_CHAT", this.props.userSetup, this.state.localChatMessages)
         return (
-
             <View style={styles.chatContainerNew}>
                 <View style={{flex : 7}}>
                      {showEmojiPicker ? (
@@ -734,6 +736,7 @@ class ChatMobile extends Component {
                         <MessageList    hwdate={this.state.selDate?this.state.curDate:null}
                                         messages={this.state.messages}
                                         localmessages={this.state.localChatMessages}
+                                        updatemessages={this.updateLocalMessages}
                                         username={chatUserName}
                                         isshortmsg={this.state.isServiceChat||!this.state.servicePlus}
                                         classID={this.props.classID}

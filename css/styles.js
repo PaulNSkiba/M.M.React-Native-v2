@@ -313,6 +313,9 @@ export default styles = StyleSheet.create({
         borderColor : "#ffffff",
         borderWidth : 2,
     },
+    msgAuthorText : {
+        color : "#ffffff"
+    },
     msgRightAuthor : {
         color : "#ffffff",
         display: "flex",
@@ -362,22 +365,98 @@ export default styles = StyleSheet.create({
         fontSize : 10,
     // font-size : 0.7em;
     },
+    modalView : {
+        display : "flex",
+        flexDirection : "column",
+        flex : 1,
+        // marginTop: 22,
+        height : "98%",
+        // borderWidth : 2,
+        // borderColor : "#ecabb9",
+        // borderRadius : 10,
+    },
+    // modalHeader : {
+    //     flex : 1,
+    //     color : "#b40530",
+    //     // width : "100%",
+    //     fontSize : 30,
+    //     // paddingLeft : 40,
+    // },
+    modalHeaderText : {
+        color : "#b40530",
+        fontWeight : "700",
+        fontSize : 22,
+    },
+    btnHomework : {
+      height : "100%",
+      backgroundColor : "#b40530",
+
+    },
+    btnHomeworkDisabled : {
+        height : "100%",
+        backgroundColor : "darkgrey",
+
+    },
+    btnHomeworkText : {
+        color : "#fff",
+    },
+    btnClose : {
+        height : "100%",
+        backgroundColor : "#7DA8E6",
+    },
+    btnCloseText : {
+      color : "#fff",
+    },
+    doneButtons : {
+        display : "flex",
+        flex: 1,
+    },
+    homeworkSettings : {
+        display : "flex",
+        flex: 12,
+    },
     msgLeftIshw : {
-    color : "#fff",
-    display: "flex",
-    position: "absolute",
-    borderRadius: 8,
-    paddingRight : 7,
-    paddingBottom : 2,
-    paddingLeft : 7,
-    // font-size: 0.75em;
-    marginTop : -10,
-    borderWidth: 0.5,
-    borderColor : "#b40530",
-    backgroundColor: "#b40530",
-    // fontWeight: "600",
-    right : 10,
-},
+        color : "#fff",
+        display: "flex",
+        position: "absolute",
+        borderRadius: 8,
+        paddingRight : 7,
+        paddingBottom : 2,
+        paddingLeft : 7,
+        // font-size: 0.75em;
+        marginTop : -10,
+        borderWidth: 0.5,
+        borderColor : "#b40530",
+        backgroundColor: "#b40530",
+        // fontWeight: "600",
+        right : 10,
+    },
+    homeworkContainer : {
+        display : "flex",
+        flex : 1,
+        flexDirection : "row"
+    },
+    tabHeader : {
+        backgroundColor : "#edf0f2",
+    },
+    editHomeworkCheckbox : {
+        height : 20,
+        borderWidth : 1,
+    },
+    tabHeaderWhen : {
+        color : "#ffffff",
+        backgroundColor : '#b40530',
+    },
+    homeworkSubjectList : {
+        backgroundColor : "#edf0f2",
+        // width : "50%",
+        // borderRadius : 30,
+        // marginTop : 10,
+    },
+    homeworkDayList : {
+        // width : "50%",
+        backgroundColor : 'rgba(64, 155, 230, 0.16)',
+    },
     msgRightIshw: {
         color : "#fff",
         display: "flex",
@@ -393,5 +472,9 @@ export default styles = StyleSheet.create({
         backgroundColor: "#b40530",
         // fontWeight: "600"
     },
-
-});
+    radioButtonText : {
+        color : "#b40530",
+        fontSize : 10,
+        paddingBottom : 10,
+    }
+ });
