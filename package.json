@@ -22,6 +22,7 @@
     "react-feather": "^2.0.3",
     "react-native": "^0.60.5",
     "react-native-camera": "git+https://git@github.com/react-native-community/react-native-camera.git",
+    "react-native-display": "^1.0.8",
     "react-native-elements": "^1.1.0",
     "react-native-invertible-scroll-view": "^2.0.0",
     "react-native-radio-form": "^1.1.0",

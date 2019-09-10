@@ -68,6 +68,7 @@ class ChatMobile extends Component {
             modalVisible: false,
         }
         this.now = new Date()
+        this.editedMsgID = 0
         this.roomId = this.props.userSetup.classObj.chatroom_id // this.props.chatroomID //
         this.initLocalPusher = this.initLocalPusher.bind(this)
         this.initNetPusher = this.initNetPusher.bind(this)
@@ -126,45 +127,7 @@ class ChatMobile extends Component {
         echo.connector.pusher.logToConsole = true
         echo.connector.pusher.log = (msg) => {console.log(msg);};
         echo.connect()
-        // let echo = new Echo(
-        //     {
-        //         broadcaster : 'pusher',
-        //         key : LOCALPUSHERPWD,
-        //         cluster : 'mt1',
-        //         wsHost : BASE_HOST,
-        //         wsPort : 6001, //WEBSOCKETPORT,
-        //         wssPort: 6001, //WEBSOCKETPORT,
-        //         disableStats: true,
-        //         enabledTransports: chatSSL?['ws', 'wss']:['ws'],
-        //         encrypted: chatSSL,
-        //         // client : new Pusher(),
-        //         // client: Socketio,
-        //         auth: {
-        //             headers: {
-        //                 'V-Auth': true,
-        //                 Authorization: `Bearer ${token}`,
-        //             }
-        //         }
-        //     }
-        // )
         let channelName = 'class.'+this.props.userSetup.classID
-
-        // let echo2 = new Echo({
-        //     broadcaster: 'pusher',
-        //     host: 'wss://mymarks.info:6002',
-        //     client: Socketio,
-        //     auth: {
-        //         headers: {
-        //             'Authorization': `Bearer ${token}`,
-        //         },
-        //     },
-        // });
-        //
-        // echo2.private(channelName)
-        //     .listen('ChatMessageSSL', event => {
-        //         //Handle event
-        //         console.log("Messages")
-        //     });
 
         this.setState({Echo: echo})
 
@@ -207,8 +170,80 @@ class ChatMobile extends Component {
                         messages: [...arrChat, msg],
                         messagesNew: this.state.messagesNew.filter(item => !(item.uniqid === JSON.parse(msg).uniqid))
                     })
-                    // this.props.onReduxUpdate("ADD_CHAT_MESSAGES", arrChat)
-                    // this.props.updatemessage(msg)
+                })
+                .listen('ChatMessageSSLHomework', (e) => {
+                    console.log("FILTER-SSL-HOMEWORK")
+                    return
+                    let msg = prepareMessageToFormat(e.message), msgorig = e.message, isSideMsg = true
+                    let localChat = this.state.localChatMessages,
+                        arrChat = []
+                    // console.log("FILTER-NOT-SSL", this.state.localChatMessages)
+                    arrChat = localChat.map(
+                        item => {
+                            // console.log("map", item, JSON.parse(msg))
+                            if (this.state.messagesNew.includes(item.uniqid)) {
+                                // Для своих новых
+                                if (JSON.parse(msg).uniqid === item.uniqid) {
+                                    // console.log("MSGORIG", msgorig, msgorig.id)
+                                    isSideMsg = false
+                                    let obj = item
+                                    obj.id = msgorig.id
+                                    return obj
+                                }
+                                else {
+                                    return item
+                                }
+                            }
+                            else {
+                                return item
+                            }
+                        }
+                    )
+                    // Если новое и стороннее!!!
+                    if (isSideMsg) arrChat.push(msgorig)
+
+                    this.setState({
+                        localChatMessages: arrChat,
+                        messages: [...arrChat, msg],
+                        messagesNew: this.state.messagesNew.filter(item => !(item.uniqid === JSON.parse(msg).uniqid))
+                    })
+                })
+                .listen('ChatMessageSSLUpdated', (e) => {
+                    console.log("FILTER-SSL-UPDATED")
+                    return
+                    let msg = prepareMessageToFormat(e.message), msgorig = e.message, isSideMsg = true
+                    let localChat = this.state.localChatMessages,
+                        arrChat = []
+                    // console.log("FILTER-NOT-SSL", this.state.localChatMessages)
+                    arrChat = localChat.map(
+                        item => {
+                            // console.log("map", item, JSON.parse(msg))
+                            if (this.state.messagesNew.includes(item.uniqid)) {
+                                // Для своих новых
+                                if (JSON.parse(msg).uniqid === item.uniqid) {
+                                    // console.log("MSGORIG", msgorig, msgorig.id)
+                                    isSideMsg = false
+                                    let obj = item
+                                    obj.id = msgorig.id
+                                    return obj
+                                }
+                                else {
+                                    return item
+                                }
+                            }
+                            else {
+                                return item
+                            }
+                        }
+                    )
+                    // Если новое и стороннее!!!
+                    if (isSideMsg) arrChat.push(msgorig)
+
+                    this.setState({
+                        localChatMessages: arrChat,
+                        messages: [...arrChat, msg],
+                        messagesNew: this.state.messagesNew.filter(item => !(item.uniqid === JSON.parse(msg).uniqid))
+                    })
                 })
                 .listenForWhisper('typing', (e) => {
                     if (!this.state.typingUsers.has(e.name)) {
@@ -413,7 +448,7 @@ class ChatMobile extends Component {
         if (this.props.isnew) {
             this.setState({messages: [...this.state.messages, objForState]})
         }
-        this.sendMessage(obj, 0)
+        this.sendMessage(obj, 0, false)
         if (!(this.state.selSubjkey === null))
         this.addHomeWork(this.props.isnew?JSON.parse(obj).message:JSON.parse(obj).text)
     }
@@ -439,7 +474,7 @@ class ChatMobile extends Component {
             this.setState({messages : [...this.state.messages, objForState]})
             // console.log("handleKeyDown", obj, this.state.selSubjkey)
 
-            this.sendMessage(obj, 0)
+            this.sendMessage(obj, 0, false)
         }
         else {
             // console.log('e', e.target.value, e.target.value.slice(-1), e.key)
@@ -543,8 +578,8 @@ class ChatMobile extends Component {
     * или же просто в state в случае письма в техподдержку
     * ToDo: Вывести сообщение (сделать умный input) в случае незаполнения полей имени и электронки
     * */
-    sendMessage(text, id) {
-        // console.log("sendMessage", this.state.currentUser, text)
+    sendMessage(text, id, fromChat) {
+        console.log("sendMessage.1", text, id, this.props.isnew)
         let arr = this.state.addMsgs
         if (this.state.isServiceChat||!this.state.servicePlus) {
             console.log('Отправим электронку', this.state.addMsgs)
@@ -563,8 +598,10 @@ class ChatMobile extends Component {
             this.setState({addMsgs : arr})
             return
         }
+        if (fromChat&&id >0) this.editedMsgID = 0
         // console.log("Next message!", text)
         // Передаём сообщение с определёнными параметрами (ID-сессии + ClassID)
+        console.log("sendMessage.2", text, id, this.props.isnew)
         switch (this.props.isnew) {
             case true :
                 let arrChat = this.state.localChatMessages, obj = {}
@@ -593,6 +630,7 @@ class ChatMobile extends Component {
                     .catch(response=>
                         console.log("AXIOUS_ERROR", response)
                     )
+                console.log("sendMessage", text, id)
                 break;
             default :
             this.state.currentUser.sendMessage({
@@ -604,49 +642,49 @@ class ChatMobile extends Component {
         }
     }
 
-    daysList=()=>{
-        let daysArr = []
-        for (let i = -2; i < 8; i++) {
-            let obj = {}
-            obj.id = i
-            obj.name = this.dateString(AddDay(this.now, i))
-            daysArr.push(obj)
-        }
-        console.log("daysArr", daysArr)
-        return daysArr.map((item, i)=>(<div key={i} onClick={()=>{this.setState({curDate : AddDay(this.now, item.id), selDate : true, dayUp: !this.state.dayUp})}} className="add-msg-homework-day" id={item.id}>{item.name}</div>))
-    }
-    dateString=(curDate)=>{
-        let datediff = dateDiff(this.now, curDate)+2;
-        let daysArr = ["Позавчера","Вчера","Сегодня","Завтра","Послезавтра"]
-        Date.prototype.getWeek = function() {
-            let onejan = new Date(this.getFullYear(),0,1);
-            return Math.ceil((((this - onejan) / 86400000) + onejan.getDay())/7);
-        }
-        // console.log("datediff", datediff, curDate);
-        if (datediff>=0&&datediff<5)
-            return daysArr[datediff].toUpperCase();
-        else {
-            if ((curDate.getWeek() - this.now.getWeek())>=0)
-            {
-                if (this.now.getWeek() === curDate.getWeek()) {
-                    return arrOfWeekDays[curDate.getDay()] + '[эта.неделя]'
-                }
-                else {
-                    if ((this.now.getWeek() + 1) === curDate.getWeek()) {
-                        return arrOfWeekDays[curDate.getDay()] + '[след.неделя]'
-                    }
-                    else {
-                        return arrOfWeekDays[curDate.getDay()] + '  +' + (curDate.getWeek() - this.now.getWeek()) +'нед.'
-                    }
-                }
-            }
-            else {
-                return arrOfWeekDays[curDate.getDay()] + '  ' + (curDate.getWeek() - this.now.getWeek()) +'нед.'
-            }
-        }
-        // return ""
-        // return "След. Вторник"
-    }
+    // daysList=()=>{
+    //     let daysArr = []
+    //     for (let i = -2; i < 8; i++) {
+    //         let obj = {}
+    //         obj.id = i
+    //         obj.name = this.dateString(AddDay(this.now, i))
+    //         daysArr.push(obj)
+    //     }
+    //     console.log("daysArr", daysArr)
+    //     return daysArr.map((item, i)=>(<div key={i} onClick={()=>{this.setState({curDate : AddDay(this.now, item.id), selDate : true, dayUp: !this.state.dayUp})}} className="add-msg-homework-day" id={item.id}>{item.name}</div>))
+    // }
+    // dateString=(curDate)=>{
+    //     let datediff = dateDiff(this.now, curDate)+2;
+    //     let daysArr = ["Позавчера","Вчера","Сегодня","Завтра","Послезавтра"]
+    //     Date.prototype.getWeek = function() {
+    //         let onejan = new Date(this.getFullYear(),0,1);
+    //         return Math.ceil((((this - onejan) / 86400000) + onejan.getDay())/7);
+    //     }
+    //     // console.log("datediff", datediff, curDate);
+    //     if (datediff>=0&&datediff<5)
+    //         return daysArr[datediff].toUpperCase();
+    //     else {
+    //         if ((curDate.getWeek() - this.now.getWeek())>=0)
+    //         {
+    //             if (this.now.getWeek() === curDate.getWeek()) {
+    //                 return arrOfWeekDays[curDate.getDay()] + '[эта.неделя]'
+    //             }
+    //             else {
+    //                 if ((this.now.getWeek() + 1) === curDate.getWeek()) {
+    //                     return arrOfWeekDays[curDate.getDay()] + '[след.неделя]'
+    //                 }
+    //                 else {
+    //                     return arrOfWeekDays[curDate.getDay()] + '  +' + (curDate.getWeek() - this.now.getWeek()) +'нед.'
+    //                 }
+    //             }
+    //         }
+    //         else {
+    //             return arrOfWeekDays[curDate.getDay()] + '  ' + (curDate.getWeek() - this.now.getWeek()) +'нед.'
+    //         }
+    //     }
+    //     // return ""
+    //     // return "След. Вторник"
+    // }
     subjList=()=>{
         console.log(this.props.subjs)
         return this.props.subjs.map((item, i)=><div key={i} onClick={()=>{this.setState({selSubjname : item.subj_name_ua, selSubjkey : item.subj_key, selSubject : true, subjUp: !this.state.subjUp})}} className="add-msg-homework-subject" id={item.subj_key}>{item.subj_name_ua}</div>)
@@ -677,8 +715,15 @@ class ChatMobile extends Component {
 
     }
     onChangeText = (key, val) => {
-        console.log("onChangeText", this.state.curMessage)
+        console.log("onChangeText", this.state.curMessage, this.props.userSetup.classID, this.props.userSetup.userName)
         this.setState({ [key]: val})
+        if (this.props.isnew) {
+            let channelName = 'class.'+this.props.userSetup.classID
+            this.state.Echo.private(channelName)
+                .whisper('typing', {
+                    name: this.props.userSetup.userName
+                })
+        }
         // alert(key, val)
         // this.props.updateState()
     }
@@ -796,20 +841,20 @@ class ChatMobile extends Component {
 
                         </View>
 
-                        {!this.state.hwPlus?
-                            <View style={styles.addMsgHomeworkBlock}>
-                                <View style={styles.addMsgHomeworkTitle}><Text>Домашка</Text></View>
-                                <View id={"selDate"} style={!this.state.selDate?styles.addMsgHomeworkDay:[styles.addMsgHomeworkDay, styles.activeMsgBtn]} onClick={(e)=>{return e.target.nodeName === "DIV"&&e.target.id==="selDate"?this.setState({selDate: !this.state.selDate}):"";}}>
-                                    <View style={!this.state.dayUp?styles.showDaysSection: [styles.showDaysSection, styles.nonOpacity]}>{!this.state.dayUp?this.daysList():""}</View>
-                                    {this.dateString(this.state.curDate)}
-                                    <View style={styles.msgBtnUp} onClick={(e)=>{this.setState({dayUp: !this.state.dayUp});console.log(e.target.nodeName);e.preventDefault();}}><img src={this.state.dayUp?arrow_up:arrow_down} alt=""/></View></View>
-                                <View id={"selSubj"} style={!this.state.selDate?styles.addMsgHomeworkSubject:[styles.addMsgHomeworkSubject, styles.activeMsgBtn]} onClick={(e)=>{return e.target.nodeName === "DIV"&&e.target.id==="selSubj"?this.setState({selSubject: (!this.state.selSubject) }):""}}>
-                                    <View style={!this.state.subjUp?styles.showSubjSection:[styles.showSubjSection, styles.nonOpacity]}>{!this.state.subjUp?this.subjList():""}</View>
-                                    {this.state.selSubjkey===null?"ПРЕДМЕТ?":this.state.selSubjname}
-                                    <View style={styles.msgBtnUp} onClick={(e)=>{e.preventDefault(); this.setState({subjUp: !this.state.subjUp})}}><img src={this.state.subjUp?arrow_up:arrow_down} alt=""/></View></View>
+                        {/*{!this.state.hwPlus?*/}
+                            {/*<View style={styles.addMsgHomeworkBlock}>*/}
+                                {/*<View style={styles.addMsgHomeworkTitle}><Text>Домашка</Text></View>*/}
+                                {/*<View id={"selDate"} style={!this.state.selDate?styles.addMsgHomeworkDay:[styles.addMsgHomeworkDay, styles.activeMsgBtn]} onClick={(e)=>{return e.target.nodeName === "DIV"&&e.target.id==="selDate"?this.setState({selDate: !this.state.selDate}):"";}}>*/}
+                                    {/*<View style={!this.state.dayUp?styles.showDaysSection: [styles.showDaysSection, styles.nonOpacity]}>{!this.state.dayUp?this.daysList():""}</View>*/}
+                                    {/*{this.dateString(this.state.curDate)}*/}
+                                    {/*<View style={styles.msgBtnUp} onClick={(e)=>{this.setState({dayUp: !this.state.dayUp});console.log(e.target.nodeName);e.preventDefault();}}><img src={this.state.dayUp?arrow_up:arrow_down} alt=""/></View></View>*/}
+                                {/*<View id={"selSubj"} style={!this.state.selDate?styles.addMsgHomeworkSubject:[styles.addMsgHomeworkSubject, styles.activeMsgBtn]} onClick={(e)=>{return e.target.nodeName === "DIV"&&e.target.id==="selSubj"?this.setState({selSubject: (!this.state.selSubject) }):""}}>*/}
+                                    {/*<View style={!this.state.subjUp?styles.showSubjSection:[styles.showSubjSection, styles.nonOpacity]}>{!this.state.subjUp?this.subjList():""}</View>*/}
+                                    {/*{this.state.selSubjkey===null?"ПРЕДМЕТ?":this.state.selSubjname}*/}
+                                    {/*<View style={styles.msgBtnUp} onClick={(e)=>{e.preventDefault(); this.setState({subjUp: !this.state.subjUp})}}><img src={this.state.subjUp?arrow_up:arrow_down} alt=""/></View></View>*/}
 
-                            </View>
-                            :null}
+                            {/*</View>*/}
+                            {/*:null}*/}
                     </Form>
                 </View>
 

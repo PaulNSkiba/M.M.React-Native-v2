@@ -50,7 +50,7 @@ class App extends Component {
         }
     }
     render ()  {
-
+        console.log("SelectedFooter", this.state.selectedFooter)
         return (
             <Provider store={store}>
                 <Container style={{flex : 1}}>
@@ -58,7 +58,17 @@ class App extends Component {
                         <HeaderBlock updateState={this.updateState}/>
                     <Container >
                         {/*<View style={{flex : 1}}>*/}
+                        {this.state.selectedFooter===0?
                             <ChatBlock showLogin={this.state.showLogin} updateState={this.updateState}/>
+                                :
+                            <ChatBlock showLogin={this.state.showLogin} updateState={this.updateState}/>
+                            }
+
+                        {this.state.selectedFooter===1?<View><Text>Домашка</Text></View>:null}
+                        {this.state.selectedFooter===2?<View><Text>Оценки</Text></View>:null}
+                        {this.state.selectedFooter===3?<View><Text>Помощь</Text></View>:null}
+                        {this.state.selectedFooter===4?<View><Text>Камера</Text></View>:null}
+                        {this.state.selectedFooter===5?<View><Text>Прочее</Text></View>:null}
                         {/*</View>*/}
                     </Container>
                     <Footer style={styles.header}>

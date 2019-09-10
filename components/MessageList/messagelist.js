@@ -10,7 +10,7 @@ import {    Container, Header, Left, Body, Right, Button,
     Form, Item, Input, Label, Textarea, CheckBox, ListItem } from 'native-base';
 import RadioForm from 'react-native-radio-form';
 // import MicrolinkCard from '@microlink/react';
-import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, AddDay, toYYYYMMDD} from '../../js/helpersLight'
+import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, AddDay, toYYYYMMDD, daysList} from '../../js/helpersLight'
 import { connect } from 'react-redux'
 // import InvertibleScrollView from 'react-native-invertible-scroll-view';
 // import { css } from 'glamor';
@@ -33,7 +33,7 @@ class MessageList extends Component {
             modalVisible : false,
             checkSchedule : true,
             selSubject : {value : 0},
-            selDate : {value : -3},
+            selDate : this.getNextStudyDay(daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;}))[1],
             currentHomeworkID : 0,
             };
 
@@ -56,7 +56,6 @@ class MessageList extends Component {
             id = Number(e.target.id.replace("btn-save-", ''))
             try {
                 await this.props.sendmessage(JSON.stringify(obj), id)
-
             }
             catch (err){
             }
@@ -64,7 +63,6 @@ class MessageList extends Component {
         this.setState({editKey : -1})
     }
     onDelMsgClick=(e)=>{
-
         this.setState({editKey : -1})
     }
     onCancelMsgClick=(e)=>{
@@ -108,7 +106,10 @@ class MessageList extends Component {
                 // ToDO: Записать в БД изменение домашки
                 console.log("newmessages", newmessages)
                 this.props.updatemessages(newmessages)
-                this.setState({selSubjects : 0, selDate : -3})
+                this.setState({ currentHomeworkID : 0,
+                                selSubject : 0,
+                                selDate : this.getNextStudyDay(daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;}))[1]})
+                this.props.sendmessage(JSON.stringify(newmessages.filter(item=>item.id===currentHomeworkID)[0]), currentHomeworkID, true)
                 // this.props.onReduxUpdate(, newmessages)
             }
             console.log("messages", messages)
@@ -121,6 +122,21 @@ class MessageList extends Component {
     onSelectDay=item=>{
         this.setState({selDate : item})
         // console.log(item.value)
+    }
+    getNextStudyDay=arr=>{
+        let i = 0; obj = {};
+        // for (let i = 0; i++; i < arr.length) {
+        //     if arr
+        // }
+        arr.forEach((item, index)=>{
+            // console.log("getNextStudyDay", item, index, i)
+            if (item.value > 0 && i===0) {
+                i = index;
+                obj = item;
+                // this.setState({selDate : item})
+            }
+        })
+        return [i, obj];
     }
     render() {
 
@@ -240,18 +256,22 @@ class MessageList extends Component {
         //         value: 'th'
         //     }
         // ];
-        const mockData = this.props.userSetup.selectedSubjects.map(item=>{
+        const subjects = this.props.userSetup.selectedSubjects.map(item=>{
             return {
-                    label : item.subj_name_ua,
+                    label : item.subj_name_ua.toUpperCase(),
                     value : item.id
             }
         })
-        const daysArr = [
-            {   label : "Позавчера", value : -2},
-            {   label : "Вчера", value : -1},
-            {   label : "Сегодня", value : 0},
-            {   label : "Завтра", value : 1},
-            {   label : "Послезавтра", value : 2}]
+        // let daysArr = [
+        //     {   label : "Позавчера", value : -2},
+        //     {   label : "Вчера", value : -1},
+        //     {   label : "Сегодня", value : 0},
+        //     {   label : "Завтра", value : 1},
+        //     {   label : "Послезавтра", value : 2}]
+        // console.log("dayList", daysArr)
+        const daysArr = daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;})
+        // console.log("dayList", daysArr, )
+        const initialDay = this.getNextStudyDay(daysArr)[0];
         return (
 
             <View style={styles.msgList}>
@@ -273,7 +293,7 @@ class MessageList extends Component {
                                 <View style={styles.homeworkSubjectList}>
                                     <RadioForm
                                         // style={{ paddingBottom : 20 }}
-                                        dataSource={mockData}
+                                        dataSource={subjects}
                                         itemShowKey="label"
                                         itemRealKey="value"
                                         circleSize={16}
@@ -292,7 +312,7 @@ class MessageList extends Component {
                                         itemShowKey="label"
                                         itemRealKey="value"
                                         circleSize={16}
-                                        initial={0}
+                                        initial={initialDay}
                                         formHorizontal={false}
                                         labelHorizontal={true}
                                         onPress={(item) => this.onSelectDay(item)}
@@ -321,7 +341,7 @@ class MessageList extends Component {
                         <ListItem className={styles.editHomeworkCheckbox}>
                             <CheckBox checked={this.state.checkSchedule} onPress={()=>{this.setState({checkSchedule:!this.state.checkSchedule})}} color="#b40530"/>
                             <Body>
-                                <Text>  Предлагать день домашки cогласно расписанию</Text>
+                                <Text>  Учитывать расписание при выборе даты</Text>
                             </Body>
                         </ListItem>
                         <Footer style={styles.header}>

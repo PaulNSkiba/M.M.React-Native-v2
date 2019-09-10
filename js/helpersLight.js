@@ -475,3 +475,56 @@ export const echoClient = (token, chatSSL) => {
         }
     )
 }
+export const daysList=()=>{
+    let daysArr = []
+    for (let i = -2; i < 8; i++) {
+        let obj = {}
+        obj.id = i
+        obj.name = dateString(AddDay(new Date(), i))
+        // console.log("AddDay", AddDay(new Date(), i).getDay())
+        if (AddDay(new Date(), i).getDay()) {
+            daysArr.push(obj)
+        }
+    }
+    return daysArr
+    // console.log("daysArr", daysArr)
+    // return daysArr.map((item, i)=>(<div key={i} onClick={()=>{this.setState({curDate : AddDay(this.now, item.id), selDate : true, dayUp: !this.state.dayUp})}} className="add-msg-homework-day" id={item.id}>{item.name}</div>))
+}
+const dateString = curDate => {
+    let datediff = dateDiff((new Date()), curDate)+2;
+    let daysArr = ["Позавчера","Вчера","Сегодня","Завтра","Послезавтра"]
+    // Date.prototype.getWeek = function() {
+    //     let onejan = new Date(this.getFullYear(),0,1);
+    //     return Math.ceil((((this - onejan) / 86400000) + onejan.getDay())/7);
+    // }
+    // console.log("datediff", datediff, curDate);
+    if (datediff>=0&&datediff<5)
+        return daysArr[datediff].toUpperCase();
+    else {
+        // console.log("getWeek", curDate, getWeek(curDate), getWeek(new Date()))
+
+        if ((getWeek(curDate) - getWeek(new Date()))>=0)
+        {
+            if (getWeek(new Date()) === getWeek(curDate)) {
+                return arrOfWeekDays[curDate.getDay()].toUpperCase() + ' [эта.неделя]'
+            }
+            else {
+                if ((getWeek(new Date()) + 1) === getWeek(curDate)) {
+                    return arrOfWeekDays[curDate.getDay()].toUpperCase() + ' [след.неделя]'
+                }
+                else {
+                    return arrOfWeekDays[curDate.getDay()].toUpperCase() + '  +' + (getWeek(curDate) - getWeek(new Date())) +' нед.'
+                }
+            }
+        }
+        else {
+            return arrOfWeekDays[curDate.getDay()].toUpperCase() + '  ' + (getWeek(curDate) - getWeek(new Date())) +'нед.'
+        }
+
+    }
+}
+const getWeek = (curDate) => {
+    const now = new Date(curDate)
+    const firstJan = new Date(now.getFullYear(),0,1)
+    return Math.ceil((((now - firstJan) / 86400000) + firstJan.getDay())/7)
+}
