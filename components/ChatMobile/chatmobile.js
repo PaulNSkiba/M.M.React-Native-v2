@@ -81,6 +81,38 @@ class ChatMobile extends Component {
         this.sendMessage = this.sendMessage.bind(this)
         this.addMessage = this.addMessage.bind(this)
     }
+    componentWillMount(){
+        // console.log("this.props.isnew", this.props.isnew)
+    }
+    componentDidMount(){
+        // console.log("this.props.isnew", this.props.isnew)
+        if (this.props.isnew)
+            this.initLocalPusher()
+        else {
+            this.initNetPusher()
+        }
+        this.initChatMessages()
+        // if (this.typingTimer) clearTimeout(this.typingTimer)
+        this.typingTimer = setInterval(()=>{
+            // console.log("setInterval-tag")
+            let mp = this.state.typingUsers,
+                now = (new Date())
+            for (let user of mp.keys()) {
+                console.log("setInterval", user, now, mp.get(user),
+                    Math.abs(now.getUTCSeconds() - mp.get(user).getUTCSeconds()),
+                    Math.floor((Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) - Date.UTC(mp.get(user).getFullYear(), mp.get(user).getMonth(), mp.get(user).getDate()) ) /(1000)))
+
+                if (Math.abs(now.getUTCSeconds() - mp.get(user).getUTCSeconds()) > 2) {
+                    mp.delete(user)
+                    this.setState({typingUsers: mp})
+                }
+
+            }
+        }, 2000)
+    }
+    componentWillUnmount() {
+        if (this.typingTimer) clearInterval(this.typingTimer)
+    }
     toggleEmojiPicker=()=>{
         this.setState({            showEmojiPicker: !this.state.showEmojiPicker,        });
     }
@@ -90,7 +122,7 @@ class ChatMobile extends Component {
             .then(resp => {
                 this.setState({localChatMessages : resp.data})
                 console.log("Загружено!")
-                // this.props.onReduxUpdate("ADD_CHAT_MESSAGES", resp.data)
+                this.props.onReduxUpdate("UPDATE_HOMEWORK", resp.data.filter(item=>(item.homework_date!==null)))
             })
             .catch(error => {
                 console.log('getChatMessagesError', error)
@@ -338,38 +370,6 @@ class ChatMobile extends Component {
                 .catch(error => console.log(error))
 
         }
-    }
-    componentWillMount(){
-        // console.log("this.props.isnew", this.props.isnew)
-    }
-    componentDidMount(){
-        // console.log("this.props.isnew", this.props.isnew)
-        if (this.props.isnew)
-            this.initLocalPusher()
-        else {
-            this.initNetPusher()
-        }
-        this.initChatMessages()
-        // if (this.typingTimer) clearTimeout(this.typingTimer)
-        this.typingTimer = setInterval(()=>{
-            // console.log("setInterval-tag")
-            let mp = this.state.typingUsers,
-                now = (new Date())
-            for (let user of mp.keys()) {
-                console.log("setInterval", user, now, mp.get(user),
-                    Math.abs(now.getUTCSeconds() - mp.get(user).getUTCSeconds()),
-                    Math.floor((Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) - Date.UTC(mp.get(user).getFullYear(), mp.get(user).getMonth(), mp.get(user).getDate()) ) /(1000)))
-
-                if (Math.abs(now.getUTCSeconds() - mp.get(user).getUTCSeconds()) > 2) {
-                    mp.delete(user)
-                    this.setState({typingUsers: mp})
-                }
-
-            }
-        }, 2000)
-     }
-    componentWillUnmount() {
-        if (this.typingTimer) clearInterval(this.typingTimer)
     }
 
     prepareJSON=()=>{
@@ -738,7 +738,7 @@ class ChatMobile extends Component {
 
         console.log("RENDER_CHAT", this.props.userSetup, this.state.localChatMessages)
         return (
-            <View style={styles.chatContainerNew}>
+            <View style={this.props.hidden?styles.hidden:styles.chatContainerNew}>
                 <View style={{flex : 7}}>
                      {showEmojiPicker ? (
                      <View className="picker-background">

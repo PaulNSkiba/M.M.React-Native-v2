@@ -8,6 +8,10 @@ export default styles = StyleSheet.create({
         // position: absolute, top: 0, bottom: 0, left: 0, right: 0,
         flex : 1,
         flexDirection: 'column',
+        opacity : 1,
+        // position: 'absolute',
+        // bottom : 0,
+        // left : 0,
         // justifyContent: 'center',
         // alignItems: 'stretch',
     // position: "absolute",
@@ -199,10 +203,11 @@ export default styles = StyleSheet.create({
         // fontWeight : 900,
     },
     tabColorSelected : {
-        color : "white"
+        color : "#fff"
     },
     tabHomework : {
-        color : "#dfa700",
+        // color : "#dfa700",
+        color : "#b40530",
     },
     menuIcon : {
         color : "#555a6e",
@@ -448,6 +453,7 @@ export default styles = StyleSheet.create({
         backgroundColor : '#b40530',
     },
     homeworkSubjectList : {
+        position : 'relative',
         backgroundColor : "#edf0f2",
         // width : "50%",
         // borderRadius : 30,
@@ -476,5 +482,28 @@ export default styles = StyleSheet.create({
         color : "#b40530",
         fontSize : 10,
         paddingBottom : 10,
+    },
+    hidden: {
+        flex : 1,
+        flexDirection: 'column',
+        opacity : 0,
+        // position: 'absolute',
+        // bottom : 0,
+        // left : -500,
+        borderWidth : 1,
+        borderColor : "darkgrey",
+        backgroundColor: "white",
+        height : "100%",
+    },
+    normal : {
+        position: 'relative',
+        // top: 0,
+        left : 0,
+    },
+    absoluteView : {
+        position : 'absolute',
+        // borderWidth : 3,
+        // borderColor : "#b40530",
+        // borderType : "solid",
     }
  });

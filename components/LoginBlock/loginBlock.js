@@ -106,6 +106,10 @@ class LoginBlock extends React.Component {
                         <Input secureTextEntry={true} ref="pwdLogin"
                                onChangeText={val => this.onChangeText('password', val)}/>
                     </Item>
+                    <Item></Item>
+                    <Item></Item>
+                    <Item></Item>
+                    <Item></Item>
                     <Button iconRight full info style={styles.inputButton} onPress={() => this.onLogin()}>
                         <Text style={styles.loginButton}>Логин</Text>
                     </Button>

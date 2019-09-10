@@ -15,6 +15,7 @@ import { instanceAxios, mapStateToProps /*, langLibrary as langLibraryF*/ } from
 import LoginBlock from '../LoginBlock/loginBlock'
 import HeaderBlock from '../HeaderBlock/headerBlock'
 import ChatMobile from '../ChatMobile/chatmobile'
+import styles from '../../css/styles'
 
 class ChatBlock extends React.Component {
     constructor(props) {
@@ -36,27 +37,29 @@ class ChatBlock extends React.Component {
         return (
         <View style={{flex : 1, position : "relative", flexDirection: 'column', height : "50%"}}>
             <View style={{flex : 1, position : "relative"}}>
-            {this.props.showLogin?
-                <LoginBlock updateState={this.props.updateState}/>
-                :null}
+            {this.props.showLogin?<LoginBlock updateState={this.props.updateState}/>:null}
+
+                {/*<View style={(this.props.userSetup.userID > 0&&(!this.props.showLogin))?styles.normal:styles.hidden}>*/}
+                {/*<View style={this.props.hidden?{position: 'absolute', top: -500, left : -500,}:{position: 'relative', top: 0, left : 0,}}>*/}
             {   this.props.userSetup.userID > 0&&(!this.props.showLogin)?
-                    <ChatMobile
-                        isnew={true}
-                        updatemessage={this.props.updateMessages}
+                        <ChatMobile
+                            isnew={true}
+                            updatemessage={this.props.updateMessages}
+                            hidden={this.props.hidden}
+                            // session_id={this.props.userSetup.chatSessionID}
+                            // homeworkarray={this.props.userSetup.homework}
+                            // chatroomID={this.props.userSetup.classObj.chatroom_id}
 
-                        // session_id={this.props.userSetup.chatSessionID}
-                        // homeworkarray={this.props.userSetup.homework}
-                        // chatroomID={this.props.userSetup.classObj.chatroom_id}
-
-                        messages={this.state.chatMessages}
-                        subjs={this.props.userSetup.selectedSubjects}
-                        btnclose={() => {
-                            this.setState({displayChat: !this.state.displayChat})
-                        }}
-                        display={this.state.displayChat} newmessage={this.newChatMessage}
-                    />
-                :null
-            }
+                            messages={this.state.chatMessages}
+                            subjs={this.props.userSetup.selectedSubjects}
+                            btnclose={() => {
+                                this.setState({displayChat: !this.state.displayChat})
+                            }}
+                            display={this.state.displayChat} newmessage={this.newChatMessage}
+                        />
+                    // </View>
+                // </View>
+                :null}
             </View>
         </View>)
     }
