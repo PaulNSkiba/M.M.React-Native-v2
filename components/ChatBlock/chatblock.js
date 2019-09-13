@@ -46,6 +46,7 @@ class ChatBlock extends React.Component {
                             isnew={true}
                             updatemessage={this.props.updateMessages}
                             hidden={this.props.hidden}
+                            forceupdate={this.props.forceupdate}
                             // session_id={this.props.userSetup.chatSessionID}
                             // homeworkarray={this.props.userSetup.homework}
                             // chatroomID={this.props.userSetup.classObj.chatroom_id}

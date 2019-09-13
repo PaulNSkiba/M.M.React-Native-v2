@@ -27,7 +27,7 @@ const initialState = (check)=>{
             avgclassmarks : [], loading : -1, stepsLeft : 6,
             chatSessionID : '', classObj : { chatroom_id : 0},
             newMsgCount : 0, countryCode : "EN", langLibrary : {}, chatSSL : true,
-            localChatMessages : [], isMobile : true,
+            localChatMessages : [], isMobile : true, photoPath : []
         }
     return obj
 }
@@ -165,12 +165,15 @@ export function userSetupReducer(state = initialState(true), action) {
         case 'CHAT_SSL' : {
             return{...state, chatSSL: action.payload}
         }
+        case 'PHOTO_PATH' : {
+            return{...state, photoPath: action.payload}
+        }
         // case "INIT_CHAT_MESSAGES" : {
         //     return{...state, localChatMessages: action.payload}
         // }
-        // case "ADD_CHAT_MESSAGES" : {
-        //     return{...state, localChatMessages: action.payload}
-        // }
+        case "ADD_CHAT_MESSAGES" : {
+            return{...state, localChatMessages: action.payload}
+        }
         case 'USER_LOGGEDOUT' :
 
             let initState = initialState(false)

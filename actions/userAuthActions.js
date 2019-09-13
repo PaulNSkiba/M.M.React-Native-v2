@@ -15,7 +15,7 @@ export const userLoggedIn = (email, pwd, provider, provider_id, langLibrary) => 
             "provider_id" : provider_id,
             "token" : null,
         };
-        console.log('USER_LOGGIN', JSON.stringify(data))
+        console.log('USER_LOGGIN', LOGINUSER_URL, JSON.stringify(data))
         // document.body.style.cursor = 'progress';
 
         instanceAxios().post(LOGINUSER_URL, JSON.stringify(data), null)

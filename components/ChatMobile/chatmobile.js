@@ -123,6 +123,7 @@ class ChatMobile extends Component {
                 this.setState({localChatMessages : resp.data})
                 console.log("Загружено!")
                 this.props.onReduxUpdate("UPDATE_HOMEWORK", resp.data.filter(item=>(item.homework_date!==null)))
+                this.props.onReduxUpdate("ADD_CHAT_MESSAGES", resp.data)
             })
             .catch(error => {
                 console.log('getChatMessagesError', error)
@@ -202,10 +203,15 @@ class ChatMobile extends Component {
                         messages: [...arrChat, msg],
                         messagesNew: this.state.messagesNew.filter(item => !(item.uniqid === JSON.parse(msg).uniqid))
                     })
+                    const todayMessages = this.props.userSetup.localChatMessages.filter(item=>(new Date(item.msg_date).toLocaleDateString())===(new Date().toLocaleDateString()))
+                    const homeworks = this.props.userSetup.localChatMessages.filter(item=>(item.homework_date!==null))
+
+                    this.props.forceupdate(todayMessages.length, homeworks.length)
                 })
                 .listen('ChatMessageSSLHomework', (e) => {
-                    console.log("FILTER-SSL-HOMEWORK")
-                    return
+                    // ToDO: Обновлять таблицу домашек и пересчитывать Label
+                    console.log("FILTER-SSL-HOMEWORK", e.message, e)
+                    // return
                     let msg = prepareMessageToFormat(e.message), msgorig = e.message, isSideMsg = true
                     let localChat = this.state.localChatMessages,
                         arrChat = []
@@ -213,18 +219,9 @@ class ChatMobile extends Component {
                     arrChat = localChat.map(
                         item => {
                             // console.log("map", item, JSON.parse(msg))
-                            if (this.state.messagesNew.includes(item.uniqid)) {
-                                // Для своих новых
-                                if (JSON.parse(msg).uniqid === item.uniqid) {
-                                    // console.log("MSGORIG", msgorig, msgorig.id)
-                                    isSideMsg = false
-                                    let obj = item
-                                    obj.id = msgorig.id
-                                    return obj
-                                }
-                                else {
-                                    return item
-                                }
+                            if (item.id === e.message.id) {
+
+                                return e.message
                             }
                             else {
                                 return item
@@ -232,17 +229,21 @@ class ChatMobile extends Component {
                         }
                     )
                     // Если новое и стороннее!!!
-                    if (isSideMsg) arrChat.push(msgorig)
+                    // if (isSideMsg) arrChat.push(msgorig)
 
                     this.setState({
                         localChatMessages: arrChat,
                         messages: [...arrChat, msg],
                         messagesNew: this.state.messagesNew.filter(item => !(item.uniqid === JSON.parse(msg).uniqid))
                     })
+                    const todayMessages = this.props.userSetup.localChatMessages.filter(item=>(new Date(item.msg_date).toLocaleDateString())===(new Date().toLocaleDateString()))
+                    const homeworks = this.props.userSetup.localChatMessages.filter(item=>(item.homework_date!==null))
+
+                    this.props.forceupdate(todayMessages.length, homeworks.length)
                 })
                 .listen('ChatMessageSSLUpdated', (e) => {
                     console.log("FILTER-SSL-UPDATED")
-                    return
+                    // return
                     let msg = prepareMessageToFormat(e.message), msgorig = e.message, isSideMsg = true
                     let localChat = this.state.localChatMessages,
                         arrChat = []
@@ -250,18 +251,9 @@ class ChatMobile extends Component {
                     arrChat = localChat.map(
                         item => {
                             // console.log("map", item, JSON.parse(msg))
-                            if (this.state.messagesNew.includes(item.uniqid)) {
-                                // Для своих новых
-                                if (JSON.parse(msg).uniqid === item.uniqid) {
-                                    // console.log("MSGORIG", msgorig, msgorig.id)
-                                    isSideMsg = false
-                                    let obj = item
-                                    obj.id = msgorig.id
-                                    return obj
-                                }
-                                else {
-                                    return item
-                                }
+                            if (item.id === e.message.id) {
+
+                                return e.message
                             }
                             else {
                                 return item
@@ -269,13 +261,17 @@ class ChatMobile extends Component {
                         }
                     )
                     // Если новое и стороннее!!!
-                    if (isSideMsg) arrChat.push(msgorig)
+                    // if (isSideMsg) arrChat.push(msgorig)
 
                     this.setState({
                         localChatMessages: arrChat,
                         messages: [...arrChat, msg],
                         messagesNew: this.state.messagesNew.filter(item => !(item.uniqid === JSON.parse(msg).uniqid))
                     })
+                    const todayMessages = this.props.userSetup.localChatMessages.filter(item=>(new Date(item.msg_date).toLocaleDateString())===(new Date().toLocaleDateString()))
+                    const homeworks = this.props.userSetup.localChatMessages.filter(item=>(item.homework_date!==null))
+
+                    this.props.forceupdate(todayMessages.length, homeworks.length)
                 })
                 .listenForWhisper('typing', (e) => {
                     if (!this.state.typingUsers.has(e.name)) {
@@ -371,7 +367,6 @@ class ChatMobile extends Component {
 
         }
     }
-
     prepareJSON=()=>{
         console.log("prepareJSON", this.inputMessage.value, this.state.selSubjkey)
         let {classID, userName, userID, studentId, studentName} = this.props.userSetup
@@ -449,8 +444,8 @@ class ChatMobile extends Component {
             this.setState({messages: [...this.state.messages, objForState]})
         }
         this.sendMessage(obj, 0, false)
-        if (!(this.state.selSubjkey === null))
-        this.addHomeWork(this.props.isnew?JSON.parse(obj).message:JSON.parse(obj).text)
+        // if (!(this.state.selSubjkey === null))
+        // this.addHomeWork(this.props.isnew?JSON.parse(obj).message:JSON.parse(obj).text)
     }
     _handleKeyDown = (e) => {
         console.log("_handleKeyDown", e.nativeEvent.key, e.nativeEvent)
@@ -504,28 +499,20 @@ class ChatMobile extends Component {
             }
         }
     }
-    addHomeWork=(txt)=>{
+    addHomeWork=(txt, subj_key, subj_name_ua, ondate, chat_id)=>{
         let {classID, userID, studentId} = this.props.userSetup
-        // let {userName} = this.props.userSetup
-        // let {homework : homeworkarray} = this.props //this.state;
-        // let id = this.props.homeworkarray.reduce((max, current)=>(current.id > max?current.id:max), 0) + 1;
-        let subj_key = this.state.selSubjkey //selectedSubjects[this.state.curSubjIndex].subj_key
-        let subj_name_ua = this.state.selSubjname //selectedSubjects[this.state.curSubjIndex].subj_name_ua
-        let ondate = this.state.curDate //new Date("2019-04-09");
-        // let author = userName //userName
-        // let instime = new Date() //"16:10"
-        // instime = ('0'+instime.getHours()).slice(-2) + ':' + ('0'+instime.getMinutes()).slice(-2)
-
-        // let json = `{"id":${id}, "subj_key":"${subj_key}", "subj_name_ua": "${subj_name_ua}", "homework": "${txt}", "ondate": "${ondate}", "author": "${author}", "instime" : "${instime}"}`;
-        // console.log(json)
-        // json = JSON.parse(json);
-
-        let json = `{"subj_key":"${subj_key}", "subj_name_ua": "${subj_name_ua}", "homework": "${txt}", "ondate": "${toYYYYMMDD(ondate)}", "user_id": "${userID}", "student_id":"${studentId}"}`;
+        let json = `{   "subj_key":"${subj_key}", 
+                        "subj_name_ua": "${subj_name_ua}", 
+                        "homework": "${txt}", 
+                        "ondate": "${toYYYYMMDD(ondate)}", 
+                        "user_id": "${userID}", 
+                        "chat_id": ${chat_id}, 
+                        "student_id":"${studentId}"}`;
         console.log(json);
         instanceAxios().post(HOMEWORK_ADD_URL + '/' + classID + '/hw/' + 0, json)
             .then(response => {
-                // console.log(response.data)
-                this.props.onHomeWorkChanged(response.data)
+                console.log("HOMEWORK_ADD_URL", response.data)
+                // this.props.onHomeWorkChanged(response.data)
                 // this.setState({
                 //     emails : response.data//response.data.map((item, i) => (<div className="itemInEmailList" key={item.id}>{item.email}<button id={item.id} onClick={this.deleteItemInList.bind(this)}>-</button></div>))
                 // })
@@ -535,7 +522,7 @@ class ChatMobile extends Component {
             .catch(response => {
                 console.log(response);
             })
-        this.setState({sideListLeft: true, editId : 0})
+        // this.setState({sideListLeft: true, editId : 0})
     }
     /*
     * Отправляем электронного письмо
@@ -642,49 +629,6 @@ class ChatMobile extends Component {
         }
     }
 
-    // daysList=()=>{
-    //     let daysArr = []
-    //     for (let i = -2; i < 8; i++) {
-    //         let obj = {}
-    //         obj.id = i
-    //         obj.name = this.dateString(AddDay(this.now, i))
-    //         daysArr.push(obj)
-    //     }
-    //     console.log("daysArr", daysArr)
-    //     return daysArr.map((item, i)=>(<div key={i} onClick={()=>{this.setState({curDate : AddDay(this.now, item.id), selDate : true, dayUp: !this.state.dayUp})}} className="add-msg-homework-day" id={item.id}>{item.name}</div>))
-    // }
-    // dateString=(curDate)=>{
-    //     let datediff = dateDiff(this.now, curDate)+2;
-    //     let daysArr = ["Позавчера","Вчера","Сегодня","Завтра","Послезавтра"]
-    //     Date.prototype.getWeek = function() {
-    //         let onejan = new Date(this.getFullYear(),0,1);
-    //         return Math.ceil((((this - onejan) / 86400000) + onejan.getDay())/7);
-    //     }
-    //     // console.log("datediff", datediff, curDate);
-    //     if (datediff>=0&&datediff<5)
-    //         return daysArr[datediff].toUpperCase();
-    //     else {
-    //         if ((curDate.getWeek() - this.now.getWeek())>=0)
-    //         {
-    //             if (this.now.getWeek() === curDate.getWeek()) {
-    //                 return arrOfWeekDays[curDate.getDay()] + '[эта.неделя]'
-    //             }
-    //             else {
-    //                 if ((this.now.getWeek() + 1) === curDate.getWeek()) {
-    //                     return arrOfWeekDays[curDate.getDay()] + '[след.неделя]'
-    //                 }
-    //                 else {
-    //                     return arrOfWeekDays[curDate.getDay()] + '  +' + (curDate.getWeek() - this.now.getWeek()) +'нед.'
-    //                 }
-    //             }
-    //         }
-    //         else {
-    //             return arrOfWeekDays[curDate.getDay()] + '  ' + (curDate.getWeek() - this.now.getWeek()) +'нед.'
-    //         }
-    //     }
-    //     // return ""
-    //     // return "След. Вторник"
-    // }
     subjList=()=>{
         console.log(this.props.subjs)
         return this.props.subjs.map((item, i)=><div key={i} onClick={()=>{this.setState({selSubjname : item.subj_name_ua, selSubjkey : item.subj_key, selSubject : true, subjUp: !this.state.subjUp})}} className="add-msg-homework-subject" id={item.subj_key}>{item.subj_name_ua}</div>)
@@ -786,7 +730,9 @@ class ChatMobile extends Component {
                                         isshortmsg={this.state.isServiceChat||!this.state.servicePlus}
                                         classID={this.props.classID}
                                         addmsgs={this.state.addMsgs}
-                                        sendmessage={this.sendMessage} isnew={this.props.isnew}/>
+                                        sendmessage={this.sendMessage} isnew={this.props.isnew}
+                                        addhomework={this.addHomeWork}
+                                        forceupdate={this.props.forceupdate}/>
                     </View>
                     <View style={styles.whoTyping}>
                         <Text>{this.state.typingUsers.size > 0?"Сообщение набира" + ((this.state.typingUsers.size===1?"е":"ю") + "т: ") + Array.from(this.state.typingUsers.keys()).join(', '):""}</Text>

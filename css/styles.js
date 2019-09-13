@@ -215,8 +215,9 @@ export default styles = StyleSheet.create({
     versionNumber : {
         position:"absolute",
         fontSize : 10,
-        right : -5,
-        top : -5,
+        left : 3,
+        top : -22,
+        color : "#4472C4"
         // borderWidth: 0.5,
         // borderColor : "black",
     },
@@ -505,5 +506,25 @@ export default styles = StyleSheet.create({
         // borderWidth : 3,
         // borderColor : "#b40530",
         // borderType : "solid",
+    },
+    mymMsgDateSeparator : {
+        backgroundColor : "rgba(64, 155, 230, 0.16)",
+        padding : 5,
+        marginLeft : "30%",
+        marginRight : "30%",
+        borderWidth : 1,
+        borderColor : "rgba(64, 155, 230, 0.16)",
+        borderRadius: 10,
+    },
+    mymMsgDateSeparatorText : {
+        color: "#7DA8E6",
+        textAlign: "center",
+        fontWeight: "600",
+    },
+    cameraBlock : {
+        borderWidth : 2,
+        borderColor : "#7DA8E6",
+        borderRadius: 10,
+        height : "100%",
     }
  });

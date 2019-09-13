@@ -6,11 +6,10 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { StyleSheet, Text, View } from 'react-native';
 import {    Container, Header, Left, Body, Right, Button,
-    Icon, Title, Content,  Footer, FooterTab, Badge,
-    Form, Item, Input, Label} from 'native-base';
+            Title, Content,  Footer, FooterTab,
+            Form, Item, Input, Label} from 'native-base';
+import { Avatar, Badge, Icon, withBadge } from 'react-native-elements'
 import { bindActionCreators } from 'redux';
-// import { addFriend } from './FriendActions';
-// import { LOGINUSER_URL } from './config/config'
 import { instanceAxios, mapStateToProps /*, langLibrary as langLibraryF*/ } from '../../js/helpersLight'
 import { LOGINUSER_URL, version } from '../../config/config'
 import { userLoggedIn, userLoggedInByToken, userLoggedOut } from '../../actions/userAuthActions'
@@ -37,23 +36,25 @@ class HeaderBlock extends React.Component {
         return (
         <Header style={styles.header}>
             <Left>
-                <Button transparent>
-                    <Icon style={styles.leftArrow} name='arrow-back' />
-                </Button>
+                {/*<View style={{position : "absolute"}}>*/}
+                    <Text style={styles.versionNumber}>{version}</Text>
+                {/*</View>*/}
+                {/*<Button transparent>*/}
+                    {/*<Icon style={styles.leftArrow} name='arrow-back' />*/}
+                {/*</Button>*/}
             </Left>
             <Body>
+                {/*<Text style={styles.versionNumber}>{version}</Text>*/}
                 <Title style={styles.myTitle}>My.Marks</Title>
             </Body>
             <Right>
                 <View style={{positon:"relative"}}>
-                    <View >
-                        <Text style={styles.versionNumber}>{version}</Text>
-                    </View>
+
             {/*<Icon style={styles.menuIcon} name='menu' />*/}
                     <View >
                         <Button transparent>
-                            {this.props.userSetup.userID?<Text>{this.props.userSetup.userName}  </Text>:null}
-                            <Icon style={styles.menuIcon} name='md-person' onPress={()=>this.props.updateState('showLogin')}/>
+                            {this.props.userSetup.userID?<Text style={{color : "#4472C4", fontWeight : "700"}}>{this.props.userSetup.userName}  </Text>:null}
+                            <Icon size={32} color={"#4472C4"} style={styles.menuIcon} name='person' onPress={()=>this.props.updateState('showLogin')}/>
                         </Button>
                     </View>
                 </View>

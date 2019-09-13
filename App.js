@@ -9,7 +9,6 @@
 import React, {Fragment, Component} from 'react';
 import { SafeAreaView,  StyleSheet,  ScrollView,  View,  Text,  StatusBar,} from 'react-native';
 import { Avatar, Badge, Icon, withBadge } from 'react-native-elements'
-import Display from 'react-native-display';
 // import HideableView from 'react-native-hideable-view';
 import {    Container, Header, Left, Body, Right, Button,
             Title, Content,  Footer, FooterTab,
@@ -24,7 +23,7 @@ import MarksBlock from './components/MarksBlock/marksblock'
 import HelpBlock from './components/HelpBlock/helpblock'
 import CameraBlock from './components/CameraBlock/camerablock'
 import ETCBlock from './components/ETCBlock/etcblock'
-
+import ButtonWithBadge from './components/ButtonWithBadge/buttonwithbadge'
 import { store } from './store/configureStore'
 import styles from './css/styles'
 
@@ -41,10 +40,13 @@ class App extends Component {
             password: '',
             userID: 0,
             userName : '',
+            msgs : 0,
+            homeworks : 0,
         }
         // this.onLogin = this.onLogin.bind(this)
         // this.RootContainer = this.RootContainer.bind(this)
         this.updateState = this.updateState.bind(this)
+        this.setstate = this.setstate.bind(this)
     }
 
     // RootContainer =(state)=>
@@ -55,8 +57,17 @@ class App extends Component {
             this.setState({[stateKey]: !this.state.showLogin})
         }
     }
+    setstate=(obj)=>{
+        this.setState(obj)
+    }
+    fireRender=(msgs, homeworks)=>{
+        console.log("forceUpdate", homeworks)
+        this.setState({msgs, homeworks})
+        // this.forceUpdate()
+    }
     render ()  {
-        console.log("SelectedFooter", this.state.selectedFooter)
+        // console.log("SelectedFooter", this.state.selectedFooter)
+        // const {homework} = this.props.userSetup
         return (
             <Provider store={store}>
                 <Container style={{flex : 1}}>
@@ -67,7 +78,11 @@ class App extends Component {
                         {/*<HideableView visible={this.state.selectedFooter===1} noAnimation={true}>*/}
                         {/*<View style={this.state.selectedFooter!==0?styles.hidden:null}>*/}
 
-                            <ChatBlock hidden={this.state.selectedFooter!==0} showLogin={this.state.showLogin} updateState={this.updateState}/>
+                        <ChatBlock hidden={this.state.selectedFooter!==0}
+                                   showLogin={this.state.showLogin}
+                                   updateState={this.updateState}
+                                   forceupdate={this.fireRender}
+                        />
 
                         {this.state.selectedFooter===1?
                             <View style={styles.absoluteView}>
@@ -94,32 +109,112 @@ class App extends Component {
                     </Container>
                     <Footer style={styles.header}>
                         <FooterTab style={styles.header}>
-                            <Button style={this.state.selectedFooter === 0?{backgroundColor : "#A9A9A9", color : "#fff"}:{backgroundColor : "#f0f0f0", color : "#fff"}} disabled={this.state.showLogin} badge vertical active={this.state.selectedFooter===0&&(!this.state.showLogin)} onPress={()=>this.setState({selectedFooter : 0})}>
-                                <Badge value={22} status={"primary"} containerStyle={{ position: 'absolute', top: -8, right: 2 }}></Badge>
-                                <Icon active type='material' name='message' inverse />
-                                <Text style={this.state.selectedFooter===0?styles.tabColorSelected:styles.tabColor}>Чат</Text>
-                            </Button>
-                            <Button style={this.state.selectedFooter === 1?{backgroundColor : "#A9A9A9", color : "#fff"}:{backgroundColor : "#f0f0f0", color : "#fff"}} disabled={this.state.showLogin} vertical active={this.state.selectedFooter===1} onPress={()=>this.setState({selectedFooter : 1})}>
-                                <Badge value={5} status={"error"} containerStyle={{ position: 'absolute', top: -8, right: 2 }}></Badge>
-                                <Icon active name="notifications" />
-                                <Text style={this.state.selectedFooter===1?styles.tabColorSelected:styles.tabHomework}>Домашка</Text>
-                            </Button>
-                            <Button style={this.state.selectedFooter === 2?{backgroundColor : "#A9A9A9", color : "#fff"}:{backgroundColor : "#f0f0f0", color : "#fff"}} disabled={this.state.showLogin} vertical active={this.state.selectedFooter===2} onPress={()=>this.setState({selectedFooter : 2})}>
-                                <Icon active name="timeline" />
-                                <Text style={this.state.selectedFooter===2?styles.tabColorSelected:styles.tabColor}>Оценки</Text>
-                            </Button>
-                            <Button style={this.state.selectedFooter === 3?{backgroundColor : "#A9A9A9", color : "#fff"}:{backgroundColor : "#f0f0f0", color : "#fff"}} disabled={this.state.showLogin} vertical active={this.state.selectedFooter===3} onPress={()=>this.setState({selectedFooter : 3})}>
-                                <Icon name="info" />
-                                <Text style={this.state.selectedFooter===3?styles.tabColorSelected:styles.tabColor}>Help</Text>
-                            </Button>
-                            <Button style={this.state.selectedFooter === 4?{backgroundColor : "#A9A9A9", color : "#fff"}:{backgroundColor : "#f0f0f0", color : "#fff"}} disabled={this.state.showLogin} vertical active={this.state.selectedFooter===4} onPress={()=>this.setState({selectedFooter : 4})}>
-                                <Icon name="camera" />
-                                <Text style={this.state.selectedFooter===4?styles.tabColorSelected:styles.tabColor}>Камера</Text>
-                            </Button>
-                            <Button style={this.state.selectedFooter === 5?{backgroundColor : "#A9A9A9", color : "#fff"}:{backgroundColor : "#f0f0f0", color : "#fff"}} disabled={this.state.showLogin} vertical active={this.state.selectedFooter===5} onPress={()=>this.setState({selectedFooter : 5})}>
-                                <Icon name="apps" />
-                                <Text style={this.state.selectedFooter===5?styles.tabColorSelected:styles.tabColor}>etc</Text>
-                            </Button>
+                            <ButtonWithBadge
+                                enabled={this.state.selectedFooter === 0}
+                                disabled={this.state.showLogin}
+                                onpress={this.setstate}
+                                name={"Чат"}
+                                icontype={'material'}
+                                iconname={'message'}
+                                badgestatus={'primary'}
+                                kind={'chat'}
+                                value={this.state.msgs}
+                                setstate={this.setstate}
+                                stateid={0}/>
+                            {/*<Button style={this.state.selectedFooter === 0?{backgroundColor : "#A9A9A9", color : "#fff"}:{backgroundColor : "#f0f0f0", color : "#fff"}}
+                                disabled={this.state.showLogin} badge vertical
+                                active={this.state.selectedFooter===0&&(!this.state.showLogin)} onPress={()=>this.setState({selectedFooter : 0})}>*/}
+                                {/*<Badge value={22} status={"primary"} containerStyle={{ position: 'absolute', top: -8, right: 2 }}></Badge>*/}
+                                {/*<Icon active type='material' name='message' inverse />*/}
+                                {/*<Text style={this.state.selectedFooter===0?styles.tabColorSelected:styles.tabColor}>Чат</Text>*/}
+                            {/*</Button>*/}
+
+                            <ButtonWithBadge
+                                enabled={this.state.selectedFooter === 1}
+                                disabled={this.state.showLogin}
+                                onpress={this.setstate}
+                                name={"Домашка"}
+                                icontype={'material'}
+                                iconname={'notifications'}
+                                badgestatus={'error'}
+                                kind={'homework'}
+                                value={this.state.homeworks}
+                                setstate={this.setstate}
+                                stateid={1}/>
+
+                            {/*<Button style={this.state.selectedFooter === 1?{backgroundColor : "#A9A9A9", color : "#fff"}:{backgroundColor : "#f0f0f0", color : "#fff"}} disabled={this.state.showLogin} vertical active={this.state.selectedFooter===1} onPress={()=>this.setState({selectedFooter : 1})}>*/}
+                                {/*<Badge value={5} status={"error"} containerStyle={{ position: 'absolute', top: -8, right: 2 }}></Badge>*/}
+                                {/*<Icon active name="notifications" />*/}
+                                {/*<Text style={this.state.selectedFooter===1?styles.tabColorSelected:styles.tabHomework}>Домашка</Text>*/}
+                            {/*</Button>*/}
+
+                            <ButtonWithBadge
+                                enabled={this.state.selectedFooter === 2}
+                                disabled={this.state.showLogin}
+                                onpress={this.setstate}
+                                name={"Оценки"}
+                                icontype={'material'}
+                                iconname={'timeline'}
+                                badgestatus={'error'}
+                                kind={''}
+                                value={0}
+                                setstate={this.setstate}
+                                stateid={2}/>
+
+                            {/*<Button style={this.state.selectedFooter === 2?{backgroundColor : "#A9A9A9", color : "#fff"}:{backgroundColor : "#f0f0f0", color : "#fff"}} disabled={this.state.showLogin} vertical active={this.state.selectedFooter===2} onPress={()=>this.setState({selectedFooter : 2})}>*/}
+                                {/*<Icon active name="timeline" />*/}
+                                {/*<Text style={this.state.selectedFooter===2?styles.tabColorSelected:styles.tabColor}>Оценки</Text>*/}
+                            {/*</Button>*/}
+                            <ButtonWithBadge
+                                enabled={this.state.selectedFooter === 3}
+                                disabled={this.state.showLogin}
+                                onpress={this.setstate}
+                                name={"Help"}
+                                icontype={'material'}
+                                iconname={'info'}
+                                badgestatus={'error'}
+                                kind={''}
+                                value={0}
+                                setstate={this.setstate}
+                                stateid={3}/>
+                            {/*<Button style={this.state.selectedFooter === 3?{backgroundColor : "#A9A9A9", color : "#fff"}:{backgroundColor : "#f0f0f0", color : "#fff"}} disabled={this.state.showLogin} vertical active={this.state.selectedFooter===3} onPress={()=>this.setState({selectedFooter : 3})}>*/}
+                                {/*<Icon name="info" />*/}
+                                {/*<Text style={this.state.selectedFooter===3?styles.tabColorSelected:styles.tabColor}>Help</Text>*/}
+                            {/*</Button>*/}
+                            <ButtonWithBadge
+                                enabled={this.state.selectedFooter === 4}
+                                disabled={this.state.showLogin}
+                                onpress={this.setstate}
+                                name={"Камера"}
+                                icontype={'material'}
+                                iconname={'camera'}
+                                badgestatus={'error'}
+                                kind={''}
+                                value={0}
+                                setstate={this.setstate}
+                                stateid={4}/>
+
+                            {/*<Button style={this.state.selectedFooter === 4?{backgroundColor : "#A9A9A9", color : "#fff"}:{backgroundColor : "#f0f0f0", color : "#fff"}} disabled={this.state.showLogin} vertical active={this.state.selectedFooter===4} onPress={()=>this.setState({selectedFooter : 4})}>*/}
+                                {/*<Icon name="camera" />*/}
+                                {/*<Text style={this.state.selectedFooter===4?styles.tabColorSelected:styles.tabColor}>Камера</Text>*/}
+                            {/*</Button>*/}
+                            <ButtonWithBadge
+                                enabled={this.state.selectedFooter === 5}
+                                disabled={this.state.showLogin}
+                                onpress={this.setstate}
+                                name={"etc"}
+                                icontype={'material'}
+                                iconname={'apps'}
+                                badgestatus={'error'}
+                                kind={''}
+                                value={0}
+                                setstate={this.setstate}
+                                stateid={5}/>
+
+                            {/*<Button style={this.state.selectedFooter === 5?{backgroundColor : "#A9A9A9", color : "#fff"}:{backgroundColor : "#f0f0f0", color : "#fff"}} disabled={this.state.showLogin} vertical active={this.state.selectedFooter===5} onPress={()=>this.setState({selectedFooter : 5})}>*/}
+                                {/*<Icon name="apps" />*/}
+                                {/*<Text style={this.state.selectedFooter===5?styles.tabColorSelected:styles.tabColor}>etc</Text>*/}
+                            {/*</Button>*/}
                         </FooterTab>
                     </Footer>
                     {/*<AppFooter/>*/}

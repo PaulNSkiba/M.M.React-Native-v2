@@ -36,7 +36,7 @@ class MessageList extends Component {
             selDate : this.getNextStudyDay(daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;}))[1],
             currentHomeworkID : 0,
             };
-
+        this.curMsgDate = null
         this.onMessageDblClick = this.onMessageDblClick.bind(this)
         this.onSaveMsgClick=this.onSaveMsgClick.bind(this)
         this.onCancelMsgClick=this.onCancelMsgClick.bind(this)
@@ -105,11 +105,24 @@ class MessageList extends Component {
                 })
                 // ToDO: Записать в БД изменение домашки
                 console.log("newmessages", newmessages)
+                // ToDO: Проверить, что делает эта запись
                 this.props.updatemessages(newmessages)
+                const homeworkMsg = newmessages.filter(item=>item.id===currentHomeworkID)[0]
+                this.props.sendmessage(JSON.stringify(homeworkMsg), currentHomeworkID, true)
+
+                // Здесь будем апдейтить базу домашки
+                // txt, subj_key, subj_name_ua, ondate, chat_id
+                if (currentHomeworkID)
+                this.props.addhomework(homeworkMsg.message, subject.subj_key, subject.subj_name_ua, AddDay(new Date(), selDate.value), currentHomeworkID)
+
                 this.setState({ currentHomeworkID : 0,
                                 selSubject : 0,
                                 selDate : this.getNextStudyDay(daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;}))[1]})
-                this.props.sendmessage(JSON.stringify(newmessages.filter(item=>item.id===currentHomeworkID)[0]), currentHomeworkID, true)
+
+                const todayMessages = this.props.userSetup.localChatMessages.filter(item=>(new Date(item.msg_date).toLocaleDateString())===(new Date().toLocaleDateString()))
+                const homeworks = this.props.userSetup.localChatMessages.filter(item=>(item.homework_date!==null))
+
+                this.props.forceupdate(todayMessages.length, homeworks.length)
                 // this.props.onReduxUpdate(, newmessages)
             }
             console.log("messages", messages)
@@ -138,16 +151,19 @@ class MessageList extends Component {
         })
         return [i, obj];
     }
+    getDateSeparator=(msgDate)=>{
+        // console.log("getDateSeparator", this.curMsgDate, msgDate)
+        if (msgDate !== this.curMsgDate) {
+
+            this.curMsgDate = msgDate
+            return  <View style={styles.mymMsgDateSeparator}>
+                    <Text style={styles.mymMsgDateSeparatorText}>{new Date(msgDate).toLocaleDateString()}</Text>
+            </View>
+        }
+    }
     render() {
 
-        // const ROOT_CSS = css({
-        //     borderRadius: "10px",
-        //     margin : "12px 10px",
-        //     height : "60vh",
-        //     maxHeight : "510px",
-        //     overflow: "auto",
-        // });
-        // console.log("addmsgs", this.props.addmsgs)
+         // console.log("addmsgs", this.props.addmsgs)
         {/*{!this.props.isshortmsg?*/}
         // :
         // <ScrollToBottom className={"" /*ROOT_CSS*/ }>
@@ -241,37 +257,18 @@ class MessageList extends Component {
         else
             messages = this.props.messages
         // console.log('MESSAGES', this.props.localmessages, messages)
-
-        // const mockData = [
-        //     {
-        //         label: 'label1',
-        //         value: 'fi'
-        //     },
-        //     {
-        //         label: 'label2',
-        //         value: 'se'
-        //     },
-        //     {
-        //         label: 'label3',
-        //         value: 'th'
-        //     }
-        // ];
         const subjects = this.props.userSetup.selectedSubjects.map(item=>{
             return {
                     label : item.subj_name_ua.toUpperCase(),
                     value : item.id
             }
         })
-        // let daysArr = [
-        //     {   label : "Позавчера", value : -2},
-        //     {   label : "Вчера", value : -1},
-        //     {   label : "Сегодня", value : 0},
-        //     {   label : "Завтра", value : 1},
-        //     {   label : "Послезавтра", value : 2}]
         // console.log("dayList", daysArr)
         const daysArr = daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;})
         // console.log("dayList", daysArr, )
         const initialDay = this.getNextStudyDay(daysArr)[0];
+        const {userID} = this.props.userSetup
+
         return (
 
             <View style={styles.msgList}>
@@ -283,11 +280,6 @@ class MessageList extends Component {
                         Alert.alert('Modal has been closed.');
                     }}>
                     <View style={styles.modalView}>
-                        {/*<Header hasTabs/>*/}
-                        {/*<Header>*/}
-
-                            {/*</Header>*/}
-                        {/*style={styles.tabHeader}*/}
                         <Tabs>
                             <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text style={{color : "#fff"}}>ПРЕДМЕТ</Text></TabHeading>}>
                                 <View style={styles.homeworkSubjectList}>
@@ -324,14 +316,6 @@ class MessageList extends Component {
                                 </View>
                             </Tab>
                         </Tabs>
-                        {/*<Container style={styles.homeworkContainer}>*/}
-
-                            {/**/}
-                            {/*/!*<Text>List of days and subjects</Text>*!/*/}
-                            {/*/!*<View style={{flex : 1}}>*!/*/}
-                            {/*/!*<ChatBlock showLogin={this.state.showLogin} updateState={this.updateState}/>*!/*/}
-                            {/*/!*</View>*!/*/}
-                        {/*</Container>*/}
                         <ListItem style={styles.modalHeader}>
                             <Text style={styles.modalHeaderText}>
                                 {this.state.selSubject.value?this.state.selSubject.label:null}
@@ -358,19 +342,6 @@ class MessageList extends Component {
                                 </Button>
                             </FooterTab>
                         </Footer>
-                        {/*<View style={styles.homeworkSettings}>*/}
-
-                            {/*/!*<Text>Hello World!</Text>*!/*/}
-                            {/*/!*<TouchableHighlight*!/*/}
-                                {/*/!*onPress={() => {this.setModalVisible(!this.state.modalVisible);}}>*!/*/}
-                                {/*/!*<Text>Hide Modal</Text>*!/*/}
-                            {/*/!*</TouchableHighlight>*!/*/}
-                        {/*</View>*/}
-                        {/*<View style={styles.doneButtons}>*/}
-                            {/*<Button onPress={()=>{this.setModalVisible(!this.state.modalVisible);}}>*/}
-                                {/*<Text>Закрыть</Text>*/}
-                            {/*</Button>*/}
-                        {/*</View>*/}
                     </View>
                 </Modal>
                 <ScrollView
@@ -411,7 +382,9 @@ class MessageList extends Component {
                                         <View key={i} id={"msg-"+msg.id} className={"message-block"}
                                               onClick={()=>i!==this.state.editKey?this.setState({editKey:-1}):null}
                                               onDoubleClick={(e)=>this.onMessageDblClick(e)}>
-                                            <TouchableHighlight key={i} id={"msgarea-"+msg.id} onLongPress={()=>this.onLongPressMessage(msg.id)}>
+
+                                            {this.getDateSeparator(message.msg_date)}
+                                            <TouchableHighlight key={i} id={"msgarea-"+msg.id} onLongPress={(message.user_id===userID)?()=>this.onLongPressMessage(msg.id):null}>
                                             {/*style={this.state.editKey===i?{color:"white", backgroundColor : "white", border: "white 2px solid"}:null}*/}
                                             <View key={msg.id}
                                                 style={ownMsg?

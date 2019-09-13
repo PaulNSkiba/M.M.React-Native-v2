@@ -6,7 +6,7 @@
 
 // Global consts
 export const ISDEBUG = false;
-export const version = '1.08.028'
+export const version = '1.08.058'
 // URL's
 export const AUTH_URL  = ISDEBUG?'https://sch-journal.dev':'https://mymarks.info'
 export const BASE_URL  = ISDEBUG?'https://localhost:3000':'https://mymarks.info'
