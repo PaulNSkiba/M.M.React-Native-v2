@@ -62,6 +62,20 @@ class HelpBlock extends Component {
             <Container>
                 <View style={styles.modalView}>
                     <Tabs>
+                        <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text style={{color: "#fff"}}>НОВОСТИ</Text></TabHeading>}>
+                            <View style={styles.homeworkSubjectList}>
+                                {/*<RadioForm*/}
+                                {/*dataSource={subjects}*/}
+                                {/*itemShowKey="label"*/}
+                                {/*itemRealKey="value"*/}
+                                {/*circleSize={16}*/}
+                                {/*initial={0}*/}
+                                {/*formHorizontal={false}*/}
+                                {/*labelHorizontal={true}*/}
+                                {/*onPress={(item) => this.onSelectSubject(item)}*/}
+                                {/*/>*/}
+                            </View>
+                        </Tab>
                         <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text style={{color: "#fff"}}>ВОПРОСЫ</Text></TabHeading>}>
                             <View style={styles.homeworkSubjectList}>
                                 {/*<RadioForm*/}

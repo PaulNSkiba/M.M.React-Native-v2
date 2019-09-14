@@ -47,15 +47,10 @@ class ChatBlock extends React.Component {
                             updatemessage={this.props.updateMessages}
                             hidden={this.props.hidden}
                             forceupdate={this.props.forceupdate}
-                            // session_id={this.props.userSetup.chatSessionID}
-                            // homeworkarray={this.props.userSetup.homework}
-                            // chatroomID={this.props.userSetup.classObj.chatroom_id}
-
+                            setstate={this.props.setstate}
                             messages={this.state.chatMessages}
                             subjs={this.props.userSetup.selectedSubjects}
-                            btnclose={() => {
-                                this.setState({displayChat: !this.state.displayChat})
-                            }}
+                            btnclose={() => { this.setState({displayChat: !this.state.displayChat}) }}
                             display={this.state.displayChat} newmessage={this.newChatMessage}
                         />
                     // </View>

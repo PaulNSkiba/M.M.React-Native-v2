@@ -4,7 +4,7 @@
 import React, { Component } from 'react'
 import { connect } from 'react-redux'
 import { store } from '../../store/configureStore'
-import { StyleSheet, Text, View, Image, Modal } from 'react-native';
+import { StyleSheet, Text, View, Image, Modal, TextInput } from 'react-native';
 import { Icon } from 'react-native-elements'
 
 import {    Container, Header, Left, Body, Right, Button,
@@ -674,6 +674,9 @@ class ChatMobile extends Component {
     updateLocalMessages=(messages)=>{
         this.setState({localChatMessages : messages})
     }
+    onTextIput=()=>{
+        this.props.setstate({showFooter : false})
+    }
     render() {
         const {
             showEmojiPicker,
@@ -753,10 +756,22 @@ class ChatMobile extends Component {
                             <Textarea style={styles.msgAddTextarea}
                                       onKeyPress={this._handleKeyDown}
                                       onChangeText={text=>this.onChangeText('curMessage', text)}
+                                      onFocus={()=>{this.props.setstate({showFooter : false})}}
+                                      onBlur={()=>{this.props.setstate({showFooter : true})}}
                                       placeholder="Введите сообщение..."  type="text"
                                       ref={input=>{this.inputMessage=input}}
                                       value={this.state.curMessage}
                             />
+                                {/*<TextInput*/}
+                                    {/*style={[styles.msgAddTextarea, {height : 50}]}*/}
+                                    {/*onKeyPress={this._handleKeyDown}*/}
+                                    {/*onChangeText={text=>this.onChangeText('curMessage', text)}*/}
+                                    {/*onFocus={()=>{this.props.setstate({showFooter : false})}}*/}
+                                    {/*onBlur={()=>{this.props.setstate({showFooter : true})}}*/}
+                                    {/*placeholder="Введите сообщение..."  type="text"*/}
+                                    {/*ref={input=>{this.inputMessage=input}}*/}
+                                    {/*value={this.state.curMessage}*/}
+                                {/*/>*/}
                             </View>
                             {/*<View style={{flex: 1}}>*/}
                             {/*<Button style={styles.btnAddMessage} type="submit" onPress={this.addMessage}>*/}

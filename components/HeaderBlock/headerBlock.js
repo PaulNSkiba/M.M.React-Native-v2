@@ -13,6 +13,7 @@ import { bindActionCreators } from 'redux';
 import { instanceAxios, mapStateToProps /*, langLibrary as langLibraryF*/ } from '../../js/helpersLight'
 import { LOGINUSER_URL, version } from '../../config/config'
 import { userLoggedIn, userLoggedInByToken, userLoggedOut } from '../../actions/userAuthActions'
+import LogginByToken from '../../components/LoggingByToken/loggingbytoken'
 // import { instanceAxios, mapStateToProps /*, langLibrary as langLibraryF*/ } from './js/helpersLight'
 import styles from '../../css/styles'
 
@@ -35,13 +36,9 @@ class HeaderBlock extends React.Component {
     render=()=>{
         return (
         <Header style={styles.header}>
+            {this.props.token.length?<LogginByToken email={this.props.email} token={this.props.token}/>:null}
             <Left>
-                {/*<View style={{position : "absolute"}}>*/}
-                    <Text style={styles.versionNumber}>{version}</Text>
-                {/*</View>*/}
-                {/*<Button transparent>*/}
-                    {/*<Icon style={styles.leftArrow} name='arrow-back' />*/}
-                {/*</Button>*/}
+                <Text style={styles.versionNumber}>{version}</Text>
             </Left>
             <Body>
                 {/*<Text style={styles.versionNumber}>{version}</Text>*/}
@@ -54,7 +51,7 @@ class HeaderBlock extends React.Component {
                     <View >
                         <Button transparent>
                             {this.props.userSetup.userID?<Text style={{color : "#4472C4", fontWeight : "700"}}>{this.props.userSetup.userName}  </Text>:null}
-                            <Icon size={32} color={"#4472C4"} style={styles.menuIcon} name='person' onPress={()=>this.props.updateState('showLogin')}/>
+                            <Icon size={32} color={this.props.userSetup.userID?"#4472C4":"#A9A9A9"} style={styles.menuIcon} name='person' onPress={()=>this.props.updateState('showLogin')}/>
                         </Button>
                     </View>
                 </View>

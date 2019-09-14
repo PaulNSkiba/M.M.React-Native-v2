@@ -13,6 +13,7 @@ import { Avatar, Badge, Icon, withBadge } from 'react-native-elements'
 import {    Container, Header, Left, Body, Right, Button,
             Title, Content,  Footer, FooterTab,
             Form, Item, Input, Label} from 'native-base';
+import { AsyncStorage } from 'react-native';
 import {Provider, connect} from 'react-redux';
 import LoginBlock from './components/LoginBlock/loginBlock'
 import HeaderBlock from './components/HeaderBlock/headerBlock'
@@ -26,8 +27,10 @@ import ETCBlock from './components/ETCBlock/etcblock'
 import ButtonWithBadge from './components/ButtonWithBadge/buttonwithbadge'
 import { store } from './store/configureStore'
 import styles from './css/styles'
+import LogginByToken from './components/LoggingByToken/loggingbytoken'
+import { mapStateToProps, instanceAxios, toYYYYMMDD, langLibrary as langLibraryF } from './js/helpersLight'
+import { userLoggedIn, userLoggedInByToken, userLoggedOut } from './actions/userAuthActions'
 
-// const App = () => newContent()
 class App extends Component {
     constructor(props) {
         super(props);
@@ -42,11 +45,38 @@ class App extends Component {
             userName : '',
             msgs : 0,
             homeworks : 0,
+            showFooter : true,
+            userEmail : '',
+            userToken : '',
         }
         // this.onLogin = this.onLogin.bind(this)
         // this.RootContainer = this.RootContainer.bind(this)
+        // this.userEmail = '';
+        // this.userToken = '';
         this.updateState = this.updateState.bind(this)
         this.setstate = this.setstate.bind(this)
+    }
+
+    componentDidMount() {
+        // AsyncStorage.removeItem("myMarks.data");
+        // const dataSaved = this._getStorageValue("myMarks.data")
+        AsyncStorage.getItem("myMarks.data")
+            .then(res=> {
+                const dataSaved = JSON.parse(res)
+
+                console.log("componentDidMount.0", dataSaved)
+                // && !(AsyncStorage.getItem("userSetup") && AsyncStorage.getItem("userSetupDate") === toYYYYMMDD(new Date()))
+                if (!(res === null)) {
+                    console.log("componentDidMount.1", dataSaved)
+
+                    // let localstorage = JSON.parse(AsyncStorage.getItem("myMarks.data"))
+                    const langLibrary = {}
+                    const {email, token} = dataSaved
+                    this.setState({userEmail : email, userToken : token})
+                    // console.log("componentDidMount", localstorage)
+                    }
+            }
+    )
     }
 
     // RootContainer =(state)=>
@@ -66,13 +96,13 @@ class App extends Component {
         // this.forceUpdate()
     }
     render ()  {
-        // console.log("SelectedFooter", this.state.selectedFooter)
+        console.log("RENDER_APP", this.state.userEmail, this.state.userToken)
         // const {homework} = this.props.userSetup
         return (
             <Provider store={store}>
-                <Container style={{flex : 1}}>
+               <Container style={this.state.showFooter?{flex : 1 }:{flex : 1, marginBottom : 40 }}>
                     <StatusBar barStyle="dark-content" hidden={false} />
-                        <HeaderBlock updateState={this.updateState}/>
+                    <HeaderBlock updateState={this.updateState} email={this.state.userEmail} token={this.state.userToken}/>
                     <Container >
                         {/*<View style={{flex : 1}}>*/}
                         {/*<HideableView visible={this.state.selectedFooter===1} noAnimation={true}>*/}
@@ -82,6 +112,7 @@ class App extends Component {
                                    showLogin={this.state.showLogin}
                                    updateState={this.updateState}
                                    forceupdate={this.fireRender}
+                                   setstate={this.setstate}
                         />
 
                         {this.state.selectedFooter===1?
@@ -107,6 +138,7 @@ class App extends Component {
                         {/*</Display>*/}
                         {/*</View>*/}
                     </Container>
+                    {this.state.showFooter?
                     <Footer style={styles.header}>
                         <FooterTab style={styles.header}>
                             <ButtonWithBadge
@@ -169,7 +201,7 @@ class App extends Component {
                                 enabled={this.state.selectedFooter === 3}
                                 disabled={this.state.showLogin}
                                 onpress={this.setstate}
-                                name={"Help"}
+                                name={"Info"}
                                 icontype={'material'}
                                 iconname={'info'}
                                 badgestatus={'error'}
@@ -216,7 +248,7 @@ class App extends Component {
                                 {/*<Text style={this.state.selectedFooter===5?styles.tabColorSelected:styles.tabColor}>etc</Text>*/}
                             {/*</Button>*/}
                         </FooterTab>
-                    </Footer>
+                    </Footer>:null}
                     {/*<AppFooter/>*/}
                 </Container>
 

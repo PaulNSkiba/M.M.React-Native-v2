@@ -17,8 +17,9 @@ import {API_URL} from '../../config/config'
 import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, AddDay, toYYYYMMDD, daysList, instanceAxios} from '../../js/helpersLight'
 import { RNCamera } from 'react-native-camera';
 import { connect } from 'react-redux'
-import { stylesCamera } from '../../css/camera'
-
+// import { stylesCamera } from '../../css/camera'
+// import ImageView from 'react-native-image-view';
+import {SingleImage,wrapperZoomImages,ImageInWraper} from 'react-native-zoom-lightbox';
 // import '../../ChatMobile/chatmobile.css'
 
 const insertTextAtIndices = (text, obj) => {
@@ -32,7 +33,8 @@ class CameraBlock extends Component {
         super(props);
         this.state = {
             photoPath : this.props.userSetup.photoPath,
-
+            showPreview : false,
+            prevuri : '',
         };
         this.addToChat = this.addToChat.bind(this)
     }
@@ -90,49 +92,34 @@ class CameraBlock extends Component {
         console.log("prepareJSON", obj, JSON.stringify(obj))
         return JSON.stringify(obj)
     }
-    showPreview=()=>{
-
+    showPreview=(uri)=>{
+        // const images = [
+        //     {
+        //         source: {
+        //             uri: uri,
+        //         },
+        //         title: 'Preview',
+        //         width: "100%",
+        //         height: "100%",
+        //     },
+        // ];
+        this.setState({showPreview : true, prevuri: uri})
+        // return <ImageView
+        //     images={images}
+        //     imageIndex={0}
+        //     isVisible={this.state.isImageViewVisible}
+        //     renderFooter={(currentImage) => (<View><Text>My footer</Text></View>)}
+        // />
     }
     render () {
         // const daysArr = daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;})
         // const initialDay = this.getNextStudyDay(daysArr)[0];
-        console.log("PhotoPath", this.state.photoPath)
+        console.log("PhotoPath", this.state.photoPath, this.state.prevuri)
         return (
             <Container>
                 <View style={styles.modalView}>
                     <Tabs>
                         <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text style={{color: "#fff"}}>КАМЕРА</Text></TabHeading>}>
-                            {/*<View style={styles.container}>*/}
-                                {/*<RNCamera*/}
-                                    {/*ref={ref => {*/}
-                                        {/*this.camera = ref;*/}
-                                    {/*}}*/}
-                                    {/*style={styles.preview}*/}
-                                    {/*type={RNCamera.Constants.Type.back}*/}
-                                    {/*flashMode={RNCamera.Constants.FlashMode.on}*/}
-                                    {/*androidCameraPermissionOptions={{*/}
-                                        {/*title: 'Permission to use camera',*/}
-                                        {/*message: 'We need your permission to use your camera',*/}
-                                        {/*buttonPositive: 'Ok',*/}
-                                        {/*buttonNegative: 'Cancel',*/}
-                                    {/*}}*/}
-                                    {/*androidRecordAudioPermissionOptions={{*/}
-                                        {/*title: 'Permission to use audio recording',*/}
-                                        {/*message: 'We need your permission to use your audio',*/}
-                                        {/*buttonPositive: 'Ok',*/}
-                                        {/*buttonNegative: 'Cancel',*/}
-                                    {/*}}*/}
-                                    {/*onGoogleVisionBarcodesDetected={({ barcodes }) => {*/}
-                                        {/*console.log(barcodes);*/}
-                                    {/*}}*/}
-                                {/*/>*/}
-                                {/*<View style={{ flex: 0, flexDirection: 'row', justifyContent: 'center' }}>*/}
-                                    {/*<TouchableOpacity onPress={this.takePicture.bind(this)} style={styles.capture}>*/}
-                                        {/*<Text style={{ fontSize: 14 }}> ФОТО </Text>*/}
-                                        {/*<Text>{this.state.photoPath}</Text>*/}
-                                    {/*</TouchableOpacity>*/}
-                                {/*</View>*/}
-                            {/*</View>*/}
                             <View style={styles.cameraBlock}>
                                 <RNCamera
                                     ref={ref => {this.camera = ref;}}
@@ -157,46 +144,66 @@ class CameraBlock extends Component {
                             {this.state.photoPath.length?
                                 <Badge value={this.state.photoPath.length}
                                        status={"warning"}
-                                       containerStyle={{ position: 'absolute', top: -8, right: 2 }}>
+                                       containerStyle={{ position: 'absolute', top: -8, right: 10 }}>
                                 </Badge>:null}
                         </TabHeading>}>
                             <View style={styles.homeworkSubjectList}>
-                                {this.state.photoPath.map((item, key)=>{
-                                    return (
-                                    <Card key={key}>
+                                {this.state.showPreview?
+                                    <View>
+                                        <SingleImage
+                                            uri={this.state.prevuri}
+                                            style={{position : "relative", height : "100%"}}
+                                            onClose={()=>this.setState({showPreview : false})}
+                                        />
+                                        <TouchableOpacity
+                                            style={{position : "absolute", top : 10, right : 10, zIndex:10}}
+                                            onPress={()=>this.setState({showPreview : false})}>
+                                            <View style={{
 
-                                            <CardItem>
-                                                {/*<View key={key} style={{height: 100, width:100, borderWidth : 2, borderColor: "#fff"}}>*/}
-                                                    {/*<Image source={{uri: item, isStatic:true}} style={{height: 200, width:null, flex : 1}}/>*/}
-                                                    {/*<Text>Добавить в чат</Text>*/}
-                                                {/*</View>*/}
-                                                <Left>
-                                                    <TouchableOpacity onPress={()=>this.showPreview(item.uri)}>
-                                                        <Thumbnail source={{uri: item.uri, isStatic:true}}/>
-                                                    </TouchableOpacity>
-                                                    <TouchableOpacity onPress={()=>this.addToChat(JSON.stringify(item.data))}>
-                                                        <Body style={{borderWidth : 2, borderColor : "#7DA8E6", borderRadius : 20, paddingLeft : 40, paddingRight : 40}}>
+                                                paddingTop : 5, paddingBottom : 5,
+                                                paddingLeft : 15, paddingRight : 15, borderRadius : 5,
+                                                borderWidth : 2, borderColor : "#33ccff", zIndex:10,
+                                            }}>
+                                                <Text style={{  fontSize : 20,
+                                                                color: "#33ccff",
+                                                                zIndex:10,
+                                                                }}
+                                                    >X</Text>
+                                            </View>
+                                        </TouchableOpacity>
+
+                                    </View>:
+                                    this.state.photoPath.map((item, key) => {
+                                        return (
+                                            <Card key={key}>
+                                                <CardItem>
+                                                    <Left>
+                                                        <TouchableOpacity onPress={() => this.showPreview(item.uri)}>
+                                                            <Thumbnail source={{uri: item.uri, isStatic: true}}/>
+                                                        </TouchableOpacity>
+                                                        <TouchableOpacity
+                                                            onPress={() => this.addToChat(JSON.stringify(item.data))}>
+                                                            <Body style={{
+                                                                borderWidth: 2,
+                                                                borderColor: "#7DA8E6",
+                                                                borderRadius: 20,
+                                                                paddingLeft: 40,
+                                                                paddingRight: 40,
+                                                                display : "flex",
+                                                                alignItems: "center",
+                                                                justifyContent: "center",
+                                                            }}>
                                                             <Text>Добавить в чат</Text>
                                                             <Text note>{item.time.toLocaleTimeString()}</Text>
-                                                        </Body>
-                                                    </TouchableOpacity>
-                                                </Left>
-                                            </CardItem>
+                                                            </Body>
+                                                        </TouchableOpacity>
+                                                    </Left>
+                                                </CardItem>
 
-                                    </Card>)
-                                })
+                                            </Card>)
+                                    })
                                 }
-                                {/*<RadioForm*/}
-                                    {/*// style={{ paddingBottom : 20 }}*/}
-                                    {/*dataSource={daysArr}*/}
-                                    {/*itemShowKey="label"*/}
-                                    {/*itemRealKey="value"*/}
-                                    {/*circleSize={16}*/}
-                                    {/*initial={initialDay}*/}
-                                    {/*formHorizontal={false}*/}
-                                    {/*labelHorizontal={true}*/}
-                                    {/*onPress={(item) => this.onSelectDay(item)}*/}
-                                {/*/>*/}
+
                             </View>
                         </Tab>
                     </Tabs>

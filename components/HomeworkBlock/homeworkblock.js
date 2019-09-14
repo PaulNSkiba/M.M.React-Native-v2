@@ -9,7 +9,8 @@ import {    Container, Header, Left, Body, Right, Button,
     Form, Item, Input, Label, Textarea, CheckBox, ListItem } from 'native-base';
 import RadioForm from 'react-native-radio-form';
 import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, AddDay, toYYYYMMDD, daysList} from '../../js/helpersLight'
-import MessageList from '../MessageList/messagelist'
+// import MessageList from '../MessageList/messagelist'
+import {SingleImage,wrapperZoomImages,ImageInWraper} from 'react-native-zoom-lightbox';
 import { connect } from 'react-redux'
 // import '../../ChatMobile/chatmobile.css'
 
@@ -23,21 +24,10 @@ class HomeworkBlock extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            // messages : this.props.messages,
-            // editKey: -1,
-            // modalVisible : false,
-            // checkSchedule : true,
-            // selSubject : {value : 0},
-            // selDate : this.getNextStudyDay(daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;}))[1],
-            // currentHomeworkID : 0,
             selDate : this.getNextStudyDay(daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;}))[1],
+            previd : 0,
+            showPreview : false,
         };
-
-        // this.onMessageDblClick = this.onMessageDblClick.bind(this)
-        // this.onSaveMsgClick=this.onSaveMsgClick.bind(this)
-        // this.onCancelMsgClick=this.onCancelMsgClick.bind(this)
-        // this.onDelMsgClick=this.onDelMsgClick.bind(this)
-        // this.onLongPressMessage=this.onLongPressMessage.bind(this)
     }
     onSelectDay=item=>{
         this.setState({selDate : item})
@@ -54,18 +44,40 @@ class HomeworkBlock extends Component {
         return [i, obj];
     }
     getHomeworkItems=arr=>{
-        let newarr = arr.map((item, key)=> {
+        return ( arr.map((item, key)=> {
             let msg = prepareMessageToFormat(item, true)
             let hw = msg.hasOwnProperty('hwdate')&&(!(msg.hwdate===undefined))?(dateFromYYYYMMDD(msg.hwdate)).toLocaleDateString()+':'+msg.subjname:''
             let i = key
+            let isImage = false
+            if (item.attachment3!==null) {
+                isImage = true
+            }
             console.log("homeWOrk", msg.text)
             return (
                 <View key={key} id={"msg-"+msg.id} style={{marginTop : 10}}>
                      <View key={msg.id} style={(hw.length?[styles.msgRightSide, styles.homeworkBorder]:[styles.msgRightSide, styles.homeworkNoBorder])}>
                         <View key={'id'+i} style={styles.msgRightAuthor} ><Text style={styles.msgAuthorText}>{item.student_name?item.student_name:this.props.userSetup.userName}</Text></View>
-                            <View key={'msg'+i} id={"msg-text-"+i} style={styles.msgText}>
-                                <Text>{msg.text}</Text>
-                            </View>
+                         {isImage?
+                             <View style={{display : "flex", flex : 1, flexDirection: "row"}}>
+                                 <TouchableOpacity onPress={()=>{this.setState({previd : msg.id, showPreview : true})}}>
+                                     <View style={{flex : 1}}>
+                                         <Image
+                                             source={{uri: `data:image/png;base64,${JSON.parse(item.attachment3).base64}`}}
+                                             style={{ width: 100, height: 100,
+                                                 // marginBottom : 15,
+                                                 borderRadius: 15,
+                                                 overflow: "hidden", margin : 7 }}/>
+                                     </View>
+                                 </TouchableOpacity>
+                                 <View key={'msg'+i} id={"msg-text-"+i}
+                                       style={[styles.msgText,
+                                           {flex: 3, marginLeft : 20, marginTop : 10}]}>
+                                     <Text>{msg.text}</Text>
+                                 </View>
+                             </View>
+                             :<View key={'msg'+i} id={"msg-text-"+i} style={styles.msgText}>
+                                 <Text>{msg.text}</Text>
+                             </View>}
                             <View style={msg.id?styles.btnAddTimeDone:styles.btnAddTime}>
                                 <Text style={msg.id?styles.btnAddTimeDone:styles.btnAddTime}>{msg.time}</Text>
                             </View>
@@ -78,7 +90,7 @@ class HomeworkBlock extends Component {
             )
             // return <View key={key}><Text>{msg.text}</Text></View>
         })
-        return newarr
+        )
     }
     render () {
         let messages = []
@@ -92,39 +104,73 @@ class HomeworkBlock extends Component {
         const {userName, homework, classID} = this.props.userSetup
         console.log("getHomeworkItems", homework, this.props.userSetup)
         return (
-            <View style={styles.msgList}>
-            <Container>
-                {/*<View style={styles.modalView}>*/}
-                    <Tabs>
-                        <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text style={{color: "#fff"}}>ЗАДАНИЯ</Text></TabHeading>}>
-                            {/*<View style={styles.homeworkSubjectList}>*/}
-                                <ScrollView
-                                    ref="scrollView"
-                                    onContentSizeChange={( contentWidth, contentHeight ) => {
-                                        this.refs.scrollView.scrollToEnd()
-                                    }}>
-                                    {this.getHomeworkItems(homework)}
-                                </ScrollView>
-                            {/*</View>*/}
-                        </Tab>
-                        <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text style={{color: "#fff"}}>НА КОГДА</Text></TabHeading>}>
-                            <View style={styles.homeworkSubjectList}>
-                                <RadioForm
-                                    // style={{ paddingBottom : 20 }}
-                                    dataSource={daysArr}
-                                    itemShowKey="label"
-                                    itemRealKey="value"
-                                    circleSize={16}
-                                    initial={initialDay}
-                                    formHorizontal={false}
-                                    labelHorizontal={true}
-                                    onPress={(item) => this.onSelectDay(item)}
-                                />
-                            </View>
-                        </Tab>
-                    </Tabs>
-                {/*</View>*/}
-            </Container>
+            <View style={this.props.hidden?styles.hidden:styles.chatContainerNew}>
+                <View style={styles.msgList}>
+                    <Modal
+                        animationType="slide"
+                        transparent={false}
+                        visible={this.state.showPreview}
+                        onRequestClose={() => {
+                            Alert.alert('Modal has been closed.');
+                        }}>
+                        <View>
+                            {homework.length&&this.state.previd?
+                                <SingleImage
+                                    uri={`data:image/png;base64,${JSON.parse(homework.filter(item=>item.id===this.state.previd)[0].attachment3).base64}`}
+                                    style={{position : "relative", height : "100%"}}
+                                    onClose={()=>this.setState({showPreview : false, previd : 0})}
+                                />:null}
+
+                            <TouchableOpacity
+                                style={{position : "absolute", top : 10, right : 10, zIndex:10}}
+                                onPress={()=>this.setState({showPreview : false, previd : 0})}>
+                                <View style={{
+
+                                    paddingTop : 5, paddingBottom : 5,
+                                    paddingLeft : 15, paddingRight : 15, borderRadius : 5,
+                                    borderWidth : 2, borderColor : "#33ccff", zIndex:10,
+                                }}>
+                                    <Text style={{  fontSize : 20,
+                                        color: "#33ccff",
+                                        zIndex:10,
+                                    }}
+                                    >X</Text>
+                                </View>
+                            </TouchableOpacity>
+                        </View>
+
+                    </Modal>
+                    <Container>
+                            <Tabs>
+                                <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text style={{color: "#fff"}}>ЗАДАНИЯ</Text></TabHeading>}>
+                                    {/*<View style={styles.homeworkSubjectList}>*/}
+                                        <ScrollView
+                                            ref="scrollView"
+                                            onContentSizeChange={( contentWidth, contentHeight ) => {
+                                                this.refs.scrollView.scrollToEnd()
+                                            }}>
+                                            {this.getHomeworkItems(homework)}
+                                        </ScrollView>
+                                    {/*</View>*/}
+                                </Tab>
+                                <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text style={{color: "#fff"}}>НА КОГДА</Text></TabHeading>}>
+                                    <View style={styles.homeworkSubjectList}>
+                                        <RadioForm
+                                            // style={{ paddingBottom : 20 }}
+                                            dataSource={daysArr}
+                                            itemShowKey="label"
+                                            itemRealKey="value"
+                                            circleSize={16}
+                                            initial={initialDay}
+                                            formHorizontal={false}
+                                            labelHorizontal={true}
+                                            onPress={(item) => this.onSelectDay(item)}
+                                        />
+                                    </View>
+                                </Tab>
+                            </Tabs>
+                    </Container>
+                </View>
             </View>
         )
     }

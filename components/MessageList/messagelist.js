@@ -7,10 +7,11 @@ import { StyleSheet, Text, View, Image, ScrollView,
         TouchableHighlight, Modal, Radio, TouchableOpacity } from 'react-native';
 import {    Container, Header, Left, Body, Right, Button,
     Icon, Title, Content,  Footer, FooterTab, TabHeading, Tabs, Tab, Badge,
-    Form, Item, Input, Label, Textarea, CheckBox, ListItem } from 'native-base';
+    Form, Item, Input, Label, Textarea, CheckBox, ListItem, Thumbnail } from 'native-base';
 import RadioForm from 'react-native-radio-form';
 // import MicrolinkCard from '@microlink/react';
 import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, AddDay, toYYYYMMDD, daysList} from '../../js/helpersLight'
+import {SingleImage,wrapperZoomImages,ImageInWraper} from 'react-native-zoom-lightbox';
 import { connect } from 'react-redux'
 // import InvertibleScrollView from 'react-native-invertible-scroll-view';
 // import { css } from 'glamor';
@@ -35,6 +36,8 @@ class MessageList extends Component {
             selSubject : {value : 0},
             selDate : this.getNextStudyDay(daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;}))[1],
             currentHomeworkID : 0,
+            showPreview : false,
+            previd : 0,
             };
         this.curMsgDate = null
         this.onMessageDblClick = this.onMessageDblClick.bind(this)
@@ -43,11 +46,6 @@ class MessageList extends Component {
         this.onDelMsgClick=this.onDelMsgClick.bind(this)
         this.onLongPressMessage=this.onLongPressMessage.bind(this)
     }
-    // componentDidMount() {
-    //
-    //     console.log("componentDidMount")
-    //     // this.refs.scrollView.scrollToEnd({animated: false})
-    // }
     onSaveMsgClick=async (e)=>{
         console.log("onSaveMsgClick", this.textareaValue.value, Number(e.target.id.replace("btn-save-", '')), this.props.isnew)
         if (this.props.isnew) {
@@ -263,7 +261,7 @@ class MessageList extends Component {
                     value : item.id
             }
         })
-        // console.log("dayList", daysArr)
+        console.log("RENDER", this.state, messages)
         const daysArr = daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;})
         // console.log("dayList", daysArr, )
         const initialDay = this.getNextStudyDay(daysArr)[0];
@@ -272,6 +270,41 @@ class MessageList extends Component {
         return (
 
             <View style={styles.msgList}>
+                {console.log("RENDER_MESSAGELIST", messages.length, this.state.previd)}
+                <Modal
+                    animationType="slide"
+                    transparent={false}
+                    visible={this.state.showPreview}
+                    onRequestClose={() => {
+                        Alert.alert('Modal has been closed.');
+                    }}>
+                    <View>
+                        {messages.length&&this.state.previd?
+                        <SingleImage
+                            uri={`data:image/png;base64,${JSON.parse(messages.filter(item=>item.id===this.state.previd)[0].attachment3).base64}`}
+                            style={{position : "relative", height : "100%"}}
+                            onClose={()=>this.setState({showPreview : false, previd : 0})}
+                        />:null}
+
+                        <TouchableOpacity
+                            style={{position : "absolute", top : 10, right : 10, zIndex:10}}
+                            onPress={()=>this.setState({showPreview : false, previd : 0})}>
+                            <View style={{
+
+                                paddingTop : 5, paddingBottom : 5,
+                                paddingLeft : 15, paddingRight : 15, borderRadius : 5,
+                                borderWidth : 2, borderColor : "#33ccff", zIndex:10,
+                            }}>
+                                <Text style={{  fontSize : 20,
+                                    color: "#33ccff",
+                                    zIndex:10,
+                                }}
+                                >X</Text>
+                            </View>
+                        </TouchableOpacity>
+                    </View>
+
+                </Modal>
                 <Modal
                     animationType="slide"
                     transparent={false}
@@ -363,6 +396,10 @@ class MessageList extends Component {
                                 let msg = this.props.isnew?prepareMessageToFormat(message, true):JSON.parse(message)
                                 const urlMatches = msg.text.match(/\b(http|https)?:\/\/\S+/gi) || [];
                                 let { text } = msg;
+                                let isImage = false
+                                if (message.attachment3!==null) {
+                                    isImage = true
+                                }
                                 // urlMatches.forEach(link => {
                                 //     const startIndex = text.indexOf(link);
                                 //     const endIndex = startIndex + link.length;
@@ -384,7 +421,8 @@ class MessageList extends Component {
                                               onDoubleClick={(e)=>this.onMessageDblClick(e)}>
 
                                             {this.getDateSeparator(message.msg_date)}
-                                            <TouchableHighlight key={i} id={"msgarea-"+msg.id} onLongPress={(message.user_id===userID)?()=>this.onLongPressMessage(msg.id):null}>
+                                            <TouchableOpacity key={i} id={"msgarea-"+msg.id}
+                                                                onLongPress={(message.user_id===userID)?()=>this.onLongPressMessage(msg.id):null}>
                                             {/*style={this.state.editKey===i?{color:"white", backgroundColor : "white", border: "white 2px solid"}:null}*/}
                                             <View key={msg.id}
                                                 style={ownMsg?
@@ -419,9 +457,29 @@ class MessageList extends Component {
                                                 {/*) : (*/}
 
                                                 {/* style={this.state.editKey===i?{visibility:"hidden"}:null} */}
-                                                    <View key={'msg'+i} id={"msg-text-"+i} style={styles.msgText}>
-                                                        <Text>{msg.text}</Text>
+
+
+                                                {isImage?
+                                                    <View style={{display : "flex", flex : 1, flexDirection: "row"}}>
+                                                        <TouchableOpacity onPress={()=>{this.setState({previd : msg.id, showPreview : true})}}>
+                                                         <View style={{flex : 1}}>
+                                                            <Image
+                                                            source={{uri: `data:image/png;base64,${JSON.parse(message.attachment3).base64}`}}
+                                                            style={{ width: 100, height: 100,
+                                                                    // marginBottom : 15,
+                                                                    borderRadius: 15,
+                                                                    overflow: "hidden", margin : 7 }}/>
+                                                        </View>
+                                                        </TouchableOpacity>
+                                                        <View key={'msg'+i} id={"msg-text-"+i}
+                                                                style={[styles.msgText,
+                                                                        {flex: 3, marginLeft : 20, marginTop : 10}]}>
+                                                                <Text>{msg.text}</Text>
+                                                        </View>
                                                     </View>
+                                                    :<View key={'msg'+i} id={"msg-text-"+i} style={styles.msgText}>
+                                                        <Text>{msg.text}</Text>
+                                                     </View>}
                                                 {/*    )} */}
                                                 {/*style={this.state.editKey===i?{visibility:"hidden"}:null}*/}
                                                 <View style={msg.id?styles.btnAddTimeDone:styles.btnAddTime}>
@@ -434,7 +492,7 @@ class MessageList extends Component {
                                                 </View>:null}
 
                                             </View>
-                                            </TouchableHighlight>
+                                            </TouchableOpacity>
                                         </View>
                                     :null
 

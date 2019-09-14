@@ -34,7 +34,9 @@ class LoginBlock extends React.Component {
         // this.onChangeText = this.onChangeText.bind(this)
         // this.RootContainer = this.RootContainer.bind(this)
     }
-
+    componentDidMount() {
+        // this.nameLogin.focus()
+    }
     onChangeText = (key, val) => {
         // console.log("onChangeText", key, val, this.refs)
         this.setState({ [key]: val})
@@ -95,21 +97,20 @@ class LoginBlock extends React.Component {
                 <Form>
                     <Item floatingLabel>
                         <Label>Email</Label>
-                        <Input ref="nameLogin"/*ref={ (c) => this.nameLogin = c }*/
-                               // onChangeText={val => this.onChangeText('username', val)}
+                        <TextInput ref="nameLogin"/*ref={ (c) => this.nameLogin = c }*/
+                               autoFocus={true}
                                onChangeText={text=>this.onChangeText('username', text)}
-                               // onChangeText={text=>console.log('username', text)}
                         />
                     </Item>
                     <Item floatingLabel last>
                         <Label>Пароль</Label>
-                        <Input secureTextEntry={true} ref="pwdLogin"
+                        <TextInput secureTextEntry={true} ref="pwdLogin"
                                onChangeText={val => this.onChangeText('password', val)}/>
                     </Item>
-                    <Item></Item>
-                    <Item></Item>
-                    <Item></Item>
-                    <Item></Item>
+                    {/*<Item></Item>*/}
+                    {/*<Item></Item>*/}
+                    {/*<Item></Item>*/}
+                    {/*<Item></Item>*/}
                     <Button iconRight full info style={styles.inputButton} onPress={() => this.onLogin()}>
                         <Text style={styles.loginButton}>Логин</Text>
                     </Button>
