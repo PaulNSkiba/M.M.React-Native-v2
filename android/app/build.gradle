@@ -134,6 +134,7 @@ android {
         versionCode 1
         versionName "1.08.058"
 		missingDimensionStrategy 'react-native-camera', 'general'
+
     }
     splits {
         abi {
@@ -163,9 +164,10 @@ android {
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
     }
+	
     // applicationVariants are e.g. debug, release
     applicationVariants.all { variant ->
-        variant.outputs.each { output ->
+        variant.outputs.all { output ->
             // For each separate APK per architecture, set a unique version code as described here:
             // https://developer.android.com/studio/build/configure-apk-splits.html
             def versionCodes = ["armeabi-v7a": 1, "x86": 2, "arm64-v8a": 3, "x86_64": 4]
@@ -174,6 +176,26 @@ android {
                 output.versionCodeOverride =
                         versionCodes.get(abi) * 1048576 + defaultConfig.versionCode
             }
+			// def file = variant.outputFile
+            // variant.outputFile = new File(file.parent, file.name.replace(".apk", "-" + defaultConfig.versionName + ".apk")) 
+
+			def project = "MyM"
+            def SEP = "."
+            def flavor = variant.versionCode
+            def buildType = variant.variantData.variantConfiguration.buildType.name
+            def version = variant.versionName
+            def date = new Date();
+            def formattedDate = date.format('ddMMyy_HHmm')
+
+            //def newApkName = project + SEP + flavor + SEP + buildType + SEP + version + SEP + formattedDate + ".apk"
+			def newApkName = project + SEP + version + SEP + formattedDate + ".apk"
+
+			outputFileName = new File(newApkName)
+
+//            output.outputFile = new File(
+  //                  output.outputFile.parent,
+    //                output.outputFile.name.replace(".apk", "-${variant.versionName}.apk"))
+            //output.outputFile = new File(newApkName)
 
         }
     }

@@ -263,14 +263,14 @@ class MessageList extends Component {
         })
         console.log("RENDER", this.state, messages)
         const daysArr = daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;})
-        // console.log("dayList", daysArr, )
+
         const initialDay = this.getNextStudyDay(daysArr)[0];
         const {userID} = this.props.userSetup
-
+        let isImage = false
         return (
 
             <View style={styles.msgList}>
-                {console.log("RENDER_MESSAGELIST", messages.length, this.state.previd)}
+                {/*{console.log("273: RENDER_MESSAGELIST", messages.length, this.state.previd)}*/}
                 <Modal
                     animationType="slide"
                     transparent={false}
@@ -344,8 +344,23 @@ class MessageList extends Component {
                                     />
                                 </View>
                             </Tab>
-                            <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text style={{color : "#fff"}}>ЧТО ЗАДАЛИ</Text></TabHeading>}>
-                                <View /* style={styles.homeworkDayList} */ >
+                            <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text style={{color: "#fff"}}>ИЗМЕНИТЬ</Text></TabHeading>}>
+                                <View>
+                                        <Textarea style={styles.msgUpdateTextarea}
+                                            // onKeyPress={this._handleKeyDown}
+                                            // onChangeText={text=>this.onChangeText('curMessage', text)}
+                                            // onFocus={()=>{this.props.setstate({showFooter : false})}}
+                                            // onBlur={()=>{this.props.setstate({showFooter : true})}}
+                                                  placeholder="Внесите изменения..."  type="text"
+                                                  ref={input=>{this.inputMessage=input}}
+                                                  value={this.state.curMessage}
+                                        />
+                                    <TouchableOpacity
+                                        onPress={this.updateMsg}>
+                                        <View style={styles.updateMsg}>
+                                            <Text style={styles.updateMsgText} >СОХРАНИТЬ ИЗМЕНЕНИЯ</Text>
+                                        </View>
+                                    </TouchableOpacity>
                                 </View>
                             </Tab>
                         </Tabs>
@@ -390,14 +405,16 @@ class MessageList extends Component {
                                       {/*onContentSizeChange={() => {*/}
                                           {/*this.scrollView.scrollTo({y: 0, animated: true});*/}
                                       {/*}}>*/}
+
                     {messages.length?
                         messages.map((message, i) =>{
-                                // console.log("MESSAGE", message)
+                                // console.log("395: MESSAGE", message)
+                                // console.log("396_1: MESSAGE", message, this.props.isnew, prepareMessageToFormat(message, true))
                                 let msg = this.props.isnew?prepareMessageToFormat(message, true):JSON.parse(message)
                                 const urlMatches = msg.text.match(/\b(http|https)?:\/\/\S+/gi) || [];
                                 let { text } = msg;
-                                let isImage = false
-                                if (message.attachment3!==null) {
+                                isImage = false
+                                if ((message.attachment3!==null)&&(message.attachment3!==undefined)) {
                                     isImage = true
                                 }
                                 // urlMatches.forEach(link => {
@@ -457,8 +474,7 @@ class MessageList extends Component {
                                                 {/*) : (*/}
 
                                                 {/* style={this.state.editKey===i?{visibility:"hidden"}:null} */}
-
-
+                                                {/*{console.log('460', message, isImage, message.attachment3)}*/}
                                                 {isImage?
                                                     <View style={{display : "flex", flex : 1, flexDirection: "row"}}>
                                                         <TouchableOpacity onPress={()=>{this.setState({previd : msg.id, showPreview : true})}}>
@@ -466,7 +482,6 @@ class MessageList extends Component {
                                                             <Image
                                                             source={{uri: `data:image/png;base64,${JSON.parse(message.attachment3).base64}`}}
                                                             style={{ width: 100, height: 100,
-                                                                    // marginBottom : 15,
                                                                     borderRadius: 15,
                                                                     overflow: "hidden", margin : 7 }}/>
                                                         </View>

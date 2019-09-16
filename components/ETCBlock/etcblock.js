@@ -6,13 +6,17 @@
  */
 import React, { Component } from 'react'
 import { StyleSheet, Text, View, Image, ScrollView,
-    TouchableHighlight, Modal, Radio, TouchableOpacity } from 'react-native';
+         TouchableHighlight, Modal, Radio, TouchableOpacity } from 'react-native';
 import {    Container, Header, Left, Body, Right, Button,
-    Icon, Title, Content,  Footer, FooterTab, TabHeading, Tabs, Tab, Badge,
-    Form, Item, Input, Label, Textarea, CheckBox, ListItem } from 'native-base';
+            Title, Content,  Footer, FooterTab, TabHeading, Tabs, Tab,
+            Form, Item, Input, Label, Textarea, CheckBox, ListItem } from 'native-base';
+import { Avatar, Badge, Icon, withBadge } from 'react-native-elements'
 import RadioForm from 'react-native-radio-form';
 import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, AddDay, toYYYYMMDD, daysList} from '../../js/helpersLight'
 import { connect } from 'react-redux'
+import ButtonWithBadge from '../../components/ButtonWithBadge/buttonwithbadge'
+import { RFPercentage, RFValue } from "react-native-responsive-fontsize";
+
 // import '../../ChatMobile/chatmobile.css'
 
 const insertTextAtIndices = (text, obj) => {
@@ -63,18 +67,60 @@ class ETCBlock extends Component {
                 <View style={styles.modalView}>
                     <Tabs>
                         <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text style={{color: "#fff"}}>ПРИЛОЖЕНИЯ</Text></TabHeading>}>
-                            <View style={styles.homeworkSubjectList}>
-                                {/*<RadioForm*/}
-                                    {/*dataSource={subjects}*/}
-                                    {/*itemShowKey="label"*/}
-                                    {/*itemRealKey="value"*/}
-                                    {/*circleSize={16}*/}
-                                    {/*initial={0}*/}
-                                    {/*formHorizontal={false}*/}
-                                    {/*labelHorizontal={true}*/}
-                                    {/*onPress={(item) => this.onSelectSubject(item)}*/}
-                                {/*/>*/}
+                           <View style={{flex : 1, flexDirection : "column", justifyContent : "flex-start"}}>
+                            <View style={{flex: 1, flexDirection : "row", padding : 10, justifyContent : "space-around", flexWrap : "wrap"}}>
+                                <Button style={{backgroundColor : "#f0f0f0", color : "#fff", width : 80, height : 80, margin : 5}}
+                                        disabled={false}
+                                        badge vertical
+                                        active={true}
+                                        onPress={()=>{}}>
+                                    <Icon size={52} color={"#4472C4"} active type={'material'} name={'assignment'} inverse />
+                                    <Text style={{fontSize: RFPercentage(1.8)}}>{"Расписание"}</Text>
+                                </Button>
+                                <Button style={{backgroundColor : "#f0f0f0", color : "#fff", width : 80, height : 80, margin : 5}}
+                                        disabled={false}
+                                        badge vertical
+                                        active={true}
+                                        onPress={()=>{}}>
+                                    <Icon size={52} color={"#4472C4"} active type={'material'} name={'payment'} inverse />
+                                    <Text style={{fontSize: RFPercentage(1.8)}}>{"Бюджет"}</Text>
+                                </Button>
+                                <Button style={{backgroundColor : "#f0f0f0", color : "#fff", width : 80, height : 80, margin : 5}}
+                                        disabled={false}
+                                        badge vertical
+                                        active={true}
+                                        onPress={()=>{}}>
+                                    <Icon size={52} color={"#4472C4"} active type={'material'} name={'pool'} inverse />
+                                    <Text style={{fontSize: RFPercentage(1.8)}}>{"Кружки"}</Text>
+                                </Button>
+                                <Button style={{backgroundColor : "#f0f0f0", color : "#fff", width : 80, height : 80, margin : 5}}
+                                        disabled={false}
+                                        badge vertical
+                                        active={true}
+                                        onPress={()=>{}}>
+                                    <Icon size={52} color={"#4472C4"} active type={'material'} name={'school'} inverse />
+                                    <Text style={{fontSize: RFPercentage(1.8)}}>{"Репетиторы"}</Text>
+                                </Button>
+                                <Button style={{backgroundColor : "#f0f0f0", color : "#fff", width : 80, height : 80, margin : 5}}
+                                        disabled={false}
+                                        badge vertical
+                                        active={true}
+                                        onPress={()=>{}}>
+                                    <Icon size={52} color={"#4472C4"} active type={'material'} name={'equalizer'} inverse />
+                                    <Text style={{fontSize: RFPercentage(1.8)}}>{"Статистика"}</Text>
+                                </Button>
+                                <Button style={{backgroundColor : "#f0f0f0", color : "#fff", width : 80, height : 80, margin : 5}}
+                                        disabled={false}
+                                        badge vertical
+                                        active={true}
+                                        onPress={()=>{}}>
+                                    <Icon size={52} color={"#4472C4"} active type={'material'} name={'build'} inverse />
+                                    <Text style={{fontSize: RFPercentage(1.8)}}>{"Настройки"}</Text>
+                                </Button>
                             </View>
+                            <View style={{flex: 1, flexDirection : "row", padding : 10}}>
+                            </View>
+                           </View>
                         </Tab>
                         <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text style={{color: "#fff"}}>ВЫБРАННЫЕ</Text></TabHeading>}>
                             <View style={styles.homeworkSubjectList}>

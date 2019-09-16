@@ -10,6 +10,7 @@ import {    Container, Header, Left, Body, Right, Button,
     Form, Item, Input, Label} from 'native-base';
 import styles from '../../css/styles'
 import {connect} from 'react-redux';
+import { RFPercentage, RFValue } from "react-native-responsive-fontsize";
 
 class ButtonWithBadge extends Component {
     constructor(props) {
@@ -39,8 +40,18 @@ class ButtonWithBadge extends Component {
                        status={this.props.badgestatus}
                        containerStyle={{ position: 'absolute', top: -8, right: 2 }}>
                 </Badge>:null}
+            {(this.props.kind==='info'||this.props.value)?
+                <Badge value={this.props.value?this.props.value:null}
+                       status={this.props.badgestatus}
+                       containerStyle={{ position: 'absolute', top: -8, right: 2 }}>
+                </Badge>:null}
+            {(this.props.kind==='marks'||this.props.value)?
+                <Badge value={this.props.value?this.props.value:null}
+                       status={this.props.badgestatus}
+                       containerStyle={{ position: 'absolute', top: -8, right: 2 }}>
+                </Badge>:null}
             <Icon color={this.props.enabled?"#fff":"#4472C4"} active type={this.props.icontype} name={this.props.iconname} inverse />
-            <Text style={this.props.enabled?styles.tabColorSelected:styles.tabColor}>{this.props.name}</Text>
+            <Text style={this.props.enabled?[styles.tabColorSelected, {fontSize: RFPercentage(1.8)}]:[styles.tabColor, {fontSize: RFPercentage(1.8)}]}>{this.props.name}</Text>
         </Button>)
     }
 }

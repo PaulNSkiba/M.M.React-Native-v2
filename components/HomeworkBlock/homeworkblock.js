@@ -92,6 +92,9 @@ class HomeworkBlock extends Component {
         })
         )
     }
+    updateMsg=()=>{
+
+    }
     render () {
         let messages = []
         // if (this.props.isnew)
@@ -104,7 +107,7 @@ class HomeworkBlock extends Component {
         const {userName, homework, classID} = this.props.userSetup
         console.log("getHomeworkItems", homework, this.props.userSetup)
         return (
-            <View style={this.props.hidden?styles.hidden:styles.chatContainerNew}>
+            <View style={this.props.hidden?styles.hidden:styles.chatContainerNewHW}>
                 <View style={styles.msgList}>
                     <Modal
                         animationType="slide"

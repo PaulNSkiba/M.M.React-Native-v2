@@ -7,12 +7,10 @@
 import React, { Component } from 'react'
 import { StyleSheet, Text, View, Image, ScrollView,
     TouchableHighlight, Modal, Radio, TouchableOpacity } from 'react-native';
-// import { Container, Header, Content, Thumbnail, Text, Button, Icon, Left, Body, Right } from 'native-base';
 import { Avatar, Badge, Icon, withBadge } from 'react-native-elements'
 import {    Container, Header, Left, Body, Right, Button,
     Title, Content, Card, CardItem,  Footer, FooterTab, TabHeading, Tabs, Tab,
     Form, Item, Input, Label, Textarea, CheckBox, ListItem, Thumbnail } from 'native-base';
-// import RadioForm from 'react-native-radio-form';
 import {API_URL} from '../../config/config'
 import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, AddDay, toYYYYMMDD, daysList, instanceAxios} from '../../js/helpersLight'
 import { RNCamera } from 'react-native-camera';
@@ -51,7 +49,7 @@ class CameraBlock extends Component {
             .catch(response=>
                 console.log("AXIOUS_ERROR", response)
             )
-        console.log("sendMessage", text, id)
+        // console.log("sendMessage", text, id)
     }
     takePicture = async() => {
         if (this.camera) {
@@ -62,7 +60,7 @@ class CameraBlock extends Component {
             arr.push({uri : data.uri, time : (new Date()), data: data})
             this.setState({photoPath : arr})
             this.props.onReduxUpdate("PHOTO_PATH", arr)
-            console.log(data.uri);
+            // console.log(data.uri);
         }
     };
     prepareJSON=(data)=>{
@@ -89,7 +87,7 @@ class CameraBlock extends Component {
         obj.student_name = studentName
         obj.uniqid = new Date().getTime() + this.props.userSetup.userName //uniqid()
 
-        console.log("prepareJSON", obj, JSON.stringify(obj))
+        // console.log("prepareJSON", obj, JSON.stringify(obj))
         return JSON.stringify(obj)
     }
     showPreview=(uri)=>{
@@ -199,7 +197,6 @@ class CameraBlock extends Component {
                                                         </TouchableOpacity>
                                                     </Left>
                                                 </CardItem>
-
                                             </Card>)
                                     })
                                 }

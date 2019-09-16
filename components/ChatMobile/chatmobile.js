@@ -11,7 +11,7 @@ import {    Container, Header, Left, Body, Right, Button,
     Title, Content,  Footer, FooterTab, Badge,
     Form, Item, Input, Label, Textarea} from 'native-base';
 import MessageList from '../MessageList/messagelist'
-// import emailPropType from 'email-prop-type';
+import { Picker, NimbleEmoji, getEmojiDataFromCustom, Emoji, emojiIndex  } from 'emoji-mart-native'
 import { ChatManager, TokenProvider } from '@pusher/chatkit-client'
 import arrow_down from '../../img/ARROW_DOWN.png'
 import arrow_up from '../../img/ARROW_UP.png'
@@ -22,7 +22,7 @@ import {AddDay, arrOfWeekDays, dateDiff, toYYYYMMDD, instanceAxios, mapStateToPr
 // import addMsg from '../../img/addMsg.svg'
 
 import { Smile } from 'react-feather';
-import { Picker, emojiIndex } from 'emoji-mart';
+// import { Picker, emojiIndex } from 'emoji-mart';
 import Pusher from 'pusher-js/react-native'
 import Echo from 'laravel-echo'
 import styles from '../../css/styles'
@@ -169,14 +169,15 @@ class ChatMobile extends Component {
             console.log('websocket-listening', echo)
             echo.private(channelName)
                 .listen('ChatMessageSSL', (e) => {
-                    console.log("FILTER-SSL")
+                    console.log("FILTER-SSL", e.message)
+
                     let msg = prepareMessageToFormat(e.message), msgorig = e.message, isSideMsg = true
                     let localChat = this.state.localChatMessages,
                         arrChat = []
                     // console.log("FILTER-NOT-SSL", this.state.localChatMessages)
                     arrChat = localChat.map(
                         item => {
-                            // console.log("map", item, JSON.parse(msg))
+                            // console.log("181", item)
                             if (this.state.messagesNew.includes(item.uniqid)) {
                                 // Для своих новых
                                 if (JSON.parse(msg).uniqid === item.uniqid) {
@@ -203,8 +204,8 @@ class ChatMobile extends Component {
                         messages: [...arrChat, msg],
                         messagesNew: this.state.messagesNew.filter(item => !(item.uniqid === JSON.parse(msg).uniqid))
                     })
-                    const todayMessages = this.props.userSetup.localChatMessages.filter(item=>(new Date(item.msg_date).toLocaleDateString())===(new Date().toLocaleDateString()))
-                    const homeworks = this.props.userSetup.localChatMessages.filter(item=>(item.homework_date!==null))
+                    const todayMessages = arrChat.filter(item=>(new Date(item.msg_date).toLocaleDateString())===(new Date().toLocaleDateString()))
+                    const homeworks = arrChat.filter(item=>(item.homework_date!==null))
 
                     this.props.forceupdate(todayMessages.length, homeworks.length)
                 })
@@ -218,7 +219,7 @@ class ChatMobile extends Component {
                     // console.log("FILTER-NOT-SSL", this.state.localChatMessages)
                     arrChat = localChat.map(
                         item => {
-                            // console.log("map", item, JSON.parse(msg))
+                            console.log("222", item)
                             if (item.id === e.message.id) {
 
                                 return e.message
@@ -236,8 +237,8 @@ class ChatMobile extends Component {
                         messages: [...arrChat, msg],
                         messagesNew: this.state.messagesNew.filter(item => !(item.uniqid === JSON.parse(msg).uniqid))
                     })
-                    const todayMessages = this.props.userSetup.localChatMessages.filter(item=>(new Date(item.msg_date).toLocaleDateString())===(new Date().toLocaleDateString()))
-                    const homeworks = this.props.userSetup.localChatMessages.filter(item=>(item.homework_date!==null))
+                    const todayMessages = arrChat.filter(item=>(new Date(item.msg_date).toLocaleDateString())===(new Date().toLocaleDateString()))
+                    const homeworks = arrChat.localChatMessages.filter(item=>(item.homework_date!==null))
 
                     this.props.forceupdate(todayMessages.length, homeworks.length)
                 })
@@ -250,7 +251,7 @@ class ChatMobile extends Component {
                     // console.log("FILTER-NOT-SSL", this.state.localChatMessages)
                     arrChat = localChat.map(
                         item => {
-                            // console.log("map", item, JSON.parse(msg))
+                            console.log("254", item)
                             if (item.id === e.message.id) {
 
                                 return e.message
@@ -268,8 +269,8 @@ class ChatMobile extends Component {
                         messages: [...arrChat, msg],
                         messagesNew: this.state.messagesNew.filter(item => !(item.uniqid === JSON.parse(msg).uniqid))
                     })
-                    const todayMessages = this.props.userSetup.localChatMessages.filter(item=>(new Date(item.msg_date).toLocaleDateString())===(new Date().toLocaleDateString()))
-                    const homeworks = this.props.userSetup.localChatMessages.filter(item=>(item.homework_date!==null))
+                    const todayMessages = arrChat.filter(item=>(new Date(item.msg_date).toLocaleDateString())===(new Date().toLocaleDateString()))
+                    const homeworks = arrChat.filter(item=>(item.homework_date!==null))
 
                     this.props.forceupdate(todayMessages.length, homeworks.length)
                 })
@@ -294,7 +295,7 @@ class ChatMobile extends Component {
                     newArr = arr.map(
                     item=>
                     {
-                        // console.log("map", item, JSON.parse(msg))
+                        console.log("298", item)
 
                         if (this.state.messagesNew.includes(item.uniqid)) {
                             // Для своих новых
@@ -314,8 +315,7 @@ class ChatMobile extends Component {
                         }
                     }
                 )
-                // console.log("FILTER-NOT-SSL: stateArr", newArr, JSON.parse(msg), "isSideMsg: " + isSideMsg, this.state.messagesNew)
-                // Если новое и стороннее!!!
+                 // Если новое и стороннее!!!
                 if  (isSideMsg) newArr.push(msgorig)
 
                 this.setState({
@@ -352,7 +352,6 @@ class ChatMobile extends Component {
                                     })
                                 }
                                 this.props.newmessage(JSON.parse(message.text).hasOwnProperty('hwdate'));
-                                // console.log("MESSAGES", message, JSON.parse(message.text))
                             },
                         }
                     })
@@ -416,6 +415,7 @@ class ChatMobile extends Component {
         return JSON.stringify(obj)
     }
     prepareMessageToState=(objFrom)=>{
+        console.log('418', objFrom)
         objFrom = JSON.parse(objFrom)
         let obj = {}
         obj.senderId = objFrom.user_name
@@ -438,14 +438,16 @@ class ChatMobile extends Component {
     }
     addMessage=()=>{
         console.log("addMessage")
-        let obj = this.prepareJSON()
-        let objForState = this.prepareMessageToState(obj)
-        if (this.props.isnew) {
-            this.setState({messages: [...this.state.messages, objForState]})
+
+        const obj = this.prepareJSON()
+        if (JSON.parse(obj).message.length) {
+            const objForState = this.prepareMessageToState(obj)
+            if (this.props.isnew) {
+                this.setState({messages: [...this.state.messages, objForState]})
+            }
+
+            this.sendMessage(obj, 0, false)
         }
-        this.sendMessage(obj, 0, false)
-        // if (!(this.state.selSubjkey === null))
-        // this.addHomeWork(this.props.isnew?JSON.parse(obj).message:JSON.parse(obj).text)
     }
     _handleKeyDown = (e) => {
         console.log("_handleKeyDown", e.nativeEvent.key, e.nativeEvent)
@@ -546,7 +548,7 @@ class ChatMobile extends Component {
                         "text":"${text}",
                         "classID":${this.props.classID},
                         "userID":${this.props.userID}}`
-        // console.log(json)
+        console.log("547", json)
         let data = JSON.parse(json);
          if (true) {
             instanceAxios().post(API_URL + 'mail', JSON.stringify(data))
@@ -580,6 +582,7 @@ class ChatMobile extends Component {
                     return
                 }
             }
+            console.log('581', text)
             arr.push(JSON.parse(text).text)
             this.sendMail('paul.n.skiba@gmail.com', JSON.parse(text).text)
             this.setState({addMsgs : arr})
@@ -588,11 +591,14 @@ class ChatMobile extends Component {
         if (fromChat&&id >0) this.editedMsgID = 0
         // console.log("Next message!", text)
         // Передаём сообщение с определёнными параметрами (ID-сессии + ClassID)
-        console.log("sendMessage.2", text, id, this.props.isnew)
+        // console.log("sendMessage.2", text, id, this.props.isnew)
+
+        console.log('595', id, text, JSON.parse(text))
+
         switch (this.props.isnew) {
             case true :
                 let arrChat = this.state.localChatMessages, obj = {}
-                console.log("Send message to server.1", "arr.before: ", arr)
+                console.log("601: Send message to server.1", "arr.before: ", arr)
                 if (id > 0) {
                     arrChat = arrChat.map(item => {
                         obj = item
@@ -608,6 +614,8 @@ class ChatMobile extends Component {
                    arrChat.push(JSON.parse(text))
                 }
                 // console.log("Send message to server.2", "arr.after: ", arr)
+                console.log('616', id, text, arrChat)
+                // return
                 this.setState({messages: arrChat})
                 // this.props.onReduxUpdate("ADD_CHAT_MESSAGES", arrChat)
                 instanceAxios().post(API_URL + 'chat/add' + (id?`/${id}`:''), text)
@@ -659,8 +667,30 @@ class ChatMobile extends Component {
 
     }
     onChangeText = (key, val) => {
-        console.log("onChangeText", this.state.curMessage, this.props.userSetup.classID, this.props.userSetup.userName)
+        // console.log("onChangeText", this.state.curMessage, key, val,
+        //     emojiIndex
+        //     .search(val.slice(-2))
+        //     .filter(item=>item.emoticons.indexOf(val.slice(-2))>=0)
+        //     .map(o => ({
+        //         colons: o.colons,
+        //         native: o.native,
+        //     })))
+
+        if (val.length > 1) {
+            let smile = emojiIndex
+                .search(val.slice(-2))
+                .filter(item => item.emoticons.indexOf(val.slice(-2)) >= 0)
+                .map(o => ({
+                    colons: o.colons,
+                    native: o.native,
+                }))
+
+            if (smile.length) {
+                val = val.slice(0, val.length - 2) + smile[0].native
+            }
+        }
         this.setState({ [key]: val})
+
         if (this.props.isnew) {
             let channelName = 'class.'+this.props.userSetup.classID
             this.state.Echo.private(channelName)
@@ -682,8 +712,7 @@ class ChatMobile extends Component {
             showEmojiPicker,
         } = this.state;
 
-
-        console.log("RENDER_CHAT", this.props.userSetup, this.state.localChatMessages)
+        // console.log("RENDER_CHAT", this.props.userSetup, this.state.localChatMessages)
         return (
             <View style={this.props.hidden?styles.hidden:styles.chatContainerNew}>
                 <View style={{flex : 7}}>
@@ -742,9 +771,8 @@ class ChatMobile extends Component {
                     </View>
                 </View>
                 <View style={styles.addMsgContainer}>
-                    <Form style={styles.frmAddMsg}>
-
-                        <View className={styles.inputMsgBlock}>
+                    {/*<Form style={styles.frmAddMsg}>*/}
+                        {/*<View className={styles.inputMsgBlock}>*/}
                             {/*<Button*/}
                                 {/*type="button"*/}
                                 {/*className="toggle-emoji"*/}
@@ -752,26 +780,26 @@ class ChatMobile extends Component {
                             {/*>*/}
                                 {/*<Smile />*/}
                             {/*</Button>*/}
-                            <View style={{flex: 8}}>
-                            <Textarea style={styles.msgAddTextarea}
-                                      onKeyPress={this._handleKeyDown}
-                                      onChangeText={text=>this.onChangeText('curMessage', text)}
-                                      onFocus={()=>{this.props.setstate({showFooter : false})}}
-                                      onBlur={()=>{this.props.setstate({showFooter : true})}}
-                                      placeholder="Введите сообщение..."  type="text"
-                                      ref={input=>{this.inputMessage=input}}
-                                      value={this.state.curMessage}
-                            />
-                                {/*<TextInput*/}
-                                    {/*style={[styles.msgAddTextarea, {height : 50}]}*/}
-                                    {/*onKeyPress={this._handleKeyDown}*/}
-                                    {/*onChangeText={text=>this.onChangeText('curMessage', text)}*/}
-                                    {/*onFocus={()=>{this.props.setstate({showFooter : false})}}*/}
-                                    {/*onBlur={()=>{this.props.setstate({showFooter : true})}}*/}
-                                    {/*placeholder="Введите сообщение..."  type="text"*/}
-                                    {/*ref={input=>{this.inputMessage=input}}*/}
-                                    {/*value={this.state.curMessage}*/}
-                                {/*/>*/}
+                            <View style={{flex: 7}}>
+                                <Textarea style={styles.msgAddTextarea}
+                                          onKeyPress={this._handleKeyDown}
+                                          onChangeText={text=>this.onChangeText('curMessage', text)}
+                                          onFocus={()=>{this.props.setstate({showFooter : false})}}
+                                          onBlur={()=>{this.props.setstate({showFooter : true})}}
+                                          placeholder="Введите сообщение..."  type="text"
+                                          ref={input=>{this.inputMessage=input}}
+                                          value={this.state.curMessage}
+                                />
+                                    {/*<TextInput*/}
+                                        {/*style={[styles.msgAddTextarea, {height : 50}]}*/}
+                                        {/*onKeyPress={this._handleKeyDown}*/}
+                                        {/*onChangeText={text=>this.onChangeText('curMessage', text)}*/}
+                                        {/*onFocus={()=>{this.props.setstate({showFooter : false})}}*/}
+                                        {/*onBlur={()=>{this.props.setstate({showFooter : true})}}*/}
+                                        {/*placeholder="Введите сообщение..."  type="text"*/}
+                                        {/*ref={input=>{this.inputMessage=input}}*/}
+                                        {/*value={this.state.curMessage}*/}
+                                    {/*/>*/}
                             </View>
                             {/*<View style={{flex: 1}}>*/}
                             {/*<Button style={styles.btnAddMessage} type="submit" onPress={this.addMessage}>*/}
@@ -816,8 +844,8 @@ class ChatMobile extends Component {
 
                             {/*</View>*/}
                             {/*:null}*/}
-                    </Form>
-                </View>
+                    {/*</Form>*/}
+                {/*</View>*/}
 
 
 

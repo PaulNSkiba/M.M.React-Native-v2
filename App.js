@@ -27,9 +27,10 @@ import ETCBlock from './components/ETCBlock/etcblock'
 import ButtonWithBadge from './components/ButtonWithBadge/buttonwithbadge'
 import { store } from './store/configureStore'
 import styles from './css/styles'
-import LogginByToken from './components/LoggingByToken/loggingbytoken'
-import { mapStateToProps, instanceAxios, toYYYYMMDD, langLibrary as langLibraryF } from './js/helpersLight'
-import { userLoggedIn, userLoggedInByToken, userLoggedOut } from './actions/userAuthActions'
+
+// import LogginByToken from './components/LoggingByToken/loggingbytoken'
+// import { mapStateToProps, instanceAxios, toYYYYMMDD, langLibrary as langLibraryF } from './js/helpersLight'
+// import { userLoggedIn, userLoggedInByToken, userLoggedOut } from './actions/userAuthActions'
 
 class App extends Component {
     constructor(props) {
@@ -96,11 +97,11 @@ class App extends Component {
         // this.forceUpdate()
     }
     render ()  {
-        console.log("RENDER_APP", this.state.userEmail, this.state.userToken)
+        // console.log("RENDER_APP", this.state.userEmail, this.state.userToken)
         // const {homework} = this.props.userSetup
         return (
             <Provider store={store}>
-               <Container style={this.state.showFooter?{flex : 1 }:{flex : 1, marginBottom : 40 }}>
+               <Container style={this.state.showFooter?{flex : 1 }:{flex : 1 /*, marginBottom : 40 */}}>
                     <StatusBar barStyle="dark-content" hidden={false} />
                     <HeaderBlock updateState={this.updateState} email={this.state.userEmail} token={this.state.userToken}/>
                     <Container >
@@ -117,26 +118,32 @@ class App extends Component {
 
                         {this.state.selectedFooter===1?
                             <View style={styles.absoluteView}>
-                                <HomeworkBlock hidden={this.state.selectedFooter!==1}/>
+                                <HomeworkBlock hidden={this.state.selectedFooter!==1}
+                                               forceupdate={this.fireRender}/>
                             </View>:null}
 
                             {/*<Display enable={this.state.selectedFooter===2}>*/}
                         {this.state.selectedFooter===2?
-                            <View style={styles.absoluteView}><MarksBlock/></View>:null}
-                        {/*</Display>*/}
-                        {/*<Display enable={this.state.selectedFooter===3}>*/}
+                            <View style={styles.absoluteView}>
+                                <MarksBlock    hidden={this.state.selectedFooter!==2}
+                                                forceupdate={this.fireRender}/>
+                            </View>:null}
+
                         {this.state.selectedFooter===3?
-                            <View style={styles.absoluteView}><HelpBlock/></View>:null}
-                        {/*</Display>*/}
-                        {/*<Display enable={this.state.selectedFooter===4}>*/}
+                            <View style={styles.absoluteView}>
+                                <HelpBlock     hidden={this.state.selectedFooter!==3}
+                                               forceupdate={this.fireRender}/>
+                            </View>:null}
                         {this.state.selectedFooter===4?
-                            <View style={styles.absoluteView}><CameraBlock/></View>:null}
-                        {/*</Display>*/}
-                        {/*<Display enable={this.state.selectedFooter===5}>*/}
+                            <View style={styles.absoluteView}>
+                                <CameraBlock     hidden={this.state.selectedFooter!==4}
+                                                 forceupdate={this.fireRender}/>
+                            </View>:null}
                         {this.state.selectedFooter===5?
-                            <View style={styles.absoluteView}><ETCBlock/></View>:null}
-                        {/*</Display>*/}
-                        {/*</View>*/}
+                            <View style={styles.absoluteView}>
+                                <ETCBlock     hidden={this.state.selectedFooter!==5}
+                                              forceupdate={this.fireRender}/>
+                            </View>:null}
                     </Container>
                     {this.state.showFooter?
                     <Footer style={styles.header}>
@@ -187,9 +194,9 @@ class App extends Component {
                                 name={"Оценки"}
                                 icontype={'material'}
                                 iconname={'timeline'}
-                                badgestatus={'error'}
-                                kind={''}
-                                value={0}
+                                badgestatus={'success'}
+                                kind={'marks'}
+                                value={10}
                                 setstate={this.setstate}
                                 stateid={2}/>
 
@@ -204,9 +211,9 @@ class App extends Component {
                                 name={"Info"}
                                 icontype={'material'}
                                 iconname={'info'}
-                                badgestatus={'error'}
-                                kind={''}
-                                value={0}
+                                badgestatus={'warning'}
+                                kind={'info'}
+                                value={1}
                                 setstate={this.setstate}
                                 stateid={3}/>
                             {/*<Button style={this.state.selectedFooter === 3?{backgroundColor : "#A9A9A9", color : "#fff"}:{backgroundColor : "#f0f0f0", color : "#fff"}} disabled={this.state.showLogin} vertical active={this.state.selectedFooter===3} onPress={()=>this.setState({selectedFooter : 3})}>*/}

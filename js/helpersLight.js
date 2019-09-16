@@ -429,6 +429,11 @@ export const prepareMessageToFormat=(msg, returnObject)=>{
     obj.userID = msg.user_id
     obj.userName = msg.user_name
     obj.uniqid = msg.uniqid
+    obj.attachment1 = msg.attachment1
+    obj.attachment2 = msg.attachment2
+    obj.attachment3 = msg.attachment3
+    obj.attachment4 = msg.attachment4
+    obj.attachment5 = msg.attachment5
     if (!(msg.homework_date === null)) {
         obj.hwdate = msg.homework_date
         obj.subjkey = msg.homework_subj_key

@@ -16,6 +16,8 @@ import { userLoggedIn, userLoggedInByToken, userLoggedOut } from '../../actions/
 import LogginByToken from '../../components/LoggingByToken/loggingbytoken'
 // import { instanceAxios, mapStateToProps /*, langLibrary as langLibraryF*/ } from './js/helpersLight'
 import styles from '../../css/styles'
+import NetInfo from "@react-native-community/netinfo";
+import { RFPercentage, RFValue } from "react-native-responsive-fontsize";
 
 class HeaderBlock extends React.Component {
     constructor(props) {
@@ -29,9 +31,18 @@ class HeaderBlock extends React.Component {
             password: '',
             userID: 0,
             userName : '',
+            netOnline : false,
+            netType : '',
         }
         // this.onLogin = this.onLogin.bind(this)
         // this.RootContainer = this.RootContainer.bind(this)
+    }
+    componentDidMount(){
+        NetInfo.fetch().then(state => {
+            console.log("Connection type", state.type);
+            console.log("Is connected?", state.isConnected);
+            this.setState({netOnline : state.isConnected, netType : state.type})
+        });
     }
     render=()=>{
         return (
@@ -40,9 +51,15 @@ class HeaderBlock extends React.Component {
             <Left>
                 <Text style={styles.versionNumber}>{version}</Text>
             </Left>
-            <Body>
-                {/*<Text style={styles.versionNumber}>{version}</Text>*/}
+            <Body style={{position : "relative", flex: 1, flexDirection : "row"}}>
+                <View>
                 <Title style={styles.myTitle}>My.Marks</Title>
+                </View>
+                <View>
+                    <Text style={[{fontSize: RFPercentage(1.5), position : "relative", left : 0, top : 0},this.state.netOnline?{color : "#080"}:{color : "#800"}]}>
+                    {this.state.netOnline&&this.state.netType?"online":"offline"}
+                    </Text>
+                </View>
             </Body>
             <Right>
                 <View style={{positon:"relative"}}>
