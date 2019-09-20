@@ -45,9 +45,13 @@ class HeaderBlock extends React.Component {
         });
     }
     render=()=>{
+        {/*<LogginByToken email={this.props.email} token={this.props.token} logout={true}/>*/}
+        // &&(!this.props.userSetup.userID)
         return (
         <Header style={styles.header}>
-            {this.props.token.length?<LogginByToken email={this.props.email} token={this.props.token}/>:null}
+            {this.props.token.length?
+                <LogginByToken email={this.props.email} token={this.props.token} logout={false}/>:
+                null}
             <Left>
                 <Text style={styles.versionNumber}>{version}</Text>
             </Left>
@@ -68,7 +72,7 @@ class HeaderBlock extends React.Component {
                     <View >
                         <Button transparent>
                             {this.props.userSetup.userID?<Text style={{color : "#4472C4", fontWeight : "700"}}>{this.props.userSetup.userName}  </Text>:null}
-                            <Icon size={32} color={this.props.userSetup.userID?"#4472C4":"#A9A9A9"} style={styles.menuIcon} name='person' onPress={()=>this.props.updateState('showLogin')}/>
+                            <Icon size={32} color={this.props.userSetup.userID?"#4472C4":"#A9A9A9"} style={styles.menuIcon} name='person' onPress={this.props.footer===0?()=>this.props.updateState('showLogin'):null}/>
                         </Button>
                     </View>
                 </View>

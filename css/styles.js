@@ -544,7 +544,9 @@ export default styles = StyleSheet.create({
         color : "#4472C4",
         width : "100%",
         height : "100%",
-        // padding : "50%",
         paddingTop : 7,
+    },
+    isNewsCheckbox : {
+        margin : 8,
     }
  });

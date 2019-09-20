@@ -48,7 +48,7 @@ export const userLoggedInByToken = (email, token, kind, langLibrary) => {
             "token": token,
             "kind": kind,
         };
-        console.log("userLoggedInByToken", LOGINUSER_URL, data, langLibrary);
+        // console.log("userLoggedInByToken", LOGINUSER_URL, data, langLibrary);
         // document.body.style.cursor = 'progress';
         instanceAxios().post(LOGINUSER_URL, data, null)
             .then(response => {
@@ -69,7 +69,7 @@ export const userLoggedInByToken = (email, token, kind, langLibrary) => {
 }
 export const userLoggedOut = (token, langLibrary) => {
     return dispatch => {
-            console.log("userLoggedOut", AsyncStorage.getItem("userSetupDate"))
+            // console.log("userLoggedOut", AsyncStorage.getItem("userSetupDate"))
             // document.body.style.cursor = 'progress';
         AsyncStorage.removeItem("myMarks.data");
         AsyncStorage.removeItem("userSetup")
@@ -108,6 +108,6 @@ const saveToLocalStorage=(localName, email, data)=>{
     ls.id = userID;
     ls.token = token;
     ls.class_id = classID;
-    console.log("saveToLocalStorage", JSON.stringify(ls))
+    // console.log("saveToLocalStorage", JSON.stringify(ls))
     AsyncStorage.setItem(localName, JSON.stringify(ls));
 }

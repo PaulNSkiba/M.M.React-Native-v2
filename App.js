@@ -99,11 +99,12 @@ class App extends Component {
     render ()  {
         // console.log("RENDER_APP", this.state.userEmail, this.state.userToken)
         // const {homework} = this.props.userSetup
+        // const tomorrowhomework =
         return (
             <Provider store={store}>
                <Container style={this.state.showFooter?{flex : 1 }:{flex : 1 /*, marginBottom : 40 */}}>
                     <StatusBar barStyle="dark-content" hidden={false} />
-                    <HeaderBlock updateState={this.updateState} email={this.state.userEmail} token={this.state.userToken}/>
+                    <HeaderBlock updateState={this.updateState} email={this.state.userEmail} token={this.state.userToken} footer={this.state.selectedFooter}/>
                     <Container >
                         {/*<View style={{flex : 1}}>*/}
                         {/*<HideableView visible={this.state.selectedFooter===1} noAnimation={true}>*/}
@@ -119,30 +120,40 @@ class App extends Component {
                         {this.state.selectedFooter===1?
                             <View style={styles.absoluteView}>
                                 <HomeworkBlock hidden={this.state.selectedFooter!==1}
-                                               forceupdate={this.fireRender}/>
+                                               showLogin={this.state.showLogin}
+                                               forceupdate={this.fireRender}
+                                               setstate={this.setstate}/>
                             </View>:null}
 
                             {/*<Display enable={this.state.selectedFooter===2}>*/}
                         {this.state.selectedFooter===2?
                             <View style={styles.absoluteView}>
                                 <MarksBlock    hidden={this.state.selectedFooter!==2}
-                                                forceupdate={this.fireRender}/>
+                                               showLogin={this.state.showLogin}
+                                               forceupdate={this.fireRender}
+                                               setstate={this.setstate}/>
                             </View>:null}
 
                         {this.state.selectedFooter===3?
                             <View style={styles.absoluteView}>
                                 <HelpBlock     hidden={this.state.selectedFooter!==3}
-                                               forceupdate={this.fireRender}/>
+                                               showLogin={this.state.showLogin}
+                                               forceupdate={this.fireRender}
+                                               setstate={this.setstate}/>
                             </View>:null}
                         {this.state.selectedFooter===4?
                             <View style={styles.absoluteView}>
                                 <CameraBlock     hidden={this.state.selectedFooter!==4}
-                                                 forceupdate={this.fireRender}/>
+                                                 showLogin={this.state.showLogin}
+                                                 forceupdate={this.fireRender}
+                                                 setstate={this.setstate}/>
                             </View>:null}
                         {this.state.selectedFooter===5?
                             <View style={styles.absoluteView}>
                                 <ETCBlock     hidden={this.state.selectedFooter!==5}
-                                              forceupdate={this.fireRender}/>
+                                              showLogin={this.state.showLogin}
+                                              forceupdate={this.fireRender}
+                                              setstate={this.setstate}/>
                             </View>:null}
                     </Container>
                     {this.state.showFooter?

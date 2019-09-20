@@ -93,18 +93,18 @@ class LoginBlock extends React.Component {
     }
     render() {
         return (
-            <View>
+            <View style={{backgroundColor : "#fff"}}>
                 <Form>
                     <Item floatingLabel>
                         <Label>Email</Label>
-                        <TextInput ref="nameLogin"/*ref={ (c) => this.nameLogin = c }*/
-                               autoFocus={true}
+                        <Input ref="nameLogin"/*ref={ (c) => this.nameLogin = c }*/
+                               // autoFocus={true}
                                onChangeText={text=>this.onChangeText('username', text)}
                         />
                     </Item>
                     <Item floatingLabel last>
                         <Label>Пароль</Label>
-                        <TextInput secureTextEntry={true} ref="pwdLogin"
+                        <Input secureTextEntry={true} ref="pwdLogin"
                                onChangeText={val => this.onChangeText('password', val)}/>
                     </Item>
                     {/*<Item></Item>*/}

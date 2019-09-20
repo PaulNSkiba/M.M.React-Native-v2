@@ -9,10 +9,10 @@ import {    Container, Header, Left, Body, Right, Button,
     Icon, Title, Content,  Footer, FooterTab, TabHeading, Tabs, Tab, Badge,
     Form, Item, Input, Label, Textarea, CheckBox, ListItem, Thumbnail } from 'native-base';
 import RadioForm from 'react-native-radio-form';
-// import MicrolinkCard from '@microlink/react';
-import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, AddDay, toYYYYMMDD, daysList} from '../../js/helpersLight'
+import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, AddDay, toYYYYMMDD, daysList, toLocalDate} from '../../js/helpersLight'
 import {SingleImage,wrapperZoomImages,ImageInWraper} from 'react-native-zoom-lightbox';
 import { connect } from 'react-redux'
+// import MicrolinkCard from '@microlink/react';
 // import InvertibleScrollView from 'react-native-invertible-scroll-view';
 // import { css } from 'glamor';
 
@@ -29,7 +29,7 @@ class MessageList extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            messages : this.props.messages,
+            messages : this.props.isnew?this.props.localmessages:this.props.messages,
             editKey: -1,
             modalVisible : false,
             checkSchedule : true,
@@ -39,13 +39,21 @@ class MessageList extends Component {
             showPreview : false,
             previd : 0,
             };
-        this.curMsgDate = null
+        this.curMsgDate = new Date('19000101')
         this.onMessageDblClick = this.onMessageDblClick.bind(this)
         this.onSaveMsgClick=this.onSaveMsgClick.bind(this)
         this.onCancelMsgClick=this.onCancelMsgClick.bind(this)
         this.onDelMsgClick=this.onDelMsgClick.bind(this)
         this.onLongPressMessage=this.onLongPressMessage.bind(this)
     }
+    componentWillMount(){
+        // if (this.props.isnew&&this.props.localmessages.length)
+        //     this.curMsgDate = new Date(this.props.localmessages.slice(-1)[0].msg_date)
+        // else
+        //     this.curMsgDate = dateFromYYYYMMDD(toYYYYMMDD(new Date()))
+        //
+        // console.log("WILLMOUNT", this.curMsgDate, this.props.localmessages, this.props.localmessages.slice(-1)[0])
+        }
     onSaveMsgClick=async (e)=>{
         console.log("onSaveMsgClick", this.textareaValue.value, Number(e.target.id.replace("btn-save-", '')), this.props.isnew)
         if (this.props.isnew) {
@@ -111,7 +119,7 @@ class MessageList extends Component {
                 // Здесь будем апдейтить базу домашки
                 // txt, subj_key, subj_name_ua, ondate, chat_id
                 if (currentHomeworkID)
-                this.props.addhomework(homeworkMsg.message, subject.subj_key, subject.subj_name_ua, AddDay(new Date(), selDate.value), currentHomeworkID)
+                this.props.addhomework(homeworkMsg.message, subject.subj_key, subject.subj_name_ua, new Date(AddDay(new Date(), selDate.value)), currentHomeworkID)
 
                 this.setState({ currentHomeworkID : 0,
                                 selSubject : 0,
@@ -150,13 +158,15 @@ class MessageList extends Component {
         return [i, obj];
     }
     getDateSeparator=(msgDate)=>{
-        // console.log("getDateSeparator", this.curMsgDate, msgDate)
-        if (msgDate !== this.curMsgDate) {
+        // console.log("getDateSeparator", msgDate, this.curMsgDate,
+        //                                 toYYYYMMDD(new Date(msgDate)), toYYYYMMDD(new Date(this.curMsgDate)))
 
-            this.curMsgDate = msgDate
+        if (toYYYYMMDD(new Date(msgDate)) !== toYYYYMMDD(new Date(this.curMsgDate))) {
+            // console.log("DATE_SEPAR", msgDate, this.curMsgDate, toYYYYMMDD(new Date(msgDate)), toYYYYMMDD(new Date(this.curMsgDate)))
+            this.curMsgDate = new Date(msgDate)
             return  <View style={styles.mymMsgDateSeparator}>
-                    <Text style={styles.mymMsgDateSeparatorText}>{new Date(msgDate).toLocaleDateString()}</Text>
-            </View>
+                        <Text style={styles.mymMsgDateSeparatorText}>{toLocalDate(new Date(msgDate), "UA", false)}</Text>
+                    </View>
         }
     }
     render() {
@@ -267,6 +277,26 @@ class MessageList extends Component {
         const initialDay = this.getNextStudyDay(daysArr)[0];
         const {userID} = this.props.userSetup
         let isImage = false
+
+        const tagsArr = [
+            {
+                value : 1,
+                label : "Родительский комитет"
+            },
+            {
+                value : 2,
+                label : "Реквизиты оплат"
+            },
+            {
+                value : 3,
+                label : "Инфа от классного"
+            },
+            {
+                value : 4,
+                label : "Инфа от школы"
+            },
+
+        ]
         return (
 
             <View style={styles.msgList}>
@@ -322,7 +352,7 @@ class MessageList extends Component {
                                         itemShowKey="label"
                                         itemRealKey="value"
                                         circleSize={16}
-                                        initial={0}
+                                        initial={-1}
                                         formHorizontal={false}
                                         labelHorizontal={true}
                                         onPress={(item) => this.onSelectSubject(item)}
@@ -361,6 +391,21 @@ class MessageList extends Component {
                                             <Text style={styles.updateMsgText} >СОХРАНИТЬ ИЗМЕНЕНИЯ</Text>
                                         </View>
                                     </TouchableOpacity>
+                                </View>
+                            </Tab>
+                            <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text style={{color: "#fff"}}>ЗАКЛАДКИ</Text></TabHeading>}>
+                                <View style={styles.homeworkSubjectList}>
+                                    <RadioForm
+                                        // style={{ paddingBottom : 20 }}
+                                        dataSource={tagsArr}
+                                        itemShowKey="label"
+                                        itemRealKey="value"
+                                        circleSize={16}
+                                        // initial={initialDay}
+                                        formHorizontal={false}
+                                        labelHorizontal={true}
+                                        onPress={(item) => this.onSelectDay(item)}
+                                    />
                                 </View>
                             </Tab>
                         </Tabs>
@@ -411,6 +456,9 @@ class MessageList extends Component {
                                 // console.log("395: MESSAGE", message)
                                 // console.log("396_1: MESSAGE", message, this.props.isnew, prepareMessageToFormat(message, true))
                                 let msg = this.props.isnew?prepareMessageToFormat(message, true):JSON.parse(message)
+                                // console.log("449: MESSAGE", message, msg,msg.hwdate)
+                                // msg.hwdate = this.props.isnew&&(!(message.homework_date===null))?(new Date(message.homework_date)):null
+                                // console.log("451: MESSAGE", message, msg,msg.hwdate)
                                 const urlMatches = msg.text.match(/\b(http|https)?:\/\/\S+/gi) || [];
                                 let { text } = msg;
                                 isImage = false
@@ -426,18 +474,28 @@ class MessageList extends Component {
                                 //     });
                                 // });
                                 // const LinkPreviews = urlMatches.map(link => <MicrolinkCard  key={"url"+i} url={link} />);
-
+                                // console.log("464: MESSAGE", message,
+                                //     msg,
+                                //     msg.hasOwnProperty('hwdate'),
+                                //     msg.hwdate===undefined,
+                                //     msg.hwdate===null,
+                                //     msg.hwdate)
                                 let username = msg.hasOwnProperty('userID')?msg.userName:msg.senderId
-                                let hw = msg.hasOwnProperty('hwdate')&&(!(msg.hwdate===undefined))?(dateFromYYYYMMDD(msg.hwdate)).toLocaleDateString()+':'+msg.subjname:''
+                                // if (msg.hasOwnProperty('hwdate')&&(!(msg.hwdate===undefined))&&(!(msg.hwdate===null))) {
+                                //     console.log("HWDATE", msg, msg.hwdate)
+                                // }
+                                let hw = msg.hasOwnProperty('hwdate')&&(!(msg.hwdate===undefined))&&(!(msg.hwdate===null))?(toLocalDate(msg.hwdate.lenght===8?dateFromYYYYMMDD(msg.hwdate):msg.hwdate, "UA"))+':'+msg.subjname:''
                                 let ownMsg = (username===this.props.userSetup.userName)
+                                // console.log("469: MESSAGE", this.curMsgDate, message)
 
                                 return (this.props.hwdate===null||(!(this.props.hwdate===null)&&((new Date(this.props.hwdate)).toLocaleDateString()===(new Date(msg.hwdate)).toLocaleDateString())))?
 
                                         <View key={i} id={"msg-"+msg.id} className={"message-block"}
                                               onClick={()=>i!==this.state.editKey?this.setState({editKey:-1}):null}
                                               onDoubleClick={(e)=>this.onMessageDblClick(e)}>
+                                            {/*{console.log("MESSAGE_DATE", message, message.msg_date, new Date(message.msg_date))}*/}
+                                            {this.getDateSeparator(message.msg_date.length===8?dateFromYYYYMMDD(message.msg_date):new Date(message.msg_date))}
 
-                                            {this.getDateSeparator(message.msg_date)}
                                             <TouchableOpacity key={i} id={"msgarea-"+msg.id}
                                                                 onLongPress={(message.user_id===userID)?()=>this.onLongPressMessage(msg.id):null}>
                                             {/*style={this.state.editKey===i?{color:"white", backgroundColor : "white", border: "white 2px solid"}:null}*/}

@@ -21,7 +21,15 @@ class ButtonWithBadge extends Component {
     render () {
 
         const todayMessages = this.props.userSetup.localChatMessages.filter(item=>(new Date(item.msg_date).toLocaleDateString())===(new Date().toLocaleDateString())).length
-        const homework = this.props.userSetup.homework.length
+        // console.log("homework", this.props.userSetup.homework)
+        const test = true
+        // console.log('test', test)
+        // if (this.props.kind==='homework')
+        const homework = this.props.userSetup.homework.length?this.props.userSetup.homework.filter(item=>{
+            if (item.hasOwnProperty('ondate')) item.homework_date = new Date(item.ondate)
+                return toYYYYMMDD(new Date(item.homework_date)) === toYYYYMMDD(AddDay((new Date()), 1))
+            }
+        ).length:0
         // console.log("ButtonWithBadge", this.props.icontype, this.props.iconname, todayMessages, homework)
 
         return (

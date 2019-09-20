@@ -38,10 +38,7 @@ class ChatBlock extends React.Component {
         <View style={{flex : 1, position : "relative", flexDirection: 'column', height : "50%"}}>
             <View style={{flex : 1, position : "relative"}}>
             {this.props.showLogin?<LoginBlock updateState={this.props.updateState}/>:null}
-
-                {/*<View style={(this.props.userSetup.userID > 0&&(!this.props.showLogin))?styles.normal:styles.hidden}>*/}
-                {/*<View style={this.props.hidden?{position: 'absolute', top: -500, left : -500,}:{position: 'relative', top: 0, left : 0,}}>*/}
-            {   this.props.userSetup.userID > 0&&(!this.props.showLogin)?
+            {this.props.userSetup.userID > 0&&(!this.props.showLogin)?
                         <ChatMobile
                             isnew={true}
                             updatemessage={this.props.updateMessages}

@@ -114,6 +114,22 @@ class ETCBlock extends Component {
                                         badge vertical
                                         active={true}
                                         onPress={()=>{}}>
+                                    <Icon size={52} color={"#4472C4"} active type={'material'} name={'bookmark'} inverse />
+                                    <Text style={{fontSize: RFPercentage(1.8)}}>{"Метки чата"}</Text>
+                                </Button>
+                                <Button style={{backgroundColor : "#f0f0f0", color : "#fff", width : 80, height : 80, margin : 5}}
+                                        disabled={false}
+                                        badge vertical
+                                        active={true}
+                                        onPress={()=>{}}>
+                                    <Icon size={52} color={"#4472C4"} active type={'material'} name={'album'} inverse />
+                                    <Text style={{fontSize: RFPercentage(1.8)}}>{"Музыка"}</Text>
+                                </Button>
+                                <Button style={{backgroundColor : "#f0f0f0", color : "#fff", width : 80, height : 80, margin : 5}}
+                                        disabled={false}
+                                        badge vertical
+                                        active={true}
+                                        onPress={()=>{}}>
                                     <Icon size={52} color={"#4472C4"} active type={'material'} name={'build'} inverse />
                                     <Text style={{fontSize: RFPercentage(1.8)}}>{"Настройки"}</Text>
                                 </Button>

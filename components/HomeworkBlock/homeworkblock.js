@@ -8,10 +8,11 @@ import {    Container, Header, Left, Body, Right, Button,
     Icon, Title, Content,  Footer, FooterTab, TabHeading, Tabs, Tab, Badge,
     Form, Item, Input, Label, Textarea, CheckBox, ListItem } from 'native-base';
 import RadioForm from 'react-native-radio-form';
-import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, AddDay, toYYYYMMDD, daysList} from '../../js/helpersLight'
-// import MessageList from '../MessageList/messagelist'
+import {toLocalDate, dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, AddDay, toYYYYMMDD, daysList} from '../../js/helpersLight'
 import {SingleImage,wrapperZoomImages,ImageInWraper} from 'react-native-zoom-lightbox';
+import LoginBlock from '../LoginBlock/loginBlock'
 import { connect } from 'react-redux'
+// import MessageList from '../MessageList/messagelist'
 // import '../../ChatMobile/chatmobile.css'
 
 const insertTextAtIndices = (text, obj) => {
@@ -28,6 +29,7 @@ class HomeworkBlock extends Component {
             previd : 0,
             showPreview : false,
         };
+        this.getHomeworkItems = this.getHomeworkItems.bind(this)
     }
     onSelectDay=item=>{
         this.setState({selDate : item})
@@ -46,13 +48,13 @@ class HomeworkBlock extends Component {
     getHomeworkItems=arr=>{
         return ( arr.map((item, key)=> {
             let msg = prepareMessageToFormat(item, true)
-            let hw = msg.hasOwnProperty('hwdate')&&(!(msg.hwdate===undefined))?(dateFromYYYYMMDD(msg.hwdate)).toLocaleDateString()+':'+msg.subjname:''
+            let hw = msg.hasOwnProperty('hwdate')&&(!(msg.hwdate===undefined))?(toLocalDate(msg.hwdate, "UA"))+':'+msg.subjname:''
             let i = key
             let isImage = false
             if (item.attachment3!==null) {
                 isImage = true
             }
-            console.log("homeWOrk", msg.text)
+            console.log("homeWork", msg.text)
             return (
                 <View key={key} id={"msg-"+msg.id} style={{marginTop : 10}}>
                      <View key={msg.id} style={(hw.length?[styles.msgRightSide, styles.homeworkBorder]:[styles.msgRightSide, styles.homeworkNoBorder])}>
@@ -104,9 +106,29 @@ class HomeworkBlock extends Component {
 
         const daysArr = daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;})
         const initialDay = this.getNextStudyDay(daysArr)[0];
-        const {userName, homework, classID} = this.props.userSetup
+        const {userName, localChatMessages : homeworkorig, classID} = this.props.userSetup
         console.log("getHomeworkItems", homework, this.props.userSetup)
+        // По умолчанию выбираем домашку на завтра...
+
+
+        const homeworks = homeworkorig
+        console.log("homework", homeworks)
+        const homework = homeworkorig.length?homeworkorig.filter(
+            item=>{
+                console.log("HOMEWORK", item)
+                if (!(item.hasOwnProperty("homework_date"))) return false
+                if (item.homework_date===null) return false
+                if (item.homework_date.length===8) {
+                    return (toYYYYMMDD(dateFromYYYYMMDD(item.homework_date)) === toYYYYMMDD(AddDay((new Date()), this.state.selDate.value)))
+                }
+                else
+                    return (toYYYYMMDD(new Date(item.homework_date))===toYYYYMMDD(AddDay((new Date()), this.state.selDate.value)))
+            }):0
+
+        // В счётчике обновления делаем на завтра
         return (
+            <View>
+            {/*{this.props.showLogin?<LoginBlock updateState={this.props.updateState}/>:null}*/}
             <View style={this.props.hidden?styles.hidden:styles.chatContainerNewHW}>
                 <View style={styles.msgList}>
                     <Modal
@@ -146,15 +168,21 @@ class HomeworkBlock extends Component {
                     <Container>
                             <Tabs>
                                 <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text style={{color: "#fff"}}>ЗАДАНИЯ</Text></TabHeading>}>
-                                    {/*<View style={styles.homeworkSubjectList}>*/}
-                                        <ScrollView
-                                            ref="scrollView"
-                                            onContentSizeChange={( contentWidth, contentHeight ) => {
-                                                this.refs.scrollView.scrollToEnd()
-                                            }}>
-                                            {this.getHomeworkItems(homework)}
-                                        </ScrollView>
-                                    {/*</View>*/}
+                                    <View style={{flex : 1}}>
+                                        <View style={[styles.msgList, {flex: 7}, {marginBottom : 70}]}>
+                                            <ScrollView
+                                                ref="scrollViewHW"
+                                                onContentSizeChange={( contentWidth, contentHeight ) => {
+                                                    console.log("onContentSizeChange", contentHeight)
+                                                    this.refs.scrollViewHW.scrollToEnd()
+                                                }}>
+                                                {this.getHomeworkItems(homework)}
+                                            </ScrollView>
+                                        </View>
+                                        <View style={{flex : 1}}>
+
+                                        </View>
+                                    </View>
                                 </Tab>
                                 <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text style={{color: "#fff"}}>НА КОГДА</Text></TabHeading>}>
                                     <View style={styles.homeworkSubjectList}>
@@ -174,6 +202,7 @@ class HomeworkBlock extends Component {
                             </Tabs>
                     </Container>
                 </View>
+            </View>
             </View>
         )
     }

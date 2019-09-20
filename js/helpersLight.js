@@ -429,16 +429,19 @@ export const prepareMessageToFormat=(msg, returnObject)=>{
     obj.userID = msg.user_id
     obj.userName = msg.user_name
     obj.uniqid = msg.uniqid
+    // obj.msg_date = new Date(msg.msg_date)
     obj.attachment1 = msg.attachment1
     obj.attachment2 = msg.attachment2
     obj.attachment3 = msg.attachment3
     obj.attachment4 = msg.attachment4
     obj.attachment5 = msg.attachment5
-    if (!(msg.homework_date === null)) {
-        obj.hwdate = msg.homework_date
-        obj.subjkey = msg.homework_subj_key
-        obj.subjname = msg.homework_subj_name
-        obj.subjid = msg.homework_subj_id
+    if (msg.hasOwnProperty('homework_date')) {
+        if (!(msg.homework_date === null)) {
+            obj.hwdate = new Date(msg.homework_date.length===8?dateFromYYYYMMDD(msg.homework_date):msg.homework_date)
+            obj.subjkey = msg.homework_subj_key
+            obj.subjname = msg.homework_subj_name
+            obj.subjid = msg.homework_subj_id
+        }
     }
     obj.id = msg.id
     //"{"senderId":"my-marks","text":"выучить параграф 12","time":"14:59","userID":209,"userName":"Menen",
@@ -451,6 +454,41 @@ export function toYYYYMMDD(d) {
         mm = (d.getMonth() + 101).toString().slice(-2),
         dd = (d.getDate() + 100).toString().slice(-2)
     return yyyy + mm + dd;
+}
+export function dateFromTimestamp(timestamp) {
+    // Split timestamp into [ Y, M, D, h, m, s ]
+    let t = timestamp.split(/[- :]/);
+// Apply each element to the Date function
+    return new Date(Date.UTC(t[0], t[1]-1, t[2], t[3], t[4], t[5]));
+
+
+// -> Wed Jun 09 2010 14:12:01 GMT+0100 (BST)
+}
+export function toLocalDate(d, countryCode, withTime) {
+    const   yyyy = d.getFullYear().toString().slice(-2),
+            mm = (d.getMonth() + 101).toString().slice(-2),
+            dd = (d.getDate() + 100).toString().slice(-2),
+            hh = (d.getHours() + 100).toString().slice(-2),
+            mi = (d.getMinutes() + 100).toString().slice(-2)
+    let date = '', time = ''
+
+    // console.log("toLocalDate", `${dd}/${mm}/${yyyy}${withTime?(' ' +hh+':'+mi):""}`)
+    switch (countryCode) {
+        case 'UA':
+            date = `${dd}/${mm}/${yyyy}`
+            if (withTime)
+                return date + ' ' + `${hh}:${mi}`
+            else
+                return date
+            break;
+        default :
+            date = `${dd}/${mm}/${yyyy}`
+            if (withTime)
+                return date + ' ' + `${hh}:${mi}`
+            else
+                return date
+            break;
+    }
 }
 export function dateDiff(date1, date2) {
     let dt1 = new Date(date1);

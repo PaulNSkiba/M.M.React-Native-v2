@@ -42,18 +42,22 @@ class CameraBlock extends Component {
     }
     sendMessage(text) {
         const id = 0;
+        console.log("sendMessage", API_URL + 'chat/add' + (id?`/${id}`:''), text)
+        const {userID} = this.props.userSetup
+
         instanceAxios().post(API_URL + 'chat/add' + (id?`/${id}`:''), text)
             .then(response => {
                 console.log('ADD_MSG', response)
             })
-            .catch(response=>
-                console.log("AXIOUS_ERROR", response)
+            .catch(response=> {
+                    console.log("AXIOUS_ERROR", response)
+                }
             )
         // console.log("sendMessage", text, id)
     }
     takePicture = async() => {
         if (this.camera) {
-            const options = { quality: 0.7, base64: true, format: 'png', result: 'file', };
+            const options = { quality: 0.7, base64: true, width : 960, format: 'png', result: 'file', };
             const data = await this.camera.takePictureAsync(options);
             console.log("Picture", data)
             let arr = this.state.photoPath

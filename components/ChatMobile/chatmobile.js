@@ -17,7 +17,7 @@ import arrow_down from '../../img/ARROW_DOWN.png'
 import arrow_up from '../../img/ARROW_UP.png'
 import { API_URL, BASE_HOST, WEBSOCKETPORT, LOCALPUSHERPWD, HOMEWORK_ADD_URL,
         instanceLocator, testToken, chatUserName } from '../../config/config'
-import {AddDay, arrOfWeekDays, dateDiff, toYYYYMMDD, instanceAxios, mapStateToProps, prepareMessageToFormat, echoClient} from '../../js/helpersLight'
+import {dateFromYYYYMMDD, AddDay, arrOfWeekDays, dateDiff, toYYYYMMDD, instanceAxios, mapStateToProps, prepareMessageToFormat, echoClient} from '../../js/helpersLight'
 
 // import addMsg from '../../img/addMsg.svg'
 
@@ -145,7 +145,7 @@ class ChatMobile extends Component {
             newMessage: text,
             showEmojiPicker: false,
         });
-        this.inputMessage.value = this.inputMessage.value + emoji.native
+        // this.inputMessage.value = this.inputMessage.value + emoji.native
     }
     initLocalPusher=()=>{
         // let {token} = store.getState().user
@@ -174,7 +174,7 @@ class ChatMobile extends Component {
                     let msg = prepareMessageToFormat(e.message), msgorig = e.message, isSideMsg = true
                     let localChat = this.state.localChatMessages,
                         arrChat = []
-                    // console.log("FILTER-NOT-SSL", this.state.localChatMessages)
+                    console.log("FILTER-SSL", e.message, msg)
                     arrChat = localChat.map(
                         item => {
                             // console.log("181", item)
@@ -185,6 +185,7 @@ class ChatMobile extends Component {
                                     isSideMsg = false
                                     let obj = item
                                     obj.id = msgorig.id
+                                    obj.msg_date = msgorig.msg_date
                                     return obj
                                 }
                                 else {
@@ -205,7 +206,7 @@ class ChatMobile extends Component {
                         messagesNew: this.state.messagesNew.filter(item => !(item.uniqid === JSON.parse(msg).uniqid))
                     })
                     const todayMessages = arrChat.filter(item=>(new Date(item.msg_date).toLocaleDateString())===(new Date().toLocaleDateString()))
-                    const homeworks = arrChat.filter(item=>(item.homework_date!==null))
+                    const homeworks = arrChat.filter(item=>(item.homework_date!==null)).filter(item=>toYYYYMMDD(new Date(item.homework_date))===toYYYYMMDD(AddDay((new Date()), 1)))
 
                     this.props.forceupdate(todayMessages.length, homeworks.length)
                 })
@@ -219,7 +220,7 @@ class ChatMobile extends Component {
                     // console.log("FILTER-NOT-SSL", this.state.localChatMessages)
                     arrChat = localChat.map(
                         item => {
-                            console.log("222", item)
+                            // console.log("222", item)
                             if (item.id === e.message.id) {
 
                                 return e.message
@@ -238,7 +239,7 @@ class ChatMobile extends Component {
                         messagesNew: this.state.messagesNew.filter(item => !(item.uniqid === JSON.parse(msg).uniqid))
                     })
                     const todayMessages = arrChat.filter(item=>(new Date(item.msg_date).toLocaleDateString())===(new Date().toLocaleDateString()))
-                    const homeworks = arrChat.localChatMessages.filter(item=>(item.homework_date!==null))
+                    const homeworks = arrChat.filter(item=>(item.homework_date!==null)).filter(item=>toYYYYMMDD(new Date(item.homework_date))===toYYYYMMDD(AddDay((new Date()), 1)))
 
                     this.props.forceupdate(todayMessages.length, homeworks.length)
                 })
@@ -262,7 +263,7 @@ class ChatMobile extends Component {
                         }
                     )
                     // Если новое и стороннее!!!
-                    // if (isSideMsg) arrChat.push(msgorig)
+                    // if (isSideMsg.log()) arrChat.push(msgorig)
 
                     this.setState({
                         localChatMessages: arrChat,
@@ -270,7 +271,7 @@ class ChatMobile extends Component {
                         messagesNew: this.state.messagesNew.filter(item => !(item.uniqid === JSON.parse(msg).uniqid))
                     })
                     const todayMessages = arrChat.filter(item=>(new Date(item.msg_date).toLocaleDateString())===(new Date().toLocaleDateString()))
-                    const homeworks = arrChat.filter(item=>(item.homework_date!==null))
+                    const homeworks = arrChat.filter(item=>(item.homework_date!==null)).filter(item=>toYYYYMMDD(new Date(item.homework_date))===toYYYYMMDD(AddDay((new Date()), 1)))
 
                     this.props.forceupdate(todayMessages.length, homeworks.length)
                 })
@@ -367,7 +368,7 @@ class ChatMobile extends Component {
         }
     }
     prepareJSON=()=>{
-        console.log("prepareJSON", this.inputMessage.value, this.state.selSubjkey)
+        console.log("prepareJSON", this.state.selSubjkey)
         let {classID, userName, userID, studentId, studentName} = this.props.userSetup
         let text = this.state.curMessage
         let obj = {}
@@ -406,7 +407,7 @@ class ChatMobile extends Component {
                 break;
         }
         console.log("prepareJSON", obj, JSON.stringify(obj))
-        this.inputMessage.value = ''
+        // this.inputMessage.value = ''
         this.setState({curMessage:""})
         this.setState({
             selSubject: false,
@@ -424,6 +425,7 @@ class ChatMobile extends Component {
         obj.userID = objFrom.user_id
         obj.userName = objFrom.user_name
         obj.uniqid = objFrom.uniqid
+        // obj.msg_date = (new Date())
         if (!(objFrom.homework_date === null)) {
             obj.hwdate = objFrom.homework_date
             obj.subjkey = objFrom.homework_subj_key
@@ -433,15 +435,18 @@ class ChatMobile extends Component {
         obj.id = 0
         //"{"senderId":"my-marks","text":"выучить параграф 12","time":"14:59","userID":209,"userName":"Menen",
         // "hwdate":"2019-07-16T21:00:00.000Z","subjkey":"#lngukr","subjname":"Українська мова"}"
-        // console.log('obj', JSON.stringify(obj))
+        console.log('prepareMessageToState', JSON.stringify(obj))
         return JSON.stringify(obj)
     }
     addMessage=()=>{
-        console.log("addMessage")
+
 
         const obj = this.prepareJSON()
+
         if (JSON.parse(obj).message.length) {
             const objForState = this.prepareMessageToState(obj)
+            objForState.msg_date = dateFromYYYYMMDD(toYYYYMMDD(new Date()))
+            console.log("addMessage", objForState)
             if (this.props.isnew) {
                 this.setState({messages: [...this.state.messages, objForState]})
             }
@@ -494,7 +499,7 @@ class ChatMobile extends Component {
                     }))
 
                 if (smile.length) {
-                    this.inputMessage.value = this.inputMessage.value.substring(0, this.inputMessage.value.length - 1) + smile[0].native
+                    // this.inputMessage.value = this.inputMessage.value.substring(0, this.inputMessage.value.length - 1) + smile[0].native
                     e.preventDefault();
                 }
                 console.log("smile", emojiIndex.search(key), e.target.value.slice(-1) + key)
@@ -621,9 +626,18 @@ class ChatMobile extends Component {
                 instanceAxios().post(API_URL + 'chat/add' + (id?`/${id}`:''), text)
                     .then(response => {
                         console.log('ADD_MSG', response)
+                        this.refs.textarea.setNativeProps({'editable':false});
+                        this.refs.textarea.setNativeProps({'editable':true});
+                        this.props.setstate({showFooter : true})
+                        this.setState({curMessage : ''})
                     })
-                    .catch(response=>
-                        console.log("AXIOUS_ERROR", response)
+                    .catch(response=> {
+                            console.log("AXIOUS_ERROR", response)
+                            this.refs.textarea.setNativeProps({'editable': false});
+                            this.refs.textarea.setNativeProps({'editable':true});
+                            this.props.setstate({showFooter: true})
+                            this.setState({curMessage: ''})
+                        }
                     )
                 console.log("sendMessage", text, id)
                 break;
@@ -787,7 +801,7 @@ class ChatMobile extends Component {
                                           onFocus={()=>{this.props.setstate({showFooter : false})}}
                                           onBlur={()=>{this.props.setstate({showFooter : true})}}
                                           placeholder="Введите сообщение..."  type="text"
-                                          ref={input=>{this.inputMessage=input}}
+                                          ref="textarea"
                                           value={this.state.curMessage}
                                 />
                                     {/*<TextInput*/}
