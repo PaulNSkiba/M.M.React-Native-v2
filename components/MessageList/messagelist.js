@@ -271,7 +271,7 @@ class MessageList extends Component {
                     value : item.id
             }
         })
-        console.log("RENDER", this.state, messages)
+        // console.log("RENDER", this.state, messages)
         const daysArr = daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;})
 
         const initialDay = this.getNextStudyDay(daysArr)[0];
@@ -306,7 +306,7 @@ class MessageList extends Component {
                     transparent={false}
                     visible={this.state.showPreview}
                     onRequestClose={() => {
-                        Alert.alert('Modal has been closed.');
+                        // Alert.alert('Modal has been closed.');
                     }}>
                     <View>
                         {messages.length&&this.state.previd?
@@ -340,7 +340,7 @@ class MessageList extends Component {
                     transparent={false}
                     visible={this.state.modalVisible}
                     onRequestClose={() => {
-                        Alert.alert('Modal has been closed.');
+                        // Alert.alert('Modal has been closed.');
                     }}>
                     <View style={styles.modalView}>
                         <Tabs>

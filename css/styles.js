@@ -548,5 +548,29 @@ export default styles = StyleSheet.create({
     },
     isNewsCheckbox : {
         margin : 8,
+    },
+    /* Popup container */
+    popup : {
+        position: "absolute",
+        // cursor: "pointer",
+        // display: inline-block;
+        /*margin: 20px 0;*/
+    },
+/* The actual popup (appears on top) */
+    popuptext : {
+        width: 220,
+        backgroundColor: "#f2b436",
+        color: "#fff",
+        textAlign: "center",
+        borderRadius: 6,
+        paddingTop: 8,
+        paddingBottom : 8,
+        position: "absolute",
+        zIndex: 1,
+        bottom: "125",
+        left: "50%",
+        marginBottom : -63,
+        marginLeft : -170,
     }
+
  });

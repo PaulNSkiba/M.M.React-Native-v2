@@ -136,7 +136,7 @@ class HomeworkBlock extends Component {
                         transparent={false}
                         visible={this.state.showPreview}
                         onRequestClose={() => {
-                            Alert.alert('Modal has been closed.');
+                            // Alert.alert('Modal has been closed.');
                         }}>
                         <View>
                             {homework.length&&this.state.previd?

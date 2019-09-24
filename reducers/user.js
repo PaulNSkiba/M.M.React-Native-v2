@@ -11,7 +11,8 @@ const initialState = {
         logging : false,
         verified : false,
         email : "",
-        loginmsg : ""
+        loginmsg : "",
+        logBtnClicked : false,
 }
 
 export function userReducer(state = initialState, action) {
@@ -27,10 +28,17 @@ export function userReducer(state = initialState, action) {
                 id : 0,
                 token : "",
                 logging : false};
-        case 'USER_LOGGEDIN_DONE' :
-            return {...state, logging: false};
+        case 'USER_LOGGING' :
+            return {...state, logging: true};
+        case 'LOG_BTN_CLICK' :
+            return {...state, logBtnClicked : true};
+        case 'LOG_BTN_UNCLICK' :
+            return {...state, logBtnClicked : false};
+        case 'USER_LOGGEDIN_DONE' : {
+            return {...state, logging: false}
+        };
         case 'USER_PWD_MISSEDMATCH':
-            return {...state, loginmsg: 'Неправильный пароль'};
+            return {...state, loginmsg: action.payload};
         case 'USER_MSG_CLEAR':
             return {...state, loginmsg: ''};
         default:

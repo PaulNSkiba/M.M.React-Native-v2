@@ -65,11 +65,10 @@ class App extends Component {
             .then(res=> {
                 const dataSaved = JSON.parse(res)
 
-                console.log("componentDidMount.0", dataSaved)
+                // console.log("componentDidMount.0", dataSaved)
                 // && !(AsyncStorage.getItem("userSetup") && AsyncStorage.getItem("userSetupDate") === toYYYYMMDD(new Date()))
                 if (!(res === null)) {
-                    console.log("componentDidMount.1", dataSaved)
-
+                    // console.log("componentDidMount.1", dataSaved)
                     // let localstorage = JSON.parse(AsyncStorage.getItem("myMarks.data"))
                     const langLibrary = {}
                     const {email, token} = dataSaved

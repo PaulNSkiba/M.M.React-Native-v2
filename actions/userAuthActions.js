@@ -21,18 +21,32 @@ export const userLoggedIn = (email, pwd, provider, provider_id, langLibrary) => 
         instanceAxios().post(LOGINUSER_URL, JSON.stringify(data), null)
             .then(response => {
                 console.log('USER_LOGGEDIN.1', response.data);
-                // alert('USER_LOGGEDIN.1')
-                dispatch({type: 'USER_LOGGEDIN', payload: response.data, langLibrary : langLibrary});
-                dispatch({type: 'ADD_CHAT_MESSAGES', payload : response.data.chatrows});
-                // пробуем записать в LocalStorage имя пользователя, ID, имя и тип авторизации
-                saveToLocalStorage("myMarks.data", email, response.data)
-                // AsyncStorage.setItem("localChatMessages", response.data.chatrows)
-                // document.body.style.cursor = 'default';
-                dispatch({type: 'APP_LOADED'})
+                switch (response.data.loggedin) {
+                    case false :
+                        dispatch({type: 'USER_PWD_MISSEDMATCH', payload: response.data.message})
+                        dispatch({type: 'LOG_BTN_UNCLICK', payload : false})
+                        // console.log("LOGGEDIN_FALSE", response.data.message)
+                        break;
+                    case true :
+                    // alert('USER_LOGGEDIN.1')
+                        dispatch ({type: 'USER_LOGGING'})
+                        dispatch ({type: 'USER_LOGGEDIN', payload: response.data, langLibrary: langLibrary});
+                        dispatch({type: 'ADD_CHAT_MESSAGES', payload: response.data.chatrows});
+                        // пробуем записать в LocalStorage имя пользователя, ID, имя и тип авторизации
+                        saveToLocalStorage("myMarks.data", email, response.data)
+                        // dispatch({type: 'LOG_BTN_UNCLICK', payload : false})
+                        // AsyncStorage.setItem("localChatMessages", response.data.chatrows)
+                        // document.body.style.cursor = 'default';
+                        // dispatch({type: 'LOG_BTN_UNCLICK', payload : false})
+                        dispatch({type: 'USER_LOGGEDIN_DONE'})
+                        dispatch({type: 'APP_LOADED'})
+
+                        break;
+                }
             })
             .catch(error => {
                 // Список ошибок в отклике...
-                console.log("ERROR_LOGGEDIN", error)
+                console.log("ERROR_LOGGEDIN", error, error.data)
                 // alert('ERROR_LOGGEDIN', email, pwd)
                 // document.body.style.cursor = 'default';
                 dispatch({type: 'USER_PWD_MISSEDMATCH'})

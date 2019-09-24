@@ -10,12 +10,12 @@ import {    Container, Header, Left, Body, Right, Button,
     Form, Item, Input, Label} from 'native-base';
 import { bindActionCreators } from 'redux';
 // import { addFriend } from './FriendActions';
-// import { LOGINUSER_URL } from './config/config'
-import { instanceAxios, mapStateToProps /*, langLibrary as langLibraryF*/ } from '../../js/helpersLight'
-import { LOGINUSER_URL } from '../../config/config'
+import { instanceAxios, mapStateToProps, msgTimeOut /*, langLibrary as langLibraryF*/ } from '../../js/helpersLight'
 import { userLoggedIn, userLoggedInByToken, userLoggedOut } from '../../actions/userAuthActions'
-// import { instanceAxios, mapStateToProps /*, langLibrary as langLibraryF*/ } from './js/helpersLight'
+import Dialog, { DialogFooter, DialogButton, DialogContent } from 'react-native-popup-dialog';
+
 import styles from '../../css/styles'
+import { LOGINUSER_URL } from '../../config/config'
 
 class LoginBlock extends React.Component {
     constructor(props) {
@@ -24,19 +24,71 @@ class LoginBlock extends React.Component {
         this.state = {
             chatMessages : [],
             selectedFooter : 0,
-            showLogin : false,
+            showLogin : true,
             username: '',
             password: '',
             userID: 0,
             userName : '',
+            // buttonClicked : false,
+            // loading : false,
+            // buttonClicked : false,
         }
+        // this.buttonClicked = false
+        this.showLogin = true
         this.onLogin = this.onLogin.bind(this)
+        this.clearError = this.clearError.bind(this)
         // this.onChangeText = this.onChangeText.bind(this)
         // this.RootContainer = this.RootContainer.bind(this)
     }
     componentDidMount() {
+        // this.props.onStartLogging()
+        // this.props.onReduxUpdate("USER_LOGGING")
         // this.nameLogin.focus()
     }
+    shouldComponentUpdate(nextProps, nextState) {
+        const {logging, loginmsg, logBtnClicked} = this.props.user
+        console.log("shouldComponentUpdate", this.props.user,
+            logging, loginmsg,
+            this.state.buttonClicked,
+            this.buttonClicked,
+            logBtnClicked,
+            "test")
+
+        // if ((this.props.userSetup.chatSessionID !== nextProps.userSetup.chatSessionID))
+        //     return false
+        // else
+        // if (!this.state.langLibrary)
+        //     return false
+        // else {
+        //     return true
+        // }
+
+
+        // if (this.props.user.loginmsg.length){
+        //     // this.setState({loading : false})
+        //     // this.props.updateState("showLogin", false)
+        //     return true
+        // }
+        // if (this.props.user.loading) {
+        //     return true
+        // }
+        if (logging) {
+            return true
+        }
+        if ((!logging)&&(!loginmsg.length)&&(logBtnClicked)){
+            this.props.updateState("showLogin", false)
+            this.showLogin = false
+            // console.log('SHOWLOGIN_FALSE')
+            // this.setState({showLogin : false})
+            // this.forceUpdate()
+            this.props.onReduxUpdate("LOG_BTN_UNCLICK")
+            // this.props.onReduxUpdate('USER_LOGGEDIN_DONE')
+            // this.props.onStopLogging()
+
+        }
+        return true
+    }
+
     onChangeText = (key, val) => {
         // console.log("onChangeText", key, val, this.refs)
         this.setState({ [key]: val})
@@ -62,39 +114,75 @@ class LoginBlock extends React.Component {
         // };
         // alert('onLogin', this.state.username, this.state.password)
         // ToDO: Подсветить неверный пароль
+        // console.log("START_LOGIN", "!!!")
+
+        this.props.onReduxUpdate("USER_LOGGING")
+        this.props.onReduxUpdate("LOG_BTN_CLICK")
+
         this.props.onUserLogging(name, pwd, provider, provider_id /*,  langLibraryF(this.state.myCountryCode?this.state.myCountryCode:"GB")*/);
 
-        this.props.updateState("showLogin", false)
-        // instanceAxios().post(LOGINUSER_URL, JSON.stringify(data), null)
-        //     .then(response => {
-        //         console.log('USER_LOGGEDIN.1', response.data);
-        //         this.setState({
-        //             userID : response.data.user.id,
-        //             userName : response.data.user.name,
-        //         })
-        //         this.setState({showLogin : !this.state.showLogin})
-        //         alert('USER_LOGGEDIN.1', response.data.userName)
-        //         dispatch({type: 'USER_LOGGEDIN', payload: response.data, langLibrary : langLibrary});
-        //         dispatch({type: 'ADD_CHAT_MESSAGES', payload : response.data.chatrows});
-        //         // пробуем записать в LocalStorage имя пользователя, ID, имя и тип авторизации
-        //         // saveToLocalStorage("myMarks.data", email, response.data)
-        //         // window.localStorage.setItem("localChatMessages", response.data.chatrows)
-        //         // document.body.style.cursor = 'default';
-        //         dispatch({type: 'APP_LOADED'})
-        //     })
-        //     .catch(error => {
-        //         // Список ошибок в отклике...
-        //         console.log("ERROR_LOGGEDIN", error)
-        //         alert('ERROR_LOGGEDIN ' + error)
-        //         // document.body.style.cursor = 'default';
-        //         dispatch({type: 'USER_PWD_MISSEDMATCH'})
-        //         dispatch({type: 'APP_LOADED'})
-        //     })
+        // console.log("AFTER_LOGGING", this.props.user)
+        // this.setState({buttonClicked : true})
+        // this.buttonClicked = true
+
+        //
+        // if (!this.props.user.loginmsg.length&&!this.props.user.logging)
+        // this.props.updateState("showLogin", false)
+    }
+    clearError(){
+        console.log("clearError",this.props.user)
+        // this.props.user.loginmsg.length&&setTimeout(this.props.onClearErrorMsg(), msgTimeOut)
+        this.props.onReduxUpdate("LOG_BTN_UNCLICK")
+        this.props.onStopLogging()
+        this.props.user.loginmsg.length&&this.props.onClearErrorMsg()
+        // this.setState({buttonClicked : false})
+        // this.buttonClicked = false
     }
     render() {
+
+        const {logging, loginmsg, logBtnClicked} = this.props.user
+        const showModal = this.showLogin&&logBtnClicked&&(!loginmsg.length)
+        console.log("RENDER_LOGIN", showModal, this.state.showLogin, logBtnClicked, !loginmsg.length, this.showLogin)
         return (
             <View style={{backgroundColor : "#fff"}}>
                 <Form>
+                    {/*<View>*/}
+                        {/*<Dialog*/}
+                            {/*visible={showModal}*/}
+                            {/*dialogStyle={{ backgroundColor: "#1890e6",  color: "#fff" }}>*/}
+                            {/*<DialogContent style={{paddingTop : 20, paddingBottom : 20}}>*/}
+                                {/*<Text style={{color : "#fff"}}>{"LOADING..."}</Text>*/}
+                            {/*</DialogContent>*/}
+                        {/*</Dialog>*/}
+                    {/*</View>*/}
+                    {/*{showModal?*/}
+                        {/*<View style={{  backgroundColor :  "#1890e6", color : "#fff",*/}
+                                        {/*width : 80, height : 40, borderRadius : 20,*/}
+                                        {/*position : "absolute", marginTop : "50%", marginLeft : "50%"}}>*/}
+                            {/*<Text style={{color : "#fff"}}>{"LOADING..."}</Text>*/}
+                        {/*</View>:*/}
+                        {/*null}*/}
+                     <View>
+                         <Dialog
+                             visible={loginmsg.length?true:false}
+                             dialogStyle={{ backgroundColor: "#1890e6",  color: "#fff" }}
+                             footer={
+                                <DialogFooter>
+                                     <DialogButton
+                                        text="OK"
+                                        onPress={this.clearError}
+                                    />
+                                 </DialogFooter>
+                            }
+                        >
+                             <DialogContent style={{paddingTop : 20, paddingBottom : 20}}>
+                                 <Text style={{color : "#fff"}}>{this.props.user.loginmsg}</Text>
+                             </DialogContent>
+                         </Dialog>
+                     </View>
+
+
+
                     <Item floatingLabel>
                         <Label>Email</Label>
                         <Input ref="nameLogin"/*ref={ (c) => this.nameLogin = c }*/
@@ -104,13 +192,10 @@ class LoginBlock extends React.Component {
                     </Item>
                     <Item floatingLabel last>
                         <Label>Пароль</Label>
-                        <Input secureTextEntry={true} ref="pwdLogin"
+                        <Input secureTextEntry={true}
+                               ref="pwdLogin"
                                onChangeText={val => this.onChangeText('password', val)}/>
                     </Item>
-                    {/*<Item></Item>*/}
-                    {/*<Item></Item>*/}
-                    {/*<Item></Item>*/}
-                    {/*<Item></Item>*/}
                     <Button iconRight full info style={styles.inputButton} onPress={() => this.onLogin()}>
                         <Text style={styles.loginButton}>Логин</Text>
                     </Button>
@@ -160,9 +245,10 @@ const mapDispatchToProps = dispatch => {
         onStudentChartSubject  : value => {
             return dispatch({type: 'UPDATE_STUDENT_CHART_SUBJECT', payload: value})
         },
-        onStopLogging : ()=> dispatch({type: 'USER_LOGGEDIN_DONE', payload: []}),
+        onStopLogging : ()=> dispatch({type: 'USER_LOGGEDIN_DONE'}),
         onStopLoading : ()=> dispatch({type: 'APP_LOADED'}),
         onStartLoading : ()=> dispatch({type: 'APP_LOADING'}),
+        // onStartLogging : ()=> dispatch({type: 'USER_LOGGING'}),
         onChangeStepsQty : (steps)=>dispatch({type: 'ENABLE_SAVE_STEPS', payload : steps})
     })
 }
