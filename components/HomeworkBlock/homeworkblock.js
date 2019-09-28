@@ -48,7 +48,7 @@ class HomeworkBlock extends Component {
     getHomeworkItems=arr=>{
         return ( arr.map((item, key)=> {
             let msg = prepareMessageToFormat(item, true)
-            let hw = msg.hasOwnProperty('hwdate')&&(!(msg.hwdate===undefined))?(toLocalDate(msg.hwdate, "UA"))+':'+msg.subjname:''
+            let hw = msg.hasOwnProperty('hwdate')&&(!(msg.hwdate===undefined))?(toLocalDate(msg.hwdate, "UA", false, false))+':'+msg.subjname:''
             let i = key
             let isImage = false
             if (item.attachment3!==null) {
@@ -176,7 +176,7 @@ class HomeworkBlock extends Component {
                                                     console.log("onContentSizeChange", contentHeight)
                                                     this.refs.scrollViewHW.scrollToEnd()
                                                 }}>
-                                                {this.getHomeworkItems(homework)}
+                                                {homework.length?this.getHomeworkItems(homework):null}
                                             </ScrollView>
                                         </View>
                                         <View style={{flex : 1}}>

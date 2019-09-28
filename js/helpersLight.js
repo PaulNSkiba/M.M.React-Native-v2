@@ -465,7 +465,7 @@ export function dateFromTimestamp(timestamp) {
 
 // -> Wed Jun 09 2010 14:12:01 GMT+0100 (BST)
 }
-export function toLocalDate(d, countryCode, withTime) {
+export function toLocalDate(d, countryCode, withTime, withOutYear) {
     const   yyyy = d.getFullYear().toString().slice(-2),
             mm = (d.getMonth() + 101).toString().slice(-2),
             dd = (d.getDate() + 100).toString().slice(-2),
@@ -476,14 +476,14 @@ export function toLocalDate(d, countryCode, withTime) {
     // console.log("toLocalDate", `${dd}/${mm}/${yyyy}${withTime?(' ' +hh+':'+mi):""}`)
     switch (countryCode) {
         case 'UA':
-            date = `${dd}/${mm}/${yyyy}`
+            date = withOutYear?`${dd}/${mm}`:`${dd}/${mm}/${yyyy}`
             if (withTime)
                 return date + ' ' + `${hh}:${mi}`
             else
                 return date
             break;
         default :
-            date = `${dd}/${mm}/${yyyy}`
+            date = withOutYear?`${dd}/${mm}`:`${dd}/${mm}/${yyyy}`
             if (withTime)
                 return date + ' ' + `${hh}:${mi}`
             else

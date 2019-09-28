@@ -4,7 +4,7 @@
 import React, { Component } from 'react'
 import { connect } from 'react-redux'
 import { store } from '../../store/configureStore'
-import { StyleSheet, Text, View, Image, Modal, TextInput } from 'react-native';
+import { StyleSheet, Text, View, Image, Modal, TextInput, TouchableWithoutFeedback } from 'react-native';
 import { Icon } from 'react-native-elements'
 
 import {    Container, Header, Left, Body, Right, Button,
@@ -479,8 +479,8 @@ class ChatMobile extends Component {
             this.sendMessage(obj, 0, false)
         }
         else {
-            // console.log('e', e.target.value, e.target.value.slice(-1), e.key)
-            if ((e.target.value.slice(-1) === ':' && (key.trim().length)) || key===')' || key==='(') {
+            console.log('e', e.target.value, e.target.value.slice(-1), key, e.target.value.length>=6&&e.target.value.slice(-6))
+            if ((e.target.value.slice(-1) === ':' && (!(e.target.value.length>=6&&e.target.value.slice(-6)==='http:/'))&&(!(e.target.value.length>=7&&e.target.value.slice(-7)==='https:/')) && (key.trim().length)) || key===')' || key==='(') {
                 console.log('emojiIndex',
                 emojiIndex
                     .search(e.target.value.slice(-1)+key)
@@ -690,7 +690,8 @@ class ChatMobile extends Component {
         //         native: o.native,
         //     })))
 
-        if (val.length > 1) {
+        console.log("onChangeText", val.length>=6&&val.slice(-6))
+        if (val.length > 1&&(!(val.length>=6&&val.slice(-6)==='http:/'))&&(!(val.length>=7&&val.slice(-7)==='https:/'))) {
             let smile = emojiIndex
                 .search(val.slice(-2))
                 .filter(item => item.emoticons.indexOf(val.slice(-2)) >= 0)
@@ -794,7 +795,9 @@ class ChatMobile extends Component {
                             {/*>*/}
                                 {/*<Smile />*/}
                             {/*</Button>*/}
+
                             <View style={{flex: 7}}>
+
                                 <Textarea style={styles.msgAddTextarea}
                                           onKeyPress={this._handleKeyDown}
                                           onChangeText={text=>this.onChangeText('curMessage', text)}

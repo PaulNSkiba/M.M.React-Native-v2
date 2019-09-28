@@ -212,9 +212,9 @@ export default styles = StyleSheet.create({
     },
     versionNumber : {
         position:"absolute",
-        fontSize : 10,
-        left : 3,
-        top : -22,
+        // fontSize : 10,
+        // left : 3,
+        // top : -22,
         color : "#4472C4"
         // borderWidth: 0.5,
         // borderColor : "black",
@@ -571,6 +571,15 @@ export default styles = StyleSheet.create({
         left: "50%",
         marginBottom : -63,
         marginLeft : -170,
+    },
+    answer : {
+        backgroundColor : "#C6EFCE",
+        borderRadius : 10,
+        marginLeft : 5,
+        paddingTop : 4,
+        paddingBottom : 4,
+        paddingLeft : 8,
+        paddingRight : 8,
     }
 
  });

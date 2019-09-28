@@ -2,16 +2,17 @@
  * Created by Paul on 13.05.2019.
  */
 import React, { Component } from 'react'
-// import ScrollToBottom from 'react-scroll-to-bottom';
 import { StyleSheet, Text, View, Image, ScrollView,
-        TouchableHighlight, Modal, Radio, TouchableOpacity } from 'react-native';
+        TouchableHighlight, Modal, Radio, TouchableOpacity, TouchableWithoutFeedback } from 'react-native';
 import {    Container, Header, Left, Body, Right, Button,
     Icon, Title, Content,  Footer, FooterTab, TabHeading, Tabs, Tab, Badge,
     Form, Item, Input, Label, Textarea, CheckBox, ListItem, Thumbnail } from 'native-base';
 import RadioForm from 'react-native-radio-form';
 import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, AddDay, toYYYYMMDD, daysList, toLocalDate} from '../../js/helpersLight'
 import {SingleImage,wrapperZoomImages,ImageInWraper} from 'react-native-zoom-lightbox';
+import LinkPreviewEx from '../LinkPreviewEx/linkpreviewex'
 import { connect } from 'react-redux'
+// import ScrollToBottom from 'react-scroll-to-bottom';
 // import MicrolinkCard from '@microlink/react';
 // import InvertibleScrollView from 'react-native-invertible-scroll-view';
 // import { css } from 'glamor';
@@ -441,7 +442,7 @@ class MessageList extends Component {
                     ref="scrollView"
                     onContentSizeChange={( contentWidth, contentHeight ) => {
                         // this._contentHeight = contentHeight
-                        console.log("onContentSizeChange", contentHeight)
+                        // console.log("onContentSizeChange", contentHeight)
                         this.refs.scrollView.scrollToEnd()
                     }}
                 >
@@ -465,14 +466,19 @@ class MessageList extends Component {
                                 if ((message.attachment3!==null)&&(message.attachment3!==undefined)) {
                                     isImage = true
                                 }
-                                // urlMatches.forEach(link => {
-                                //     const startIndex = text.indexOf(link);
-                                //     const endIndex = startIndex + link.length;
-                                //     text = insertTextAtIndices(text, {
-                                //         [startIndex]: `<a href="${link}" target="_blank" rel="noopener noreferrer" class="embedded-link">`,
-                                //         [endIndex]: '</a>',
-                                //     });
-                                // });
+                                urlMatches.forEach(link => {
+                                    const startIndex = text.indexOf(link);
+                                    const endIndex = startIndex + link.length;
+                                    text = insertTextAtIndices(text, {
+                                        [startIndex]: `<a href="${link}" target="_blank" rel="noopener noreferrer" class="embedded-link">`,
+                                        [endIndex]: '</a>',
+                                    });
+                                });
+                                let LinkPreviews = null;
+                                if (urlMatches.length) {
+                                    // console.log("urlMatches", urlMatches)
+                                     LinkPreviews = urlMatches.map(link => <LinkPreviewEx key={"url" + i}  uri={link}/>)
+                                }
                                 // const LinkPreviews = urlMatches.map(link => <MicrolinkCard  key={"url"+i} url={link} />);
                                 // console.log("464: MESSAGE", message,
                                 //     msg,
@@ -484,20 +490,23 @@ class MessageList extends Component {
                                 // if (msg.hasOwnProperty('hwdate')&&(!(msg.hwdate===undefined))&&(!(msg.hwdate===null))) {
                                 //     console.log("HWDATE", msg, msg.hwdate)
                                 // }
-                                let hw = msg.hasOwnProperty('hwdate')&&(!(msg.hwdate===undefined))&&(!(msg.hwdate===null))?(toLocalDate(msg.hwdate.lenght===8?dateFromYYYYMMDD(msg.hwdate):msg.hwdate, "UA"))+':'+msg.subjname:''
+                                let hw = msg.hasOwnProperty('hwdate')&&(!(msg.hwdate===undefined))&&(!(msg.hwdate===null))?(toLocalDate(msg.hwdate.lenght===8?dateFromYYYYMMDD(msg.hwdate):msg.hwdate, "UA", false, false))+':'+msg.subjname:''
                                 let ownMsg = (username===this.props.userSetup.userName)
                                 // console.log("469: MESSAGE", this.curMsgDate, message)
 
                                 return (this.props.hwdate===null||(!(this.props.hwdate===null)&&((new Date(this.props.hwdate)).toLocaleDateString()===(new Date(msg.hwdate)).toLocaleDateString())))?
 
                                         <View key={i} id={"msg-"+msg.id} className={"message-block"}
-                                              onClick={()=>i!==this.state.editKey?this.setState({editKey:-1}):null}
-                                              onDoubleClick={(e)=>this.onMessageDblClick(e)}>
+                                              // onClick={()=>i!==this.state.editKey?this.setState({editKey:-1}):null}
+                                              // onDoubleClick={(e)=>this.onMessageDblClick(e)}
+                                        >
                                             {/*{console.log("MESSAGE_DATE", message, message.msg_date, new Date(message.msg_date))}*/}
                                             {this.getDateSeparator(message.msg_date.length===8?dateFromYYYYMMDD(message.msg_date):new Date(message.msg_date))}
 
-                                            <TouchableOpacity key={i} id={"msgarea-"+msg.id}
-                                                                onLongPress={(message.user_id===userID)?()=>this.onLongPressMessage(msg.id):null}>
+                                            <TouchableWithoutFeedback   key={i} id={"msgarea-"+msg.id}
+                                                                        delayLongPress={1000}
+                                                                        onLongPress={(message.user_id===userID)?()=>this.onLongPressMessage(msg.id):null}
+                                            >
                                             {/*style={this.state.editKey===i?{color:"white", backgroundColor : "white", border: "white 2px solid"}:null}*/}
                                             <View key={msg.id}
                                                 style={ownMsg?
@@ -519,17 +528,15 @@ class MessageList extends Component {
                                                 {/*style={this.state.editKey===i?{visibility:"hidden"}:null}*/}
                                                 <View key={'id'+i} style={ownMsg?styles.msgRightAuthor:styles.msgLeftAuthor} ><Text style={styles.msgAuthorText}>{username}</Text></View>
 
-                                                {/*{urlMatches.length > 0 ? (*/}
-                                                {/*<View key={'msg'+i} id={"msg-text-"+i} style={this.state.editKey===i?{visibility:"hidden"}:null} className="msg-text">*/}
-                                                {/*<span*/}
-                                                {/*dangerouslySetInnerHTML={{*/}
-                                                {/*__html: text,*/}
-                                                {/*}}*/}
-                                                {/*/>*/}
-
-                                                {/*{LinkPreviews}*/}
-                                                {/*</View>*/}
-                                                {/*) : (*/}
+                                                {urlMatches.length > 0?(
+                                                    <View key={'msgpreview'+i} id={"msg-text-"+i} style={this.state.editKey===i?{visibility:"hidden"}:null} className="msg-text">
+                                                        {/*<span*/}
+                                                            {/*dangerouslySetInnerHTML={{*/}
+                                                                {/*__html: text, }}*/}
+                                                        {/*/>*/}
+                                                        {LinkPreviews}
+                                                    </View>)
+                                                    :null}
 
                                                 {/* style={this.state.editKey===i?{visibility:"hidden"}:null} */}
                                                 {/*{console.log('460', message, isImage, message.attachment3)}*/}
@@ -553,7 +560,7 @@ class MessageList extends Component {
                                                     :<View key={'msg'+i} id={"msg-text-"+i} style={styles.msgText}>
                                                         <Text>{msg.text}</Text>
                                                      </View>}
-                                                {/*    )} */}
+
                                                 {/*style={this.state.editKey===i?{visibility:"hidden"}:null}*/}
                                                 <View style={msg.id?styles.btnAddTimeDone:styles.btnAddTime}>
                                                     <Text style={msg.id?styles.btnAddTimeDone:styles.btnAddTime}>{msg.time}</Text>
@@ -565,7 +572,7 @@ class MessageList extends Component {
                                                 </View>:null}
 
                                             </View>
-                                            </TouchableOpacity>
+                                            </TouchableWithoutFeedback>
                                         </View>
                                     :null
 

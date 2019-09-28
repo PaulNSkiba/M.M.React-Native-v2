@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { connect } from 'react-redux';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, Image } from 'react-native';
 import {    Container, Header, Left, Body, Right, Button,
             Title, Content,  Footer, FooterTab,
             Form, Item, Input, Label} from 'native-base';
@@ -14,10 +14,13 @@ import { instanceAxios, mapStateToProps /*, langLibrary as langLibraryF*/ } from
 import { LOGINUSER_URL, version } from '../../config/config'
 import { userLoggedIn, userLoggedInByToken, userLoggedOut } from '../../actions/userAuthActions'
 import LogginByToken from '../../components/LoggingByToken/loggingbytoken'
-// import { instanceAxios, mapStateToProps /*, langLibrary as langLibraryF*/ } from './js/helpersLight'
 import styles from '../../css/styles'
 import NetInfo from "@react-native-community/netinfo";
 import { RFPercentage, RFValue } from "react-native-responsive-fontsize";
+import Logo from '../../img/LogoMyMsmall.png'
+// import {Image} from "react-native-elements/src/index.d";
+
+// import { instanceAxios, mapStateToProps /*, langLibrary as langLibraryF*/ } from './js/helpersLight'
 
 class HeaderBlock extends React.Component {
     constructor(props) {
@@ -53,22 +56,23 @@ class HeaderBlock extends React.Component {
                 <LogginByToken email={this.props.email} token={this.props.token} logout={false}/>:
                 null}
             <Left>
-                <Text style={styles.versionNumber}>{version}</Text>
+                <Image source={Logo}/>
+
             </Left>
             <Body style={{position : "relative", flex: 1, flexDirection : "row"}}>
                 <View>
                 <Title style={styles.myTitle}>My.Marks</Title>
                 </View>
                 <View>
-                    <Text style={[{fontSize: RFPercentage(1.5), position : "relative", left : 0, top : 0},this.state.netOnline?{color : "#080"}:{color : "#800"}]}>
-                    {this.state.netOnline&&this.state.netType?"online":"offline"}
+                    <Text style={[{fontSize: RFPercentage(1), position : "relative", left : 0, top : 0},this.state.netOnline?{color : "#080"}:{color : "#800"}]}>
+                        {this.state.netOnline&&this.state.netType?this.state.netType:null}
                     </Text>
-                </View>
+                 </View>
             </Body>
             <Right>
                 <View style={{positon:"relative"}}>
-
-            {/*<Icon style={styles.menuIcon} name='menu' />*/}
+                    <Text style={[{fontSize: RFPercentage(1), position : "absolute", right : 0, top : -5, color : "#4472C4"}]}>{version}</Text>
+                    {/*<Icon style={styles.menuIcon} name='menu' />*/}
                     <View >
                         <Button transparent>
                             {this.props.userSetup.userID?<Text style={{color : "#4472C4", fontWeight : "700"}}>{this.props.userSetup.userName}  </Text>:null}

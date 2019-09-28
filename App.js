@@ -9,7 +9,8 @@
 import React, {Fragment, Component} from 'react';
 import { SafeAreaView,  StyleSheet,  ScrollView,  View,  Text,  StatusBar,} from 'react-native';
 import { Avatar, Badge, Icon, withBadge } from 'react-native-elements'
-// import HideableView from 'react-native-hideable-view';
+import axios from 'axios';
+import { API_URL }        from './config/config'
 import {    Container, Header, Left, Body, Right, Button,
             Title, Content,  Footer, FooterTab,
             Form, Item, Input, Label} from 'native-base';
@@ -28,6 +29,7 @@ import ButtonWithBadge from './components/ButtonWithBadge/buttonwithbadge'
 import { store } from './store/configureStore'
 import styles from './css/styles'
 
+// import HideableView from 'react-native-hideable-view';
 // import LogginByToken from './components/LoggingByToken/loggingbytoken'
 // import { mapStateToProps, instanceAxios, toYYYYMMDD, langLibrary as langLibraryF } from './js/helpersLight'
 // import { userLoggedIn, userLoggedInByToken, userLoggedOut } from './actions/userAuthActions'
@@ -54,13 +56,16 @@ class App extends Component {
         // this.RootContainer = this.RootContainer.bind(this)
         // this.userEmail = '';
         // this.userToken = '';
+        this.session_id = '';
         this.updateState = this.updateState.bind(this)
         this.setstate = this.setstate.bind(this)
     }
 
     componentDidMount() {
+        console.log("COMPONENT_DID_MOUNT")
         // AsyncStorage.removeItem("myMarks.data");
         // const dataSaved = this._getStorageValue("myMarks.data")
+        this.getSessionID();
         AsyncStorage.getItem("myMarks.data")
             .then(res=> {
                 const dataSaved = JSON.parse(res)
@@ -79,6 +84,28 @@ class App extends Component {
     )
     }
 
+    getSessionID(){
+        let session_id = ''
+        let header = {
+            headers: {
+                'Content-Type': 'x-www-form-urlencoded',
+                'Access-Control-Allow-Origin' : '*',
+                'Access-Control-Allow-Methods' : 'GET',
+            }
+        }
+        axios.get(API_URL +'session', [], header)
+            .then(response=>{
+                session_id = response.data.session_id
+                this.session_id = session_id;
+                // this.props.onReduxUpdate('CHAT_SESSION_ID', session_id)
+                AsyncStorage.setItem('chatSessionID', session_id)
+                console.log("session", session_id);
+            })
+            .catch(response => {
+                console.log("session_error", response);
+            })
+        return session_id
+    }
     // RootContainer =(state)=>
     // ConnectedRoot = connect(mapStateToProps, mapDispatchToProps)(this.RootContainer(this.state));
     updateState=(stateKey, stateValue)=>{
@@ -138,7 +165,9 @@ class App extends Component {
                                 <HelpBlock     hidden={this.state.selectedFooter!==3}
                                                showLogin={this.state.showLogin}
                                                forceupdate={this.fireRender}
-                                               setstate={this.setstate}/>
+                                               setstate={this.setstate}
+                                               session_id={this.session_id}
+                                />
                             </View>:null}
                         {this.state.selectedFooter===4?
                             <View style={styles.absoluteView}>

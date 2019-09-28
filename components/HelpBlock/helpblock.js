@@ -17,6 +17,8 @@ import { API_URL, BASE_HOST, WEBSOCKETPORT, LOCALPUSHERPWD, HOMEWORK_ADD_URL,
 import { Icon } from 'react-native-elements'
 import { RFPercentage, RFValue } from "react-native-responsive-fontsize";
 import { connect } from 'react-redux'
+import { AsyncStorage } from 'react-native';
+// import {Text} from "react-native-elements/src/index.d";
 
 const insertTextAtIndices = (text, obj) => {
     return text.replace(/./g, function(character, index) {
@@ -42,7 +44,7 @@ class HelpBlock extends Component {
             curMessage : '',
             showFooter : true,
         };
-
+        this.session_id =  AsyncStorage.getItem('chatSessionID')
         // this.onMessageDblClick = this.onMessageDblClick.bind(this)
         // this.onSaveMsgClick=this.onSaveMsgClick.bind(this)
         // this.onCancelMsgClick=this.onCancelMsgClick.bind(this)
@@ -95,6 +97,7 @@ class HelpBlock extends Component {
             "msg_date" : "${toYYYYMMDD(new Date())}",
             "msg_header" : "${this.state.isNews?"Внесены следующие изменения":""}",
             "question" : "${""}",
+            "answer" : "${""}",
             "is_news" : ${this.state.isNews?1:null}
         }`
         console.log("addserv", text, JSON.stringify(text))
@@ -102,24 +105,29 @@ class HelpBlock extends Component {
         text.question = this.state.curMessage
         instanceAxios().post(API_URL + 'chat/addserv', JSON.parse(JSON.stringify(text)))
             .then(response => {
-                console.log('ADD_MSG', response)
+                // console.log('ADD_MSG', response)
                 if (this.state.isNews) {
                     let arr = this.state.news
-                    arr.unshift(text)
-                    // this.setState({news : arr})
+                    // console.log("NEWS", text)
+                    arr.unshift(response.data)
 
-                    if (!this.state.isNews)
-                    this.sendMail('paul.n.skiba@gmail.com', this.state.curMessage)
                     this.refs.textarea.setNativeProps({'editable':false});
                     this.refs.textarea.setNativeProps({'editable':true});
                     this.props.setstate({showFooter : true})
                     this.setState({news : arr, curMessage : '', showFooter : true})
                 }
                 else {
+                    // console.log("QUESTION", text)
                     let arr = this.state.questions
-                    arr.unshift(text)
+
+                    arr.unshift(response.data)
+
+                    this.sendMail('paul.n.skiba@gmail.com', this.state.curMessage)
+
                     this.refs.textarea.setNativeProps({'editable':false});
                     this.refs.textarea.setNativeProps({'editable':true});
+
+                    console.log("SETSTATE", arr)
                     this.props.setstate({showFooter : true})
                     this.setState({questions : arr, curMessage : '', showFooter : true})
                 }
@@ -133,29 +141,30 @@ class HelpBlock extends Component {
         console.log("sendMessage", text, API_URL + 'chat/addserv')
     }
     sendMail=(mail, text)=>{
-        const {session_id, userName, classID, userID} = this.props.userSetup
+        console.log("sentMail", this.props.userSetup)
+        const {chatSessionID, userName, classID, userID} = this.props.userSetup
+        // const session_id = AsyncStorage.getItem('chatSessionID')
         // let author = !this.inputName===undefined?this.inputName.value:"",
         //     mailAuthor = !this.inputEmail===undefined?this.inputEmail.value:""
-        let json = `{   "session_id":"${session_id}",
+        let json = `{   "session_id":"${this.props.session_id}",
                         "mailService":"${mail}",
                         "author":"${userName}",
                         "mailAuthor":"${userName}",
                         "text":"${text}",
                         "classID":${classID},
                         "userID":${userID}}`
-        console.log("547", json)
+
         let data = JSON.parse(json);
-        if (true) {
+        console.log("547", JSON.stringify(data), API_URL + 'mail')
             instanceAxios().post(API_URL + 'mail', JSON.stringify(data))
                 .then(response => {
                     console.log('SEND_MAIL', response)
                     // dispatch({type: 'UPDATE_STUDENTS_REMOTE', payload: response.data})
                 })
                 .catch(response => {
-                    console.log("AXIOUS_ERROR", response);
+                    console.log("SEND_MAIL_ERROR", response);
                     // dispatch({type: 'UPDATE_STUDENTS_FAILED', payload: response.data})
                 })
-        }
     }
     onChangeText = (key, val) => {
         this.setState({ [key]: val})
@@ -187,6 +196,7 @@ class HelpBlock extends Component {
                                                                 justifyContent: "center",
                                                             }}>
                                                             <Text style={{fontWeight : "700", color : "#4472C4"}}>{item.msg_header}</Text>
+                                                            {/*{console.log("RENDER_NEWS", item, item.question, this.state.news)}*/}
                                                              {item.question.split("\n").map((item, key)=> {
                                                                     return <Text key={key}>{item}</Text>
                                                                 }
@@ -203,7 +213,7 @@ class HelpBlock extends Component {
                                                             </Body>
                                                         </TouchableOpacity>
                                                     <Right style={{ position : "absolute", right : 5, bottom : 2}}>
-                                                        <Text style={{fontSize: RFPercentage(1.4), color : "#4472C4"}} note>{toLocalDate(dateFromTimestamp(item.created_at), "UA", true)}</Text>
+                                                        <Text style={{fontSize: RFPercentage(1.4), color : "#4472C4"}} note>{toLocalDate(dateFromTimestamp(item.created_at), "UA", true, false)}</Text>
                                                     </Right>
                                                 </CardItem>
                                             </Card>)}
@@ -223,7 +233,7 @@ class HelpBlock extends Component {
                                                 {/*<Text>Блок вопросов</Text>*/}
                                                     {this.state.questions.map((item, i)=>
                                                     <Card key={i}>
-                                                        {/*{console.log("question", (new Date(item.created_at)), item.created_at)}*/}
+                                                        {/*{console.log("RENDER_QUESTIONS", item, item.question, this.state.questions)}*/}
                                                         <CardItem>
                                                             <TouchableOpacity
                                                                 onPress={() => console.log("onPressQuestion")/*this.addToChat(JSON.stringify(item.data)*/}>
@@ -237,11 +247,20 @@ class HelpBlock extends Component {
                                                                 {/*<Text style={{fontWeight : "700", color : "#4472C4"}}>Внесены следущие изменения:</Text>*/}
                                                                 {/*<Text>Когда будет доделан логин через социальные сети?</Text>*/}
                                                                     <Text>{item.question}</Text>
+                                                                    {item.answer!==null?
+
+                                                                        <View style={styles.answer}>
+                                                                            <Text>{item.answer}</Text>
+                                                                        </View>
+
+                                                                        :null}
                                                                 </Body>
                                                             </TouchableOpacity>
+
                                                             <Right style={{ position : "absolute", right : 5, bottom : 2}}>
-                                                                <Text style={{fontSize: RFPercentage(1.4), color : "#4472C4"}} note>{toLocalDate(dateFromTimestamp(item.created_at), "UA", true)}</Text>
+                                                                <Text style={{fontSize: RFPercentage(1.4), color : "#4472C4"}} note>{toLocalDate(dateFromTimestamp(item.created_at), "UA", true, false)}</Text>
                                                             </Right>
+
                                                         </CardItem>
                                                     </Card>)}
                                                 </ScrollView>
