@@ -189,12 +189,12 @@ export default styles = StyleSheet.create({
         width : "100%",
     },
     inputButton : {
-        marginTop : 30,
-        color : "white",
+        marginTop : 10,
+        color : "#fff",
     },
-    loginButton : {
-        color : "white",
-        // fontWeight : 900,
+    inputButtonDark : {
+        marginTop : 10,
+        color : "#000",
     },
     tabColor : {
         color : "#4472C4",

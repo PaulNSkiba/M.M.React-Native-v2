@@ -12,7 +12,7 @@ import { Avatar, Badge, Icon, withBadge } from 'react-native-elements'
 import axios from 'axios';
 import { API_URL }        from './config/config'
 import {    Container, Header, Left, Body, Right, Button,
-            Title, Content,  Footer, FooterTab,
+            Title, Content,  Footer, FooterTab, Spinner,
             Form, Item, Input, Label} from 'native-base';
 import { AsyncStorage } from 'react-native';
 import {Provider, connect} from 'react-redux';
@@ -51,6 +51,7 @@ class App extends Component {
             showFooter : true,
             userEmail : '',
             userToken : '',
+            isSpinner : false,
         }
         // this.onLogin = this.onLogin.bind(this)
         // this.RootContainer = this.RootContainer.bind(this)
@@ -131,6 +132,7 @@ class App extends Component {
                <Container style={this.state.showFooter?{flex : 1 }:{flex : 1 /*, marginBottom : 40 */}}>
                     <StatusBar barStyle="dark-content" hidden={false} />
                     <HeaderBlock updateState={this.updateState} email={this.state.userEmail} token={this.state.userToken} footer={this.state.selectedFooter}/>
+                   {this.state.isSpinner?<Spinner color="#7DA8E6"/>:null}
                     <Container >
                         {/*<View style={{flex : 1}}>*/}
                         {/*<HideableView visible={this.state.selectedFooter===1} noAnimation={true}>*/}

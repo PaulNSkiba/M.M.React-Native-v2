@@ -39,6 +39,9 @@ class MessageList extends Component {
             currentHomeworkID : 0,
             showPreview : false,
             previd : 0,
+            curSubjKey : -1,
+            curDateKey : null,
+            curMessage : null,
             };
         this.curMsgDate = new Date('19000101')
         this.onMessageDblClick = this.onMessageDblClick.bind(this)
@@ -82,11 +85,32 @@ class MessageList extends Component {
         // console.log("onMessageDblClick", "e.target.id:", e.target.id, "key", key, "this.state.editKey", this.state.editKey)
         if (Number(key)!==this.state.editKey) this.setState({editKey : Number(key)})
     }
-    onLongPressMessage=(id)=>{
-        // console.log(e, e.nativeEvent)
-        this.setState({modalVisible : true, currentHomeworkID : id})
-        //alert(id)
-        // alert(e.nativeEvent.id)
+    onLongPressMessage=(id, hwSubjID, hwOnDate, text)=>{
+        const subjects = this.props.userSetup.selectedSubjects.map(item=>{
+            return {
+                label : item.subj_name_ua.toUpperCase(),
+                value : item.id
+            }
+        })
+        let curSubjKey = -1, curSubjValue = 0
+            for (let i = 0; i < subjects.length; i++){
+                // console.log("Cicle", hwSubjID, subjects[i].value, i, subjects)
+                if (hwSubjID===subjects[i].value) {
+                    curSubjKey = i;
+                    curSubjValue = subjects[i].value
+                    break;
+                }
+            }
+            console.log("OnLongPress", curSubjKey, hwOnDate)
+        // alert(curSubjKey)
+        // curSubjKey = curSubjKey.length?curSubjKey[0]:-1
+        // curSubjKey = -1
+        const daysArr = daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;})
+        this.setState({ modalVisible : true, currentHomeworkID : id, curSubjKey,
+                        curDateKey : hwOnDate, selSubject : { value : curSubjValue} ,
+                        selDate : this.getCurStudyDay(daysArr, new Date(hwOnDate))[1],
+                        curMessage : text})
+
     }
     setModalVisible(visible, setHomework) {
         let {selSubject, selDate, currentHomeworkID} = this.state
@@ -156,6 +180,19 @@ class MessageList extends Component {
                 // this.setState({selDate : item})
             }
         })
+        return [i, obj];
+    }
+    getCurStudyDay=(arr, date)=>{
+        let i = 0; obj = {};
+        arr.forEach((item, index)=>{
+            let arrDate = dateFromYYYYMMDD(toYYYYMMDD(AddDay(new Date(), item.value)))
+            console.log("getCurStudyDay", arrDate, item.value, date)
+            if (toYYYYMMDD(arrDate) === toYYYYMMDD(date)) {
+                i = index;
+                obj = item;
+            }
+        })
+
         return [i, obj];
     }
     getDateSeparator=(msgDate)=>{
@@ -275,8 +312,13 @@ class MessageList extends Component {
         // console.log("RENDER", this.state, messages)
         const daysArr = daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;})
 
-        const initialDay = this.getNextStudyDay(daysArr)[0];
-        const {userID} = this.props.userSetup
+        let initialDay = this.getNextStudyDay(daysArr)[0];
+        if (!(this.state.curDateKey===null))
+            initialDay = this.getCurStudyDay(daysArr, new Date(this.state.curDateKey))[0];
+
+        console.log("initilDay", this.state.curDateKey, initialDay)
+
+            const {userID} = this.props.userSetup
         let isImage = false
 
         const tagsArr = [
@@ -353,7 +395,7 @@ class MessageList extends Component {
                                         itemShowKey="label"
                                         itemRealKey="value"
                                         circleSize={16}
-                                        initial={-1}
+                                        initial={this.state.curSubjKey}
                                         formHorizontal={false}
                                         labelHorizontal={true}
                                         onPress={(item) => this.onSelectSubject(item)}
@@ -500,13 +542,13 @@ class MessageList extends Component {
                                               // onClick={()=>i!==this.state.editKey?this.setState({editKey:-1}):null}
                                               // onDoubleClick={(e)=>this.onMessageDblClick(e)}
                                         >
-                                            {/*{console.log("MESSAGE_DATE", message, message.msg_date, new Date(message.msg_date))}*/}
+                                            {console.log("MESSAGE_ONPRESS9", message.user_id, userID, message, msg.id)}
                                             {this.getDateSeparator(message.msg_date.length===8?dateFromYYYYMMDD(message.msg_date):new Date(message.msg_date))}
 
                                             <TouchableWithoutFeedback   key={i} id={"msgarea-"+msg.id}
                                                                         delayLongPress={1000}
-                                                                        onLongPress={(message.user_id===userID)?()=>this.onLongPressMessage(msg.id):null}
-                                            >
+                                                                        onLongPress={()=>this.onLongPressMessage(msg.id, message.homework_subj_id, message.homework_date, msg.text)}
+                                                                        >
                                             {/*style={this.state.editKey===i?{color:"white", backgroundColor : "white", border: "white 2px solid"}:null}*/}
                                             <View key={msg.id}
                                                 style={ownMsg?

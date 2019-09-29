@@ -13,6 +13,7 @@ const initialState = {
         email : "",
         loginmsg : "",
         logBtnClicked : false,
+        loggedin : false,
 }
 
 export function userReducer(state = initialState, action) {
@@ -20,7 +21,7 @@ export function userReducer(state = initialState, action) {
         case 'USER_LOGGEDIN' :
             let {username, id, token, email_verified_at, email} = action.payload
             return {...state, name : username, id : id, token : token, logging : true, verified: email_verified_at, email,
-                        loginmsg : ""}
+                        loginmsg : "", loggedin : true}
         case 'USER_LOGGEDOUT' :
             return {...state, name: '',
                 surname: '',
@@ -29,13 +30,13 @@ export function userReducer(state = initialState, action) {
                 token : "",
                 logging : false};
         case 'USER_LOGGING' :
-            return {...state, logging: true};
+            return {...state, logging: true, loggedin : false};
         case 'LOG_BTN_CLICK' :
             return {...state, logBtnClicked : true};
         case 'LOG_BTN_UNCLICK' :
             return {...state, logBtnClicked : false};
         case 'USER_LOGGEDIN_DONE' : {
-            return {...state, logging: false}
+            return {...state, logging: false, loggedin : false}
         };
         case 'USER_PWD_MISSEDMATCH':
             return {...state, loginmsg: action.payload};

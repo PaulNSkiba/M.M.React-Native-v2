@@ -9,7 +9,7 @@ import { StyleSheet, Text, View, Image, ScrollView,
             TouchableHighlight, Modal, Radio, TouchableOpacity } from 'react-native';
 import {    Container, Header, Left, Body, Right, Button, Card, CardItem,
             Title, Content,  Footer, FooterTab, TabHeading, Tabs, Tab, Badge,
-            Form, Item, Input, Label, Textarea, CheckBox, ListItem } from 'native-base';
+            Form, Item, Input, Label, Textarea, CheckBox, Spinner } from 'native-base';
 import RadioForm from 'react-native-radio-form';
 import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, AddDay, toYYYYMMDD, daysList, instanceAxios, toLocalDate, dateFromTimestamp} from '../../js/helpersLight'
 import { API_URL, BASE_HOST, WEBSOCKETPORT, LOCALPUSHERPWD, HOMEWORK_ADD_URL,
@@ -43,6 +43,7 @@ class HelpBlock extends Component {
             news : [],
             curMessage : '',
             showFooter : true,
+            isSpinner : false,
         };
         this.session_id =  AsyncStorage.getItem('chatSessionID')
         // this.onMessageDblClick = this.onMessageDblClick.bind(this)
@@ -177,7 +178,17 @@ class HelpBlock extends Component {
         return (
             <View>
                  <Tabs>
-                        <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text style={{color: "#fff"}}>НОВОСТИ</Text></TabHeading>}>
+                         <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text style={{color: "#fff"}}>НОВОСТИ</Text></TabHeading>}>
+                             <View style={styles.homeworkSubjectList}>
+                                 <Container style={{flex: 1, width : "100%", flex : 1, flexDirection: 'column', position: "relative"}}>
+                                     <View style={{flex: 3, borderWidth : 1, borderColor : "#4472C4"}}>
+                                         <ScrollView>
+                                         </ScrollView>
+                                     </View>
+                                 </Container>
+                             </View>
+                        </Tab>
+                        <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text style={{color: "#fff"}}>ОБНОВЛЕНИЯ</Text></TabHeading>}>
                             <View style={styles.homeworkSubjectList}>
                                 <Container style={{flex: 1, width : "100%", flex : 1, flexDirection: 'column', position: "relative"}}>
                                     <View style={{flex: 3, borderWidth : 1, borderColor : "#4472C4"}}>

@@ -128,6 +128,7 @@ class ChatMobile extends Component {
             .catch(error => {
                 console.log('getChatMessagesError', error)
             })
+        this.props.onReduxUpdate("USER_LOGGEDIN_DONE")
     }
     initChatMessages=async ()=>{
         // console.log("initChatMessages", this.props.userSetup.localChatMessages, this.props.userSetup.classID)

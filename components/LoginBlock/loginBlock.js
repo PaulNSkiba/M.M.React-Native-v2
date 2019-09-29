@@ -7,14 +7,13 @@ import { AsyncStorage } from '@react-native-community/async-storage';
 import { connect } from 'react-redux';
 import {    Container, Header, Left, Body, Right, Button,
     Icon, Title, Content,  Footer, FooterTab, Badge,
-    Form, Item, Input, Label} from 'native-base';
+    Form, Item, Input, Label, Spinner} from 'native-base';
 import { bindActionCreators } from 'redux';
-// import { addFriend } from './FriendActions';
 import { instanceAxios, mapStateToProps, msgTimeOut /*, langLibrary as langLibraryF*/ } from '../../js/helpersLight'
 import { userLoggedIn, userLoggedInByToken, userLoggedOut } from '../../actions/userAuthActions'
 import Dialog, { DialogFooter, DialogButton, DialogContent } from 'react-native-popup-dialog';
-
 import styles from '../../css/styles'
+// import { addFriend } from './FriendActions';
 import { LOGINUSER_URL } from '../../config/config'
 
 class LoginBlock extends React.Component {
@@ -29,6 +28,7 @@ class LoginBlock extends React.Component {
             password: '',
             userID: 0,
             userName : '',
+            sendMailButtonDisabled : false,
             // buttonClicked : false,
             // loading : false,
             // buttonClicked : false,
@@ -37,13 +37,7 @@ class LoginBlock extends React.Component {
         this.showLogin = true
         this.onLogin = this.onLogin.bind(this)
         this.clearError = this.clearError.bind(this)
-        // this.onChangeText = this.onChangeText.bind(this)
-        // this.RootContainer = this.RootContainer.bind(this)
-    }
-    componentDidMount() {
-        // this.props.onStartLogging()
-        // this.props.onReduxUpdate("USER_LOGGING")
-        // this.nameLogin.focus()
+        this.forgotPwd = this.forgotPwd.bind(this)
     }
     shouldComponentUpdate(nextProps, nextState) {
         const {logging, loginmsg, logBtnClicked} = this.props.user
@@ -54,37 +48,13 @@ class LoginBlock extends React.Component {
             logBtnClicked,
             "test")
 
-        // if ((this.props.userSetup.chatSessionID !== nextProps.userSetup.chatSessionID))
-        //     return false
-        // else
-        // if (!this.state.langLibrary)
-        //     return false
-        // else {
-        //     return true
-        // }
-
-
-        // if (this.props.user.loginmsg.length){
-        //     // this.setState({loading : false})
-        //     // this.props.updateState("showLogin", false)
-        //     return true
-        // }
-        // if (this.props.user.loading) {
-        //     return true
-        // }
         if (logging) {
             return true
         }
         if ((!logging)&&(!loginmsg.length)&&(logBtnClicked)){
             this.props.updateState("showLogin", false)
             this.showLogin = false
-            // console.log('SHOWLOGIN_FALSE')
-            // this.setState({showLogin : false})
-            // this.forceUpdate()
             this.props.onReduxUpdate("LOG_BTN_UNCLICK")
-            // this.props.onReduxUpdate('USER_LOGGEDIN_DONE')
-            // this.props.onStopLogging()
-
         }
         return true
     }
@@ -104,30 +74,13 @@ class LoginBlock extends React.Component {
             provider = null,
             provider_id = null
 
-
-        // const data = {
-        //     "email": name,
-        //     "password": pwd,
-        //     "provider" : provider,
-        //     "provider_id" : provider_id,
-        //     "token" : null,
-        // };
         // alert('onLogin', this.state.username, this.state.password)
         // ToDO: Подсветить неверный пароль
         // console.log("START_LOGIN", "!!!")
 
         this.props.onReduxUpdate("USER_LOGGING")
         this.props.onReduxUpdate("LOG_BTN_CLICK")
-
-        this.props.onUserLogging(name, pwd, provider, provider_id /*,  langLibraryF(this.state.myCountryCode?this.state.myCountryCode:"GB")*/);
-
-        // console.log("AFTER_LOGGING", this.props.user)
-        // this.setState({buttonClicked : true})
-        // this.buttonClicked = true
-
-        //
-        // if (!this.props.user.loginmsg.length&&!this.props.user.logging)
-        // this.props.updateState("showLogin", false)
+        this.props.onUserLogging(name, pwd, provider, provider_id);
     }
     clearError(){
         console.log("clearError",this.props.user)
@@ -138,6 +91,12 @@ class LoginBlock extends React.Component {
         // this.setState({buttonClicked : false})
         // this.buttonClicked = false
     }
+    forgotPwd=()=>{
+        // this.refs.nameLogin.blur()
+        // this.refs.nameLogin.setNativeProps({'editable': false});
+        // this.refs.nameLogin.setNativeProps({'editable':true});
+        this.setState({sendMailButtonDisabled : true})
+    }
     render() {
 
         const {logging, loginmsg, logBtnClicked} = this.props.user
@@ -145,23 +104,8 @@ class LoginBlock extends React.Component {
         console.log("RENDER_LOGIN", showModal, this.state.showLogin, logBtnClicked, !loginmsg.length, this.showLogin)
         return (
             <View style={{backgroundColor : "#fff"}}>
+                {this.props.user.logging?<View style={{position : "absolute", flex: 1, alignSelf : 'center', marginTop : 240, zIndex : 100 }}><Spinner color="#33ccff"/></View>:null}
                 <Form>
-                    {/*<View>*/}
-                        {/*<Dialog*/}
-                            {/*visible={showModal}*/}
-                            {/*dialogStyle={{ backgroundColor: "#1890e6",  color: "#fff" }}>*/}
-                            {/*<DialogContent style={{paddingTop : 20, paddingBottom : 20}}>*/}
-                                {/*<Text style={{color : "#fff"}}>{"LOADING..."}</Text>*/}
-                            {/*</DialogContent>*/}
-                        {/*</Dialog>*/}
-                    {/*</View>*/}
-                    {/*{showModal?*/}
-                        {/*<View style={{  backgroundColor :  "#1890e6", color : "#fff",*/}
-                                        {/*width : 80, height : 40, borderRadius : 20,*/}
-                                        {/*position : "absolute", marginTop : "50%", marginLeft : "50%"}}>*/}
-                            {/*<Text style={{color : "#fff"}}>{"LOADING..."}</Text>*/}
-                        {/*</View>:*/}
-                        {/*null}*/}
                      <View>
                          <Dialog
                              visible={loginmsg.length?true:false}
@@ -181,11 +125,9 @@ class LoginBlock extends React.Component {
                          </Dialog>
                      </View>
 
-
-
                     <Item floatingLabel>
                         <Label>Email</Label>
-                        <Input ref="nameLogin"/*ref={ (c) => this.nameLogin = c }*/
+                        <Input ref="nameLogin"
                                // autoFocus={true}
                                onChangeText={text=>this.onChangeText('username', text)}
                         />
@@ -196,14 +138,19 @@ class LoginBlock extends React.Component {
                                ref="pwdLogin"
                                onChangeText={val => this.onChangeText('password', val)}/>
                     </Item>
-                    <Button iconRight full info style={styles.inputButton} onPress={() => this.onLogin()}>
+                    <Button block info style={styles.inputButton} onPress={() => this.onLogin()}>
                         <Text style={styles.loginButton}>Логин</Text>
                     </Button>
-                    <Button iconRight full primary style={styles.inputButton} onPress={() => alert("Facebook")}>
+                    <Button block primary disabled style={styles.inputButton} onPress={() => alert("Facebook")}>
                         <Text style={styles.loginButton}>Facebook</Text>
                     </Button>
-                    <Button iconRight full danger style={styles.inputButton} onPress={() => alert("Google")}>
+                    <Button block danger disabled style={styles.inputButton} onPress={() => alert("Google")}>
                         <Text style={styles.loginButton}>Google</Text>
+                    </Button>
+                    <Button block light style={styles.inputButtonDark} onPress={this.forgotPwd}>
+                        <Text style={styles.loginButton}
+                              disabled={this.state.sendMailButtonDisabled}>
+                            {!this.state.sendMailButtonDisabled?`Забыли пароль - отправить на${this.state.username.length?(': '+this.state.username):' почту'}?`:"Отправлено"}</Text>
                     </Button>
                 </Form>
             </View>

@@ -17,7 +17,7 @@ export const userLoggedIn = (email, pwd, provider, provider_id, langLibrary) => 
         };
         console.log('USER_LOGGIN', LOGINUSER_URL, JSON.stringify(data))
         // document.body.style.cursor = 'progress';
-
+        dispatch ({type: 'USER_LOGGING'})
         instanceAxios().post(LOGINUSER_URL, JSON.stringify(data), null)
             .then(response => {
                 console.log('USER_LOGGEDIN.1', response.data);
@@ -25,11 +25,12 @@ export const userLoggedIn = (email, pwd, provider, provider_id, langLibrary) => 
                     case false :
                         dispatch({type: 'USER_PWD_MISSEDMATCH', payload: response.data.message})
                         dispatch({type: 'LOG_BTN_UNCLICK', payload : false})
+                        dispatch({type: 'USER_LOGGEDIN_DONE'})
                         // console.log("LOGGEDIN_FALSE", response.data.message)
                         break;
                     case true :
                     // alert('USER_LOGGEDIN.1')
-                        dispatch ({type: 'USER_LOGGING'})
+
                         dispatch ({type: 'USER_LOGGEDIN', payload: response.data, langLibrary: langLibrary});
                         dispatch({type: 'ADD_CHAT_MESSAGES', payload: response.data.chatrows});
                         // пробуем записать в LocalStorage имя пользователя, ID, имя и тип авторизации
@@ -51,6 +52,7 @@ export const userLoggedIn = (email, pwd, provider, provider_id, langLibrary) => 
                 // document.body.style.cursor = 'default';
                 dispatch({type: 'USER_PWD_MISSEDMATCH'})
                 dispatch({type: 'APP_LOADED'})
+                dispatch({type: 'USER_LOGGEDIN_DONE'})
             })
    };
 }
@@ -64,6 +66,7 @@ export const userLoggedInByToken = (email, token, kind, langLibrary) => {
         };
         // console.log("userLoggedInByToken", LOGINUSER_URL, data, langLibrary);
         // document.body.style.cursor = 'progress';
+        dispatch ({type: 'USER_LOGGING'})
         instanceAxios().post(LOGINUSER_URL, data, null)
             .then(response => {
                 // langLibrary?langLibrary:langLibraryF(localStorage.getItem("myCountryCode")?localStorage.getItem("myCountryCode"):"EN")
@@ -72,11 +75,13 @@ export const userLoggedInByToken = (email, token, kind, langLibrary) => {
                 // dispatch({type: 'APP_LOADED'})
                 // пробуем записать в LocalStorage имя пользователя, ID, имя и тип авторизации
                 saveToLocalStorage("myMarks.data", email, response.data)
+                dispatch({type: 'USER_LOGGEDIN_DONE'})
                 // localStorage.setItem("localChatMessages", response.data.chatrows)
             })
             .catch(response => {
                 console.log("userLoggedInByTokenError", response);
                 dispatch({type: "LANG_LIBRARY", langLibrary: langLibrary})
+                dispatch({type: 'USER_LOGGEDIN_DONE'})
                 // dispatch({type: 'APP_LOADED'})
             })
     };
