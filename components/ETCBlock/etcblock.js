@@ -16,7 +16,7 @@ import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, AddDay, toYYY
 import { connect } from 'react-redux'
 import ButtonWithBadge from '../../components/ButtonWithBadge/buttonwithbadge'
 import { RFPercentage, RFValue } from "react-native-responsive-fontsize";
-
+import Budget from '../Budget/budget'
 // import '../../ChatMobile/chatmobile.css'
 
 const insertTextAtIndices = (text, obj) => {
@@ -29,6 +29,7 @@ class ETCBlock extends Component {
     constructor(props) {
         super(props);
         this.state = {
+            showBudget : false,
             // messages : this.props.messages,
             // editKey: -1,
             // modalVisible : false,
@@ -36,14 +37,9 @@ class ETCBlock extends Component {
             // selSubject : {value : 0},
             // selDate : this.getNextStudyDay(daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;}))[1],
             // currentHomeworkID : 0,
-            selDate : this.getNextStudyDay(daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;}))[1],
+            // selDate : this.getNextStudyDay(daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;}))[1],
         };
-
-        // this.onMessageDblClick = this.onMessageDblClick.bind(this)
-        // this.onSaveMsgClick=this.onSaveMsgClick.bind(this)
-        // this.onCancelMsgClick=this.onCancelMsgClick.bind(this)
-        // this.onDelMsgClick=this.onDelMsgClick.bind(this)
-        // this.onLongPressMessage=this.onLongPressMessage.bind(this)
+        this.onExit=this.onExit.bind(this)
     }
     onSelectDay=item=>{
         this.setState({selDate : item})
@@ -59,11 +55,52 @@ class ETCBlock extends Component {
         })
         return [i, obj];
     }
+    onExit=()=> {
+        console.log("Exit")
+        this.setState({showBudget: false})
+    }
     render () {
         const daysArr = daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;})
         const initialDay = this.getNextStudyDay(daysArr)[0];
         return (
             <Container>
+                <Modal
+                    animationType="slide"
+                    transparent={false}
+                    visible={this.state.showBudget}
+                    onRequestClose={() => {
+                        // Alert.alert('Modal has been closed.');
+                    }}>
+                    <View>
+                        {/*{messages.length&&this.state.previd?*/}
+                            {/*<SingleImage*/}
+                                {/*uri={`data:image/png;base64,${JSON.parse(messages.filter(item=>item.id===this.state.previd)[0].attachment3).base64}`}*/}
+                                {/*style={{position : "relative", height : "100%"}}*/}
+                                {/*onClose={()=>this.setState({showPreview : false, previd : 0})}*/}
+                            {/*/>:null}*/}
+
+                        {/*<TouchableOpacity*/}
+                            {/*style={{position : "absolute", top : 10, right : 10, zIndex:10}}*/}
+                            {/*onPress={()=>this.setState({showPreview : false, previd : 0})}>*/}
+                            {/*<View style={{*/}
+
+                                {/*paddingTop : 5, paddingBottom : 5,*/}
+                                {/*paddingLeft : 15, paddingRight : 15, borderRadius : 5,*/}
+                                {/*borderWidth : 2, borderColor : "#33ccff", zIndex:10,*/}
+                            {/*}}>*/}
+                                {/*<Text style={{  fontSize : 20,*/}
+                                    {/*color: "#33ccff",*/}
+                                    {/*zIndex:10,*/}
+                                {/*}}*/}
+                                {/*>X</Text>*/}
+                            {/*</View>*/}
+                        {/*</TouchableOpacity>*/}
+                        <Body>
+                            <Budget onexit={this.onExit}/>
+                        </Body>
+
+                    </View>
+                </Modal>
                 <View style={styles.modalView}>
                     <Tabs>
                         <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text style={{color: "#fff"}}>ПРИЛОЖЕНИЯ</Text></TabHeading>}>
@@ -75,15 +112,20 @@ class ETCBlock extends Component {
                                         active={true}
                                         onPress={()=>{}}>
                                     <Icon size={52} color={"#4472C4"} active type={'material'} name={'assignment'} inverse />
-                                    <Text style={{fontSize: RFPercentage(1.8)}}>{"Расписание"}</Text>
+                                    <Text style={{fontSize: RFPercentage(1.6)}}>{"Расписание"}</Text>
                                 </Button>
                                 <Button style={{backgroundColor : "#f0f0f0", color : "#fff", width : 80, height : 80, margin : 5}}
                                         disabled={false}
                                         badge vertical
                                         active={true}
-                                        onPress={()=>{}}>
+                                        onPress={()=>{this.setState({showBudget: true})}}>
                                     <Icon size={52} color={"#4472C4"} active type={'material'} name={'payment'} inverse />
-                                    <Text style={{fontSize: RFPercentage(1.8)}}>{"Бюджет"}</Text>
+                                    <Text style={{fontSize: RFPercentage(1.6)}}>{"Бюджет"}</Text>
+                                    <Badge
+                                           value={""}
+                                           status={"success"}
+                                           containerStyle={{ position: 'absolute', top: -8, right: 2 }}>
+                                    </Badge>
                                 </Button>
                                 <Button style={{backgroundColor : "#f0f0f0", color : "#fff", width : 80, height : 80, margin : 5}}
                                         disabled={false}
@@ -91,7 +133,7 @@ class ETCBlock extends Component {
                                         active={true}
                                         onPress={()=>{}}>
                                     <Icon size={52} color={"#4472C4"} active type={'material'} name={'pool'} inverse />
-                                    <Text style={{fontSize: RFPercentage(1.8)}}>{"Кружки"}</Text>
+                                    <Text style={{fontSize: RFPercentage(1.6)}}>{"Кружки"}</Text>
                                 </Button>
                                 <Button style={{backgroundColor : "#f0f0f0", color : "#fff", width : 80, height : 80, margin : 5}}
                                         disabled={false}
@@ -99,7 +141,7 @@ class ETCBlock extends Component {
                                         active={true}
                                         onPress={()=>{}}>
                                     <Icon size={52} color={"#4472C4"} active type={'material'} name={'school'} inverse />
-                                    <Text style={{fontSize: RFPercentage(1.8)}}>{"Репетиторы"}</Text>
+                                    <Text style={{fontSize: RFPercentage(1.6)}}>{"Репетиторы"}</Text>
                                 </Button>
                                 <Button style={{backgroundColor : "#f0f0f0", color : "#fff", width : 80, height : 80, margin : 5}}
                                         disabled={false}
@@ -107,7 +149,7 @@ class ETCBlock extends Component {
                                         active={true}
                                         onPress={()=>{}}>
                                     <Icon size={52} color={"#4472C4"} active type={'material'} name={'equalizer'} inverse />
-                                    <Text style={{fontSize: RFPercentage(1.8)}}>{"Статистика"}</Text>
+                                    <Text style={{fontSize: RFPercentage(1.6)}}>{"Статистика"}</Text>
                                 </Button>
                                 <Button style={{backgroundColor : "#f0f0f0", color : "#fff", width : 80, height : 80, margin : 5}}
                                         disabled={false}
@@ -115,7 +157,7 @@ class ETCBlock extends Component {
                                         active={true}
                                         onPress={()=>{}}>
                                     <Icon size={52} color={"#4472C4"} active type={'material'} name={'bookmark'} inverse />
-                                    <Text style={{fontSize: RFPercentage(1.8)}}>{"Метки чата"}</Text>
+                                    <Text style={{fontSize: RFPercentage(1.6)}}>{"Метки чата"}</Text>
                                 </Button>
                                 <Button style={{backgroundColor : "#f0f0f0", color : "#fff", width : 80, height : 80, margin : 5}}
                                         disabled={false}
@@ -123,7 +165,7 @@ class ETCBlock extends Component {
                                         active={true}
                                         onPress={()=>{}}>
                                     <Icon size={52} color={"#4472C4"} active type={'material'} name={'album'} inverse />
-                                    <Text style={{fontSize: RFPercentage(1.8)}}>{"Музыка"}</Text>
+                                    <Text style={{fontSize: RFPercentage(1.6)}}>{"Музыка"}</Text>
                                 </Button>
                                 <Button style={{backgroundColor : "#f0f0f0", color : "#fff", width : 80, height : 80, margin : 5}}
                                         disabled={false}
@@ -131,7 +173,7 @@ class ETCBlock extends Component {
                                         active={true}
                                         onPress={()=>{}}>
                                     <Icon size={52} color={"#4472C4"} active type={'material'} name={'build'} inverse />
-                                    <Text style={{fontSize: RFPercentage(1.8)}}>{"Настройки"}</Text>
+                                    <Text style={{fontSize: RFPercentage(1.6)}}>{"Настройки"}</Text>
                                 </Button>
                             </View>
                             <View style={{flex: 1, flexDirection : "row", padding : 10}}>

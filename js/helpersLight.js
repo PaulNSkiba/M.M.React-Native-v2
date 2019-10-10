@@ -524,7 +524,8 @@ export const daysList=()=>{
     for (let i = -2; i < 8; i++) {
         let obj = {}
         obj.id = i
-        obj.name = dateString(AddDay(new Date(), i))
+        obj.name = dateString(AddDay(new Date(), i)) + ' (' + ('0'+ AddDay(new Date(), i).getDate()).slice(-2) +'.' + ('0' + (AddDay(new Date(), i).getMonth() + 1)).slice(-2) + ')'
+        obj.date = AddDay(new Date(), i)
         // console.log("AddDay", AddDay(new Date(), i).getDay())
         if (AddDay(new Date(), i).getDay()) {
             daysArr.push(obj)
@@ -550,11 +551,11 @@ const dateString = curDate => {
         if ((getWeek(curDate) - getWeek(new Date()))>=0)
         {
             if (getWeek(new Date()) === getWeek(curDate)) {
-                return arrOfWeekDays[curDate.getDay()].toUpperCase() + ' [эта.неделя]'
+                return arrOfWeekDays[curDate.getDay()].toUpperCase() + ' [эта.нед.]'
             }
             else {
                 if ((getWeek(new Date()) + 1) === getWeek(curDate)) {
-                    return arrOfWeekDays[curDate.getDay()].toUpperCase() + ' [след.неделя]'
+                    return arrOfWeekDays[curDate.getDay()].toUpperCase() + ' [след.нед.]'
                 }
                 else {
                     return arrOfWeekDays[curDate.getDay()].toUpperCase() + '  +' + (getWeek(curDate) - getWeek(new Date())) +' нед.'

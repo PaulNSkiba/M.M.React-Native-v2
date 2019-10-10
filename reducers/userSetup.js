@@ -27,7 +27,8 @@ const initialState = (check)=>{
             avgclassmarks : [], loading : -1, stepsLeft : 6,
             chatSessionID : '', classObj : { chatroom_id : 0},
             newMsgCount : 0, countryCode : "EN", langLibrary : {}, chatSSL : true,
-            localChatMessages : [], isMobile : true, photoPath : []
+            localChatMessages : [], isMobile : true, photoPath : [], markscount : 0,
+            needRenew : false,
         }
     return obj
 }
@@ -43,14 +44,15 @@ export function userSetupReducer(state = initialState(true), action) {
             let {   token, subj_count, subjects_list,
                     selected_subjects, selected_subj, students, marks,
                     mark_dates, best_lines, avg_lines, avg_marks, addUserToken,
-                    lastmarkssent, emails, homework, stats2, stats3, mark_date, avgclassmarks, classObj, chatrows} = action.payload;
+                    lastmarkssent, emails, homework, stats2, stats3, mark_date,
+                    avgclassmarks, classObj, chatrows, markscount} = action.payload;
             let {   name : userName, id : userID, isadmin } = action.payload.user;
             let {   class_number, pupil_count, year_name, perioddayscount,
                     markblank_id, markblank_alias, selected_marker, titlekind,
                     direction, class_id } = action.payload.usersetup;
             let {   id : studentId, student_name : studentName} = action.payload.student;
             let {   cnt_marks, stud_cnt, subj_cnt } = action.payload.stats[0];
-            studentId = studentId?studentId:0;
+                    studentId = studentId?studentId:0;
 
             setup = {...state, userName, userID, token,
                 curClass: class_number, classNumber : class_number, classID : class_id, pupilCount: pupil_count,
@@ -61,7 +63,7 @@ export function userSetupReducer(state = initialState(true), action) {
                 selectedSubj : selected_subj, students : students?students:[], classObj,
                 isadmin, studentName, studentId, marks, mark_dates, best_lines, avg_lines, avg_marks, addUserToken,
                 cnt_marks, stud_cnt, subj_cnt, lastmarkssent, emails, homework, stats2 : stats2[0], stats3 : stats3[0],
-                mark_date, avgclassmarks, langLibrary : action.langLibrary, localChatMessages : chatrows
+                mark_date, avgclassmarks, langLibrary : action.langLibrary, localChatMessages : chatrows, markscount,
                 }
             // saveToLocalStorageOnDate("userSetupDate", toYYYYMMDD(new Date()))
             // saveToLocalStorageOnDate("userSetup", JSON.stringify(setup))
@@ -173,6 +175,12 @@ export function userSetupReducer(state = initialState(true), action) {
         // }
         case "ADD_CHAT_MESSAGES" : {
             return{...state, localChatMessages: action.payload}
+        }
+        case "ADD_MARKS" : {
+            return{...state, marks: action.payload}
+        }
+        case "NEED_RENEW" : {
+            return{...state, needRenew: action.payload}
         }
         case 'USER_LOGGEDOUT' :
 

@@ -2,7 +2,7 @@
  * Created by Paul on 12.09.2019.
  */
 import React, {Fragment, Component} from 'react';
-import { SafeAreaView,  StyleSheet,  ScrollView,  View,  Text,  StatusBar,} from 'react-native';
+import { SafeAreaView,  StyleSheet,  ScrollView,  View,  Text,  StatusBar, Dimensions} from 'react-native';
 import { Avatar, Badge, Icon, withBadge } from 'react-native-elements'
 import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, AddDay, toYYYYMMDD, daysList} from '../../js/helpersLight'
 import {    Container, Header, Left, Body, Right, Button,
@@ -20,6 +20,7 @@ class ButtonWithBadge extends Component {
     }
     render () {
 
+        const windowRatio = Dimensions.get('window').width? Dimensions.get('window').height / Dimensions.get('window').width : 1.9
         const todayMessages = this.props.userSetup.localChatMessages.filter(item=>(new Date(item.msg_date).toLocaleDateString())===(new Date().toLocaleDateString())).length
         // console.log("homework", this.props.userSetup.homework)
         const test = true
@@ -31,13 +32,17 @@ class ButtonWithBadge extends Component {
             }
         ).length:0
         // console.log("ButtonWithBadge", this.props.icontype, this.props.iconname, todayMessages, homework)
-
+        if (this.props.kind==='marks') console.log("MARKS_COUNT", this.props.value)
         return (
         <Button style={this.props.enabled?{backgroundColor : "#A9A9A9", color : "#fff"}:{backgroundColor : "#f0f0f0", color : "#fff"}}
-                disabled={this.props.disabled}
+                // disabled={this.props.disabled}
                 badge vertical
                 active={this.props.enabled&&(!this.props.disabled)}
-                onPress={()=>this.props.setstate({selectedFooter : this.props.stateid})}>
+                onPress={()=> {
+                    this.props.setstate({selectedFooter: this.props.stateid, showLogin: false})
+                    console.log("onButtonPress")
+                }
+                }>
             {(this.props.kind==='chat'&&(todayMessages||this.props.value))?
             <Badge value={this.props.value?this.props.value:todayMessages}
                    status={this.props.badgestatus}
@@ -48,18 +53,18 @@ class ButtonWithBadge extends Component {
                        status={this.props.badgestatus}
                        containerStyle={{ position: 'absolute', top: -8, right: 2 }}>
                 </Badge>:null}
-            {(this.props.kind==='info'||this.props.value)?
+            {(this.props.kind==='info'&&this.props.value)?
                 <Badge value={this.props.value?this.props.value:null}
                        status={this.props.badgestatus}
                        containerStyle={{ position: 'absolute', top: -8, right: 2 }}>
                 </Badge>:null}
-            {(this.props.kind==='marks'||this.props.value)?
+            {(this.props.kind==='marks'&&this.props.value)?
                 <Badge value={this.props.value?this.props.value:null}
                        status={this.props.badgestatus}
                        containerStyle={{ position: 'absolute', top: -8, right: 2 }}>
                 </Badge>:null}
             <Icon color={this.props.enabled?"#fff":"#4472C4"} active type={this.props.icontype} name={this.props.iconname} inverse />
-            <Text style={this.props.enabled?[styles.tabColorSelected, {fontSize: RFPercentage(1.8)}]:[styles.tabColor, {fontSize: RFPercentage(1.8)}]}>{this.props.name}</Text>
+            <Text style={this.props.enabled?[styles.tabColorSelected, {fontSize: windowRatio < 1.8?RFPercentage(1.5):RFPercentage(1.6)}]:[styles.tabColor, {fontSize: RFPercentage(1.6)}]}>{this.props.name}</Text>
         </Button>)
     }
 }

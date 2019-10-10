@@ -18,6 +18,8 @@ import { connect } from 'react-redux'
 // import { stylesCamera } from '../../css/camera'
 // import ImageView from 'react-native-image-view';
 import {SingleImage,wrapperZoomImages,ImageInWraper} from 'react-native-zoom-lightbox';
+import ImageResizer from 'react-native-image-resizer';
+import ImgToBase64 from 'react-native-image-base64';
 // import '../../ChatMobile/chatmobile.css'
 
 const insertTextAtIndices = (text, obj) => {
@@ -36,8 +38,8 @@ class CameraBlock extends Component {
         };
         this.addToChat = this.addToChat.bind(this)
     }
-    addToChat = (data) => {
-        const msg = this.prepareJSON(data)
+    addToChat = (data, data100) => {
+        const msg = this.prepareJSON(data, data100)
         this.sendMessage(msg)
     }
     sendMessage(text) {
@@ -61,13 +63,31 @@ class CameraBlock extends Component {
             const data = await this.camera.takePictureAsync(options);
             console.log("Picture", data)
             let arr = this.state.photoPath
-            arr.push({uri : data.uri, time : (new Date()), data: data})
-            this.setState({photoPath : arr})
-            this.props.onReduxUpdate("PHOTO_PATH", arr)
-            // console.log(data.uri);
+            ImageResizer.createResizedImage(data.uri, 240, 240, 'PNG', 100)
+                .then(response => {
+                    console.log("ImageResizer", response)
+                    ImgToBase64.getBase64String(response.uri)
+                        .then(base64String =>{
+                            let data100 = {}
+                            data100.base64 = base64String
+                            data100.uri = response.uri
+                            data100.height = 240
+                            data100.width = 240
+
+                            arr.push({uri : data.uri, time : (new Date()), data: data, data100: data100})
+                            this.setState({photoPath : arr})
+                            this.props.onReduxUpdate("PHOTO_PATH", arr)
+                            console.log("PHOTO_DATA", data.uri);
+                            // doSomethingWith(base64String))
+                        })
+                        .catch(err => console.log("ImgToBase64:Err"));
+                })
+                .catch(err=>
+                console.log("Resize:Err", err))
+
         }
     };
-    prepareJSON=(data)=>{
+    prepareJSON=(data, data100)=>{
         console.log("prepareJSON")
         let {classID, userName, userID, studentId, studentName} = this.props.userSetup
         // let text = this.state.curMessage
@@ -78,7 +98,8 @@ class CameraBlock extends Component {
         obj.message = "ФОТО";
         obj.msg_date = toYYYYMMDD(new Date());
         obj.msg_time = (new Date()).toLocaleTimeString().slice(0, 5);
-        obj.attachment3 = data
+        obj.attachment2 = data
+        obj.attachment3 = data100
         // if (!(this.state.selSubjkey === null)) {
         //     obj.homework_date = toYYYYMMDD(this.state.curDate)
         //     obj.homework_subj_key = this.state.selSubjkey
@@ -184,7 +205,7 @@ class CameraBlock extends Component {
                                                             <Thumbnail source={{uri: item.uri, isStatic: true}}/>
                                                         </TouchableOpacity>
                                                         <TouchableOpacity
-                                                            onPress={() => this.addToChat(JSON.stringify(item.data))}>
+                                                            onPress={() => this.addToChat(JSON.stringify(item.data), JSON.stringify(item.data100))}>
                                                             <Body style={{
                                                                 borderWidth: 2,
                                                                 borderColor: "#7DA8E6",

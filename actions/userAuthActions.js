@@ -15,7 +15,7 @@ export const userLoggedIn = (email, pwd, provider, provider_id, langLibrary) => 
             "provider_id" : provider_id,
             "token" : null,
         };
-        console.log('USER_LOGGIN', LOGINUSER_URL, JSON.stringify(data))
+        // console.log('USER_LOGGIN', LOGINUSER_URL, JSON.stringify(data))
         // document.body.style.cursor = 'progress';
         dispatch ({type: 'USER_LOGGING'})
         instanceAxios().post(LOGINUSER_URL, JSON.stringify(data), null)
@@ -30,15 +30,13 @@ export const userLoggedIn = (email, pwd, provider, provider_id, langLibrary) => 
                         break;
                     case true :
                     // alert('USER_LOGGEDIN.1')
-
+                        console.log('USER_LOGGIN', response.data)
                         dispatch ({type: 'USER_LOGGEDIN', payload: response.data, langLibrary: langLibrary});
                         dispatch({type: 'ADD_CHAT_MESSAGES', payload: response.data.chatrows});
                         // пробуем записать в LocalStorage имя пользователя, ID, имя и тип авторизации
                         saveToLocalStorage("myMarks.data", email, response.data)
-                        // dispatch({type: 'LOG_BTN_UNCLICK', payload : false})
-                        // AsyncStorage.setItem("localChatMessages", response.data.chatrows)
-                        // document.body.style.cursor = 'default';
-                        // dispatch({type: 'LOG_BTN_UNCLICK', payload : false})
+                        AsyncStorage.setItem("myMarks.marksInBase", response.data.markscount);
+
                         dispatch({type: 'USER_LOGGEDIN_DONE'})
                         dispatch({type: 'APP_LOADED'})
 
@@ -64,11 +62,12 @@ export const userLoggedInByToken = (email, token, kind, langLibrary) => {
             "token": token,
             "kind": kind,
         };
-        // console.log("userLoggedInByToken", LOGINUSER_URL, data, langLibrary);
+        console.log("userLoggedInByToken", LOGINUSER_URL, data);
         // document.body.style.cursor = 'progress';
         dispatch ({type: 'USER_LOGGING'})
         instanceAxios().post(LOGINUSER_URL, data, null)
             .then(response => {
+                console.log('USER_LOGGEDIN.1', response.data);
                 // langLibrary?langLibrary:langLibraryF(localStorage.getItem("myCountryCode")?localStorage.getItem("myCountryCode"):"EN")
                 dispatch({type: 'USER_LOGGEDIN', payload: response.data, langLibrary : "EN"});
                 dispatch({type: 'ADD_CHAT_MESSAGES', payload : response.data.chatrows});
@@ -80,6 +79,7 @@ export const userLoggedInByToken = (email, token, kind, langLibrary) => {
             })
             .catch(response => {
                 console.log("userLoggedInByTokenError", response);
+                AsyncStorage.removeItem("myMarks.data")
                 dispatch({type: "LANG_LIBRARY", langLibrary: langLibrary})
                 dispatch({type: 'USER_LOGGEDIN_DONE'})
                 // dispatch({type: 'APP_LOADED'})
@@ -101,19 +101,19 @@ export const userLoggedOut = (token, langLibrary) => {
                     // return response.data;
                     // console.log(response.data, response.data);
                     dispatch({type: 'USER_LOGGEDOUT', langLibrary : langLibrary});
-                    dispatch({type: 'APP_LOADED'})
+                    // dispatch({type: 'APP_LOADED'})
                     console.log("logoutSuccess", response);
                     // document.body.style.cursor = 'default';
                 })
                 .catch(response => {
                     dispatch({type: 'USER_LOGGEDOUT', langLibrary : langLibrary});
                     dispatch({type: "LANG_LIBRARY", payload: langLibrary})
-                    dispatch({type: 'APP_LOADED'})
+                    // dispatch({type: 'APP_LOADED'})
                     // document.body.style.cursor = 'default';
                     console.log("logoutError", response);
                     // Список ошибок в отклике...
                 })
-                dispatch({type: 'APP_LOADED'})
+                // dispatch({type: 'APP_LOADED'})
                 // document.body.style.cursor = 'default';
             };
 }

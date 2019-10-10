@@ -223,6 +223,9 @@ class HelpBlock extends Component {
                                                                 {/*<Text>Пустые сообщения теперь не отправляются</Text>*/}
                                                             </Body>
                                                         </TouchableOpacity>
+                                                    <Right style={{ position : "absolute", right : 5, top : 2}}>
+                                                        <Text style={{fontSize: RFPercentage(1.4), color : "#4472C4"}} note>{item.build_number!==null?item.build_number:null}</Text>
+                                                    </Right>
                                                     <Right style={{ position : "absolute", right : 5, bottom : 2}}>
                                                         <Text style={{fontSize: RFPercentage(1.4), color : "#4472C4"}} note>{toLocalDate(dateFromTimestamp(item.created_at), "UA", true, false)}</Text>
                                                     </Right>

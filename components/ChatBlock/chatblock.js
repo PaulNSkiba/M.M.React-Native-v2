@@ -18,21 +18,11 @@ import styles from '../../css/styles'
 class ChatBlock extends React.Component {
     constructor(props) {
         super(props);
-
         this.state = {
-            // chatMessages : [],
-            // selectedFooter : 0,
-            // showLogin : false,
-            // username: '',
-            // password: '',
-            // userID: 0,
-            // userName : '',
         }
-        // this.onLogin = this.onLogin.bind(this)
-        // this.RootContainer = this.RootContainer.bind(this)
     }
     render=()=>{
-        console.log("chatRender", this.props.user.logging, this.props.userSetup.loading)
+        // console.log("chatRender", this.props.user.logging, this.props.userSetup.loading)
         return (
         <View style={{flex : 1, position : "relative", flexDirection: 'column', height : "50%"}}>
             {this.props.user.logging?<View style={{position : "absolute", flex: 1, alignSelf : 'center', marginTop : 240, zIndex : 100 }}><Spinner color="#33ccff"/></View>:null}

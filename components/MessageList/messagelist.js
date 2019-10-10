@@ -3,15 +3,18 @@
  */
 import React, { Component } from 'react'
 import { StyleSheet, Text, View, Image, ScrollView,
-        TouchableHighlight, Modal, Radio, TouchableOpacity, TouchableWithoutFeedback } from 'react-native';
+        TouchableHighlight, Modal, Radio, TouchableOpacity, TouchableWithoutFeedback, Dimensions } from 'react-native';
 import {    Container, Header, Left, Body, Right, Button,
     Icon, Title, Content,  Footer, FooterTab, TabHeading, Tabs, Tab, Badge,
     Form, Item, Input, Label, Textarea, CheckBox, ListItem, Thumbnail } from 'native-base';
 import RadioForm from 'react-native-radio-form';
-import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, AddDay, toYYYYMMDD, daysList, toLocalDate} from '../../js/helpersLight'
+import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, AddDay, toYYYYMMDD, daysList, toLocalDate, instanceAxios} from '../../js/helpersLight'
 import {SingleImage,wrapperZoomImages,ImageInWraper} from 'react-native-zoom-lightbox';
 import LinkPreviewEx from '../LinkPreviewEx/linkpreviewex'
 import { connect } from 'react-redux'
+import ImageZoom from 'react-native-image-pan-zoom';
+import { API_URL } from '../../config/config'
+
 // import ScrollToBottom from 'react-scroll-to-bottom';
 // import MicrolinkCard from '@microlink/react';
 // import InvertibleScrollView from 'react-native-invertible-scroll-view';
@@ -38,10 +41,12 @@ class MessageList extends Component {
             selDate : this.getNextStudyDay(daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;}))[1],
             currentHomeworkID : 0,
             showPreview : false,
-            previd : 0,
+            previewID : 0,
             curSubjKey : -1,
             curDateKey : null,
             curMessage : null,
+            previewImage : null,
+            isSpinner : false,
             };
         this.curMsgDate = new Date('19000101')
         this.onMessageDblClick = this.onMessageDblClick.bind(this)
@@ -49,6 +54,7 @@ class MessageList extends Component {
         this.onCancelMsgClick=this.onCancelMsgClick.bind(this)
         this.onDelMsgClick=this.onDelMsgClick.bind(this)
         this.onLongPressMessage=this.onLongPressMessage.bind(this)
+        this.getImage = this.getImage.bind(this)
     }
     componentWillMount(){
         // if (this.props.isnew&&this.props.localmessages.length)
@@ -58,6 +64,20 @@ class MessageList extends Component {
         //
         // console.log("WILLMOUNT", this.curMsgDate, this.props.localmessages, this.props.localmessages.slice(-1)[0])
         }
+    getImage=async (id)=>{
+        console.log("getImage", id)
+        // this.setState({isSpinner : true})
+        await instanceAxios().get(API_URL + `chat/getbigimg/${id}`)
+            .then(response => {
+                // console.log('getImage2', response.data.attachment2)
+                this.setState({previewID: id, showPreview: true, previewImage : response.data.attachment2, isSpinner : false})
+            })
+            .catch(responce=>{
+                this.setState({isSpinner : false})
+                console.log("ErrorGetImage")
+            })
+
+    }
     onSaveMsgClick=async (e)=>{
         console.log("onSaveMsgClick", this.textareaValue.value, Number(e.target.id.replace("btn-save-", '')), this.props.isnew)
         if (this.props.isnew) {
@@ -107,8 +127,8 @@ class MessageList extends Component {
         // curSubjKey = -1
         const daysArr = daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;})
         this.setState({ modalVisible : true, currentHomeworkID : id, curSubjKey,
-                        curDateKey : hwOnDate, selSubject : { value : curSubjValue} ,
-                        selDate : this.getCurStudyDay(daysArr, new Date(hwOnDate))[1],
+                        curDateKey : (!(hwOnDate===null))?hwOnDate:null, selSubject : { value : curSubjValue} ,
+                        selDate : (!(hwOnDate===null))?this.getCurStudyDay(daysArr, new Date(hwOnDate))[1]:this.state.selDate,
                         curMessage : text})
 
     }
@@ -177,7 +197,6 @@ class MessageList extends Component {
             if (item.value > 0 && i===0) {
                 i = index;
                 obj = item;
-                // this.setState({selDate : item})
             }
         })
         return [i, obj];
@@ -186,7 +205,7 @@ class MessageList extends Component {
         let i = 0; obj = {};
         arr.forEach((item, index)=>{
             let arrDate = dateFromYYYYMMDD(toYYYYMMDD(AddDay(new Date(), item.value)))
-            console.log("getCurStudyDay", arrDate, item.value, date)
+            // console.log("getCurStudyDay", arrDate, item.value, date)
             if (toYYYYMMDD(arrDate) === toYYYYMMDD(date)) {
                 i = index;
                 obj = item;
@@ -313,10 +332,15 @@ class MessageList extends Component {
         const daysArr = daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;})
 
         let initialDay = this.getNextStudyDay(daysArr)[0];
+
+        console.log("initilDay.1", this.state.curDateKey, initialDay, this.getCurStudyDay(daysArr, new Date(this.state.curDateKey))[0])
+
         if (!(this.state.curDateKey===null))
             initialDay = this.getCurStudyDay(daysArr, new Date(this.state.curDateKey))[0];
 
-        console.log("initilDay", this.state.curDateKey, initialDay)
+        // initialDay = 1
+
+        console.log("initilDay.2", this.state.selDate, this.getNextStudyDay(daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;}))[1])
 
             const {userID} = this.props.userSetup
         let isImage = false
@@ -338,12 +362,23 @@ class MessageList extends Component {
                 value : 4,
                 label : "Инфа от школы"
             },
-
         ]
+        if (this.state.previewID) {
+            console.log("write file", JSON.parse(this.state.previewImage).base64, JSON.parse(this.state.previewImage))
+            // img = `data:image/png;base64,${JSON.parse(homework.filter(item => item.id === this.state.previewID)[0].attachment3).base64}`
+            img = `data:image/png;base64,${JSON.parse(this.state.previewImage).base64}`
+            console.log("write.2")
+            // const Base64Code = JSON.parse(this.state.previewImage).base64 //base64Image is my image base64 string
+            // const dirs = RNFetchBlob.fs.dirs;
+            // imgPath = dirs.DCIMDir + "/image64.png";
+            // RNFetchBlob.fs.writeFile(imgPath, Base64Code, 'base64')
+            //     .then(res => {console.log("File : ", res)})
+            //     .catch(res => console.log("FileWrite: Error", res))
+        }
         return (
 
             <View style={styles.msgList}>
-                {/*{console.log("273: RENDER_MESSAGELIST", messages.length, this.state.previd)}*/}
+                {/*{console.log("273: RENDER_MESSAGELIST", messages.length, this.state.previewID)}*/}
                 <Modal
                     animationType="slide"
                     transparent={false}
@@ -352,16 +387,28 @@ class MessageList extends Component {
                         // Alert.alert('Modal has been closed.');
                     }}>
                     <View>
-                        {messages.length&&this.state.previd?
-                        <SingleImage
-                            uri={`data:image/png;base64,${JSON.parse(messages.filter(item=>item.id===this.state.previd)[0].attachment3).base64}`}
-                            style={{position : "relative", height : "100%"}}
-                            onClose={()=>this.setState({showPreview : false, previd : 0})}
-                        />:null}
+                        {/*{messages.length&&this.state.previewID?*/}
+                        {/*<SingleImage*/}
+                            {/*uri={`data:image/png;base64,${JSON.parse(messages.filter(item=>item.id===this.state.previewID)[0].attachment3).base64}`}*/}
+                            {/*style={{position : "relative", height : "100%"}}*/}
+                            {/*onClose={()=>this.setState({showPreview : false, previewID : 0})}*/}
+                        {/*/>:null}*/}
+
+                        {messages.length && this.state.previewID ?
+                            <ImageZoom cropWidth={Dimensions.get('window').width}
+                                       cropHeight={Dimensions.get('window').height}
+                                       imageWidth={Dimensions.get('window').width}
+                                       imageHeight={Dimensions.get('window').height}
+                            >
+                                <Image style={{
+                                    width: Dimensions.get('window').width,
+                                    height: Dimensions.get('window').height,
+                                }} source={{uri: img}}/>
+                            </ImageZoom> : null}
 
                         <TouchableOpacity
                             style={{position : "absolute", top : 10, right : 10, zIndex:10}}
-                            onPress={()=>this.setState({showPreview : false, previd : 0})}>
+                            onPress={()=>this.setState({showPreview : false, previewID : 0})}>
                             <View style={{
 
                                 paddingTop : 5, paddingBottom : 5,
@@ -465,7 +512,6 @@ class MessageList extends Component {
                             </Body>
                         </ListItem>
                         <Footer style={styles.header}>
-
                             <FooterTab style={styles.header}>
                                 <Button style={this.state.selSubject.value&&this.state.selDate.value>-3?styles.btnHomework:styles.btnHomeworkDisabled} vertical
                                         onPress={this.state.selSubject.value&&this.state.selDate.value>-3?()=>this.setModalVisible(!this.state.modalVisible, true):null}>
@@ -482,26 +528,16 @@ class MessageList extends Component {
                 </Modal>
                 <ScrollView
                     ref="scrollView"
+                    decelerationRate={0.5}
                     onContentSizeChange={( contentWidth, contentHeight ) => {
-                        // this._contentHeight = contentHeight
-                        // console.log("onContentSizeChange", contentHeight)
                         this.refs.scrollView.scrollToEnd()
                     }}
                 >
-                {/*<InvertibleScrollView inverted*/}
-                                      {/*ref={ref => { this.scrollView = ref; }}*/}
-                                      {/*onContentSizeChange={() => {*/}
-                                          {/*this.scrollView.scrollTo({y: 0, animated: true});*/}
-                                      {/*}}>*/}
 
                     {messages.length?
                         messages.map((message, i) =>{
-                                // console.log("395: MESSAGE", message)
-                                // console.log("396_1: MESSAGE", message, this.props.isnew, prepareMessageToFormat(message, true))
                                 let msg = this.props.isnew?prepareMessageToFormat(message, true):JSON.parse(message)
                                 // console.log("449: MESSAGE", message, msg,msg.hwdate)
-                                // msg.hwdate = this.props.isnew&&(!(message.homework_date===null))?(new Date(message.homework_date)):null
-                                // console.log("451: MESSAGE", message, msg,msg.hwdate)
                                 const urlMatches = msg.text.match(/\b(http|https)?:\/\/\S+/gi) || [];
                                 let { text } = msg;
                                 isImage = false
@@ -521,40 +557,26 @@ class MessageList extends Component {
                                     // console.log("urlMatches", urlMatches)
                                      LinkPreviews = urlMatches.map(link => <LinkPreviewEx key={"url" + i}  uri={link}/>)
                                 }
-                                // const LinkPreviews = urlMatches.map(link => <MicrolinkCard  key={"url"+i} url={link} />);
-                                // console.log("464: MESSAGE", message,
-                                //     msg,
-                                //     msg.hasOwnProperty('hwdate'),
-                                //     msg.hwdate===undefined,
-                                //     msg.hwdate===null,
-                                //     msg.hwdate)
                                 let username = msg.hasOwnProperty('userID')?msg.userName:msg.senderId
-                                // if (msg.hasOwnProperty('hwdate')&&(!(msg.hwdate===undefined))&&(!(msg.hwdate===null))) {
-                                //     console.log("HWDATE", msg, msg.hwdate)
-                                // }
                                 let hw = msg.hasOwnProperty('hwdate')&&(!(msg.hwdate===undefined))&&(!(msg.hwdate===null))?(toLocalDate(msg.hwdate.lenght===8?dateFromYYYYMMDD(msg.hwdate):msg.hwdate, "UA", false, false))+':'+msg.subjname:''
                                 let ownMsg = (username===this.props.userSetup.userName)
-                                // console.log("469: MESSAGE", this.curMsgDate, message)
 
+                                console.log("RENDER MESSAGE_LIST")
+                                const {user_id, msg_date, homework_subj_id, homework_date} = message
                                 return (this.props.hwdate===null||(!(this.props.hwdate===null)&&((new Date(this.props.hwdate)).toLocaleDateString()===(new Date(msg.hwdate)).toLocaleDateString())))?
 
-                                        <View key={i} id={"msg-"+msg.id} className={"message-block"}
-                                              // onClick={()=>i!==this.state.editKey?this.setState({editKey:-1}):null}
-                                              // onDoubleClick={(e)=>this.onMessageDblClick(e)}
-                                        >
-                                            {console.log("MESSAGE_ONPRESS9", message.user_id, userID, message, msg.id)}
-                                            {this.getDateSeparator(message.msg_date.length===8?dateFromYYYYMMDD(message.msg_date):new Date(message.msg_date))}
+                                        <View key={i} id={"msg-"+msg.id} className={"message-block"}>
+                                            {/*{console.log("MESSAGE_ONPRESS9", message.user_id, userID, message, msg.id)}*/}
+                                            {this.getDateSeparator(msg_date.length===8?dateFromYYYYMMDD(msg_date):new Date(msg_date))}
 
                                             <TouchableWithoutFeedback   key={i} id={"msgarea-"+msg.id}
-                                                                        delayLongPress={1000}
-                                                                        onLongPress={()=>this.onLongPressMessage(msg.id, message.homework_subj_id, message.homework_date, msg.text)}
+                                                                        delayLongPress={750}
+                                                                        onLongPress={user_id===userID?()=>this.onLongPressMessage(msg.id, homework_subj_id, (homework_date===undefined)?null:homework_date, msg.text):null}
                                                                         >
-                                            {/*style={this.state.editKey===i?{color:"white", backgroundColor : "white", border: "white 2px solid"}:null}*/}
                                             <View key={msg.id}
                                                 style={ownMsg?
                                                 (hw.length?[styles.msgRightSide, styles.homeworkBorder]:[styles.msgRightSide, styles.homeworkNoBorder]):
                                                 (hw.length?[styles.msgLeftSide, styles.homeworkBorder]:[styles.msgLeftSide, styles.homeworkNoBorder])}>
-
                                                 {/*{this.state.editKey===i?<Textarea className={ownMsg?"message-block-edit-right":"message-block-edit-left"} ref={input=>{this.textareaValue=input}} defaultValue={msg.text}*/}
                                                 {/*onKeyPress={this.OnKeyPressTextArea} onChange={this.OnChangeTextArea}>*/}
                                                 {/*</Textarea>:null}*/}
@@ -584,18 +606,18 @@ class MessageList extends Component {
                                                 {/*{console.log('460', message, isImage, message.attachment3)}*/}
                                                 {isImage?
                                                     <View style={{display : "flex", flex : 1, flexDirection: "row"}}>
-                                                        <TouchableOpacity onPress={()=>{this.setState({previd : msg.id, showPreview : true})}}>
+                                                        <TouchableOpacity onPress={()=>{ this.getImage(msg.id)}}>
                                                          <View style={{flex : 1}}>
                                                             <Image
                                                             source={{uri: `data:image/png;base64,${JSON.parse(message.attachment3).base64}`}}
-                                                            style={{ width: 100, height: 100,
+                                                            style={{ width: 70, height: 70,
                                                                     borderRadius: 15,
-                                                                    overflow: "hidden", margin : 7 }}/>
+                                                                    overflow: "hidden", margin : 1 }}/>
                                                         </View>
                                                         </TouchableOpacity>
                                                         <View key={'msg'+i} id={"msg-text-"+i}
                                                                 style={[styles.msgText,
-                                                                        {flex: 3, marginLeft : 20, marginTop : 10}]}>
+                                                                        {flex: 3, marginLeft : 20, marginTop : 5}]}>
                                                                 <Text>{msg.text}</Text>
                                                         </View>
                                                     </View>

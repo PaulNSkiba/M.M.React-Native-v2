@@ -3,7 +3,7 @@
  */
 import React, { Component } from 'react'
 import {    StyleSheet, Text, View, Image, ScrollView,
-            TouchableHighlight, Modal, Radio, TouchableOpacity, FlatList } from 'react-native';
+            TouchableHighlight, Modal, Radio, TouchableOpacity, FlatList, Dimensions } from 'react-native';
 import {    Container, TabHeading, Tabs, Tab, } from 'native-base';
 // import { ListView } from 'deprecated-react-native-listview';
 import RadioForm from 'react-native-radio-form';
@@ -17,18 +17,19 @@ import ButtonWithBadge from '../../components/ButtonWithBadge/buttonwithbadge'
 // import { DataTable, Cell, CheckableCell, EditableCell, Header, HeaderCell, Row as DataRow, TableButton } from 'react-native-data-table'
 // import '../../ChatMobile/chatmobile.css'
 
-const insertTextAtIndices = (text, obj) => {
-    return text.replace(/./g, function(character, index) {
-        return obj[index] ? obj[index] + character : character;
-    });
-};
-const tableStyles = StyleSheet.create({
-    container: { flex: 1, padding: 16, paddingTop: 30, backgroundColor: '#fff', borderWidth: 2, borderColor : "#8866aa" },
-    head: { height: 40, backgroundColor: '#808B97', color : "#fff", textAlign: "center" },
-    text: { margin: 6, textAlign : "center", backgroundColor: '#fff' },
-    headtext : {  color : "#fff" },
-    wrapper: { flexDirection: 'row' },
-});
+// const insertTextAtIndices = (text, obj) => {
+//     return text.replace(/./g, function(character, index) {
+//         return obj[index] ? obj[index] + character : character;
+//     });
+// };
+// const tableStyles = StyleSheet.create({
+//     container: { flex: 1, padding: 16, paddingTop: 30, backgroundColor: '#fff', borderWidth: 2, borderColor : "#8866aa" },
+//     head: { height: 40, backgroundColor: '#808B97', color : "#fff", textAlign: "center" },
+//     text: { margin: 6, textAlign : "center", backgroundColor: '#fff' },
+//     headtext : {  color : "#fff" },
+//     wrapper: { flexDirection: 'row' },
+// });
+const windowRatio = Dimensions.get('window').width? Dimensions.get('window').height / Dimensions.get('window').width : 1.9
 
 class MarksBlock extends Component {
     constructor(props) {
@@ -80,31 +81,10 @@ class MarksBlock extends Component {
         })
         return [i, obj];
     }
-    // renderHeader() {
-    //     // const { data } = this.state;
-    //     const data = ['Предмет', 'Дата1', 'Дата2', 'Дата3', 'Дата4', 'Дата5']
-    //     const headerCells = [];
-    //     if (data && data.length > 0) {
-    //         const firstObject = data[0];
-    //         // TODO: use explicit loops instead of generators.
-    //         // eslint-disable-next-line no-restricted-syntax
-    //         for (const [key] of Object.entries(firstObject)) {
-    //             headerCells.push(
-    //                 <HeaderCell
-    //                     key={key}
-    //                     style={globalStyles.headerCell}
-    //                     textStyle={globalStyles.text}
-    //                     width={1}
-    //                     text={key}
-    //                 />
-    //             );
-    //         }
-    //     }
-    //     return <Header style={globalStyles.header}>{headerCells}</Header>;
-    // }
+
     getTableGrids=()=>{
         let {marks} = this.props.userSetup
-        let dayPages = [], curPeriod = [], cnt = 0, periodNum = 0, subjPages = []
+        let dayPages = [], curItem = [], cnt = 0, periodNum = 0, subjPages = []
         let daysMap = new Map(), subjMap = new Map();
         console.log("MARKS_ARRAY", marks)
         if (marks.length) {
@@ -114,28 +94,27 @@ class MarksBlock extends Component {
                     daysMap.set(marks[i].mark_date)
                     if ((cnt + 1) < (this.markDaySteps + 1)) {
                         cnt++
-                        curPeriod.unshift(marks[i].mark_date)
+                        curItem.unshift(marks[i].mark_date)
                     }
                     else {
-                        dayPages.unshift({i : periodNum, arr : curPeriod})
+                        dayPages.unshift({i : periodNum, arr : curItem})
                         periodNum++
-                        curPeriod = []
+                        curItem = []
                         cnt = 0
                         cnt++
                         if ((dayPages.length === 5)) break;
-                        curPeriod.unshift(marks[i].mark_date)
+                        curItem.unshift(marks[i].mark_date)
                     }
                 }
-
             }
-            if (curPeriod.length) {
-                dayPages.unshift({i : periodNum, arr : curPeriod})
+            if (curItem.length) {
+                dayPages.unshift({i : periodNum, arr : curItem})
             }
             console.log("Mark_Periods0", dayPages, subjPages)
             // Теперь выберем предметы для периода
             for (let i = dayPages.length - 1; i >= 0; i--) {
                 subjMap = new Map();
-                curPeriod = []
+                curItem = []
                 console.log("dayPages0", dayPages[i].arr, marks.length)
                 for (let j = 0; j < marks.length; j++) {
 
@@ -143,20 +122,29 @@ class MarksBlock extends Component {
                     // console.log("elem2", dayPages[i], Array.from(dayPages[i].arr.values()))
                     // console.log("dayPages1", dayPages[i].arr.values(), elem.mark_date, dayPages[i].arr.values().includes(elem.mark_date))
                     if ((values.includes(elem.mark_date)) && (!(subjMap.has(elem.subj_key)))) {
-                        curPeriod.unshift({"subj_key" : elem.subj_key, "subj_id" : elem.subj_id, "subj_name_ua" : elem.subj_name_ua})
+                        curItem.unshift({"subj_key" : elem.subj_key, "subj_id" : elem.subj_id, "subj_name_ua" : elem.subj_name_ua})
                         subjMap.set(elem.subj_key)
                     }
                     //
                 }
-                console.log("dayPages", curPeriod)
-                subjPages.unshift({i : dayPages[i].i, arr : curPeriod})
+                console.log("dayPages", curItem)
+                // Отсортируем предметы
+                curItem.sort((a, b)=>{
+                    // a.subj_name_ua>b.subj_name_ua
+                    if (a.subj_name_ua > b.subj_name_ua) return 1; // если первое значение больше второго
+                    if (a.subj_name_ua === b.subj_name_ua) return 0; // если равны
+                    if (a.subj_name_ua < b.subj_name_ua) return -1;
+                })
+                
+                subjPages.unshift({i : dayPages[i].i, arr : curItem})
                 subjMap = new Map();
-                curPeriod = []
+                curItem = []
             }
-            console.log("subjPages!!!", subjPages.length, curPeriod.length, curPeriod)
-            if (curPeriod.length) {
-                subjPages.unshift({i : subjPages.length, arr : curPeriod})
+            console.log("subjPages!!!", subjPages, subjPages.length, curItem.length, curItem)
+            if (curItem.length) {
+                subjPages.unshift({i : subjPages.length, arr : curItem})
             }
+
         }
 
         // Пробуем разобраться с ЛистВью
@@ -216,7 +204,8 @@ class MarksBlock extends Component {
     render () {
         // const daysArr = daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;})
         const initialDay = this.getNextStudyDay(daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;}))[0];
-        console.log("MARKS_RENDER", this.props.userSetup, this.state.curPage, this.state.dayPages)
+
+        console.log("MARKS_RENDER")
         let {marks} = this.props.userSetup, mark = "", subjmarks = ""
          return (
 
@@ -255,8 +244,6 @@ class MarksBlock extends Component {
                                                             style={globalStyles.headerCellSubj}>{subjItem.subj_name_ua}</Text>
                                                     </View>
                                                     {
-
-
                                                         rootItem.arr.map((dateItem, key) => {
                                                                 // console.log("Cell", item, key)
                                                                 {
@@ -279,41 +266,6 @@ class MarksBlock extends Component {
                                             })}
                                     </View>
 
-                                        {/*{console.log("subjPages3", this.state.subjPages.filter(item=>item.i===rootItem.i)[0].arr)}*/}
-                                        {/*{rootItem.i===0?<Row  data={['Head', 'Head2', 'Head3', 'Head4', 'Head2', 'Head3', 'Head4']}/>:null}*/}
-
-                                        {/*<TableWrapper key={"body_marks"}>*/}
-
-
-                                            {/*/!*{console.log("Cell2", item)}*!/*/}
-                                        {/*</TableWrapper>*/}
-                                        {/*{this.state.subjPages.filter(item=>item.i===rootItem.i)[0].arr.map(*/}
-                                            {/*(item, key)=> {*/}
-                                                {/*console.log("Cell2", item, key)*/}
-                                                {/*return   <Cell key={"cell2" + key}*/}
-                                                               {/*data={"Test"}*/}
-                                                               {/*style={globalStyles.headerCell}*/}
-                                                               {/*textStyle={{fontSize: RFPercentage(1.4)}}/>*/}
-                                            {/*}*/}
-                                        {/*)}*/}
-
-                                        {/*//Строки*/}
-
-                                        {/*<TableWrapper key={11} style={globalStyles.row}>*/}
-                                        {/*<Cell key={1} data={11} style={{*/}
-                                        {/*backgroundColor: "#C6EFCE",*/}
-                                        {/*width: 40,*/}
-                                        {/*height: 40,*/}
-                                        {/*padding: 12*/}
-                                        {/*}}/>*/}
-                                        {/*<Cell key={2} data={11} style={{*/}
-                                        {/*backgroundColor: "#87DD97",*/}
-                                        {/*width: 40,*/}
-                                        {/*height: 40,*/}
-                                        {/*padding: 12*/}
-                                        {/*}}/>*/}
-                                        {/*</TableWrapper>*/}
-                                    {/*</Table>*/}
                                 </View>
 
                             </Tab>
@@ -339,7 +291,7 @@ const globalStyles = StyleSheet.create({
     },
     headerCellFirst : {
         backgroundColor: "rgba(64, 155, 230, 0.16)",
-        width: 140,
+        width: windowRatio<1.8? 120: 120,
         height: 40,
         paddingTop: 12,
         paddingBottom: 4,
@@ -352,7 +304,7 @@ const globalStyles = StyleSheet.create({
         // display : "flex",
         // flex : 1,
         backgroundColor: "#fff",
-        width: 140,
+        width: windowRatio<1.8? 120: 120,
         height: 40,
         // justifyContent : "center",
         paddingTop: 6,

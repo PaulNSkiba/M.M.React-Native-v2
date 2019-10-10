@@ -6,7 +6,7 @@ import { connect } from 'react-redux'
 import { store } from '../../store/configureStore'
 import { StyleSheet, Text, View, Image, Modal, TextInput, TouchableWithoutFeedback } from 'react-native';
 import { Icon } from 'react-native-elements'
-
+import NetInfo from "@react-native-community/netinfo";
 import {    Container, Header, Left, Body, Right, Button,
     Title, Content,  Footer, FooterTab, Badge,
     Form, Item, Input, Label, Textarea} from 'native-base';
@@ -18,15 +18,15 @@ import arrow_up from '../../img/ARROW_UP.png'
 import { API_URL, BASE_HOST, WEBSOCKETPORT, LOCALPUSHERPWD, HOMEWORK_ADD_URL,
         instanceLocator, testToken, chatUserName } from '../../config/config'
 import {dateFromYYYYMMDD, AddDay, arrOfWeekDays, dateDiff, toYYYYMMDD, instanceAxios, mapStateToProps, prepareMessageToFormat, echoClient} from '../../js/helpersLight'
+import Pusher from 'pusher-js/react-native'
+import Echo from 'laravel-echo'
+import styles from '../../css/styles'
+import Socketio from 'socket.io-client'
 
 // import addMsg from '../../img/addMsg.svg'
 
 import { Smile } from 'react-feather';
 // import { Picker, emojiIndex } from 'emoji-mart';
-import Pusher from 'pusher-js/react-native'
-import Echo from 'laravel-echo'
-import styles from '../../css/styles'
-import Socketio from 'socket.io-client'
 
 window.Pusher = Pusher
 // import { default as uniqid } from 'uniqid'
@@ -66,6 +66,7 @@ class ChatMobile extends Component {
             localChatMessages : [],
             curMessage : '',
             modalVisible: false,
+            isConnected: true,
         }
         this.now = new Date()
         this.editedMsgID = 0
@@ -81,11 +82,10 @@ class ChatMobile extends Component {
         this.sendMessage = this.sendMessage.bind(this)
         this.addMessage = this.addMessage.bind(this)
     }
-    componentWillMount(){
-        // console.log("this.props.isnew", this.props.isnew)
-    }
     componentDidMount(){
         // console.log("this.props.isnew", this.props.isnew)
+        NetInfo.isConnected.addEventListener('connectionChange', this.handleConnectivityChange);
+
         if (this.props.isnew)
             this.initLocalPusher()
         else {
@@ -112,7 +112,75 @@ class ChatMobile extends Component {
     }
     componentWillUnmount() {
         if (this.typingTimer) clearInterval(this.typingTimer)
+        NetInfo.isConnected.removeEventListener('connectionChange', this.handleConnectivityChange);
     }
+    handleConnectivityChange = isConnected => {
+        const {classID, studentId, localChatMessages, markscount} = this.props.userSetup
+        if ((this.state.isConnected!==isConnected)&&isConnected) {
+            if (classID) {
+                instanceAxios().get(API_URL + `class/getstat/${classID}/${studentId}'/0`)
+                    .then(response => {
+                        console.log('handleConnectivityChange', response, this.props.userSetup)
+                        // homeworks: 13
+                        // marks: 0
+                        // msgs: 250
+                        // news: 3
+                        // ToDO: News исправим позже
+                        const today = toYYYYMMDD(new Date())
+                        const homeworks_count = localChatMessages.filter(item=>(item.homework_date!==null&&(toYYYYMMDD(new Date(item.homework_date))>=today)))
+                        if ((response.data.msgs!==localChatMessages.slice(-1).id)||(markscount!==response.data.marks)||(homeworks_count!==response.data.homeworks)) {
+                            instanceAxios().get(API_URL + `class/getstat/${classID}/${studentId}'/1`)
+                                .then(response => {
+                                    // console.log('NewData', response, this.props.userSetup)
+                                    // this.props.onReduxUpdate("UPDATE_HOMEWORK", response.data.msgs.filter(item=>(item.homework_date!==null)))
+                                    // this.props.onReduxUpdate("ADD_CHAT_MESSAGES", response.data.msgs)
+                                    const msgs = response.data.msgs
+                                    let arr = this.state.localChatMessages
+                                    console.log("RESPONSE", msgs)
+                                    if (msgs.length) {
+                                        msgs.forEach(msgitem=>{
+                                            let isinmsg = false
+                                            arr = arr.map(item=>{
+                                                if (item.id === msgitem.id) {
+                                                    item = msgitem
+                                                    isinmsg = true
+                                                }
+                                                return item
+                                            })
+                                            if (!isinmsg) {
+                                                if (toYYYYMMDD(new Date(msgitem.msg_date))>=toYYYYMMDD(new Date()))
+                                                arr.push(msgitem)
+                                                else
+                                                arr.unshift(msgitem)
+                                            }
+                                        })
+                                    }
+                                    this.setState({localChatMessages : arr})
+                                    console.log("Загружено по оффлайну!")
+                                    this.props.onReduxUpdate("UPDATE_HOMEWORK", response.data.msgs.filter(item=>(item.homework_date!==null)))
+                                    this.props.onReduxUpdate("ADD_CHAT_MESSAGES", response.data.msgs)
+                                    this.props.onReduxUpdate("ADD_MARKS", response.data.marks)
+                                })
+                                .catch(response=> {
+                                    console.log("NewData_ERROR", response)
+                                })
+                        }
+                    })
+                    .catch(response=> {
+                        console.log("handleConnectivityChange_ERROR", response)
+                    })
+            }
+        }
+        NetInfo.fetch().then(state => {
+            // console.log("Connection type", state.type);
+            // console.log("Is connected?", state.isConnected);
+            // this.setState({netOnline: state.isConnected, netType: state.type})
+            this.setState({ isConnected });
+        });
+
+        // console.log("NET_TYPE", netType)
+        // this.setState({ isConnected});
+    };
     toggleEmojiPicker=()=>{
         this.setState({            showEmojiPicker: !this.state.showEmojiPicker,        });
     }
@@ -719,6 +787,7 @@ class ChatMobile extends Component {
     }
     updateLocalMessages=(messages)=>{
         this.setState({localChatMessages : messages})
+        this.props.onReduxUpdate("ADD_CHAT_MESSAGES", messages)
     }
     onTextIput=()=>{
         this.props.setstate({showFooter : false})
@@ -728,7 +797,7 @@ class ChatMobile extends Component {
             showEmojiPicker,
         } = this.state;
 
-        // console.log("RENDER_CHAT", this.props.userSetup, this.state.localChatMessages)
+        console.log("RENDER_CHAT")
         return (
             <View style={this.props.hidden?styles.hidden:styles.chatContainerNew}>
                 <View style={{flex : 7}}>
@@ -875,8 +944,8 @@ class ChatMobile extends Component {
 }
 
 export default connect(mapStateToProps,
-    dispatch => {
-    return {
-        onReduxUpdate: (key, payload) => dispatch({type: key, payload: payload}),
-    }
-    })(ChatMobile)
+    dispatch => { return {
+                            onReduxUpdate: (key, payload) => dispatch({type: key, payload: payload}),
+                         }
+                }
+            )(ChatMobile)
