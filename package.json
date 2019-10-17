@@ -37,6 +37,7 @@
     "react-native-image-view": "^2.1.5",
     "react-native-image-zoom-viewer": "^2.2.26",
     "react-native-invertible-scroll-view": "^2.0.0",
+    "react-native-ionicons": "^4.6.1",
     "react-native-link-preview": "^1.4.2",
     "react-native-oauth": "^2.1.18",
     "react-native-popup-dialog": "^0.18.3",

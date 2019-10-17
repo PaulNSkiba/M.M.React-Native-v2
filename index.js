@@ -20,6 +20,5 @@ const Root = () => (
         <MyApp />
     </Provider>
 )
-// AppRegistry.registerComponent('Root', () => Root);
 AppRegistry.registerComponent(appName, () => Root);
-// AppRegistry.registerComponent(appName, () => App);
+

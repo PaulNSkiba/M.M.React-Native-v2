@@ -124,7 +124,7 @@ export default styles = StyleSheet.create({
         margin : 8,
         borderColor : "#E0E0E0",
         width : "96%",
-        height : 150,
+        height : 100,
         padding : 2,
         backgroundColor: "white",
         alignSelf : "flex-start",
@@ -228,7 +228,7 @@ export default styles = StyleSheet.create({
     },
     myTitle : {
         // textDecoration: "underline",
-        fontFamily: "'Poiret One' cursive",
+        // fontFamily: "'Poiret One' cursive",
         fontWeight: "900",
         color : "#4472C4",
         // minWidth: "140px",

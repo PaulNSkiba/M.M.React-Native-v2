@@ -9,15 +9,12 @@ import { StyleSheet, Text, View, Image, ScrollView,
          TouchableHighlight, Modal, Radio, TouchableOpacity } from 'react-native';
 import {    Container, Header, Left, Body, Right, Button,
             Title, Content,  Footer, FooterTab, TabHeading, Tabs, Tab,
-            Form, Item, Input, Label, Textarea, CheckBox, ListItem } from 'native-base';
-import { Avatar, Badge, Icon, withBadge } from 'react-native-elements'
-import RadioForm from 'react-native-radio-form';
+            Form, Item, Input, Label, Textarea, CheckBox, ListItem, Badge, Icon as IconBase } from 'native-base';
+import { Avatar, Icon, withBadge } from 'react-native-elements'
 import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, AddDay, toYYYYMMDD, daysList} from '../../js/helpersLight'
 import { connect } from 'react-redux'
-import ButtonWithBadge from '../../components/ButtonWithBadge/buttonwithbadge'
 import { RFPercentage, RFValue } from "react-native-responsive-fontsize";
 import Budget from '../Budget/budget'
-// import '../../ChatMobile/chatmobile.css'
 
 const insertTextAtIndices = (text, obj) => {
     return text.replace(/./g, function(character, index) {
@@ -69,36 +66,11 @@ class ETCBlock extends Component {
                     transparent={false}
                     visible={this.state.showBudget}
                     onRequestClose={() => {
-                        // Alert.alert('Modal has been closed.');
                     }}>
                     <View>
-                        {/*{messages.length&&this.state.previd?*/}
-                            {/*<SingleImage*/}
-                                {/*uri={`data:image/png;base64,${JSON.parse(messages.filter(item=>item.id===this.state.previd)[0].attachment3).base64}`}*/}
-                                {/*style={{position : "relative", height : "100%"}}*/}
-                                {/*onClose={()=>this.setState({showPreview : false, previd : 0})}*/}
-                            {/*/>:null}*/}
-
-                        {/*<TouchableOpacity*/}
-                            {/*style={{position : "absolute", top : 10, right : 10, zIndex:10}}*/}
-                            {/*onPress={()=>this.setState({showPreview : false, previd : 0})}>*/}
-                            {/*<View style={{*/}
-
-                                {/*paddingTop : 5, paddingBottom : 5,*/}
-                                {/*paddingLeft : 15, paddingRight : 15, borderRadius : 5,*/}
-                                {/*borderWidth : 2, borderColor : "#33ccff", zIndex:10,*/}
-                            {/*}}>*/}
-                                {/*<Text style={{  fontSize : 20,*/}
-                                    {/*color: "#33ccff",*/}
-                                    {/*zIndex:10,*/}
-                                {/*}}*/}
-                                {/*>X</Text>*/}
-                            {/*</View>*/}
-                        {/*</TouchableOpacity>*/}
                         <Body>
                             <Budget onexit={this.onExit}/>
                         </Body>
-
                     </View>
                 </Modal>
                 <View style={styles.modalView}>
@@ -121,11 +93,12 @@ class ETCBlock extends Component {
                                         onPress={()=>{this.setState({showBudget: true})}}>
                                     <Icon size={52} color={"#4472C4"} active type={'material'} name={'payment'} inverse />
                                     <Text style={{fontSize: RFPercentage(1.6)}}>{"Бюджет"}</Text>
-                                    <Badge
-                                           value={""}
-                                           status={"success"}
-                                           containerStyle={{ position: 'absolute', top: -8, right: 2 }}>
-                                    </Badge>
+                                    {/*<Badge*/}
+                                           {/*witdth={10}*/}
+                                           {/*fontSize={10}*/}
+                                           {/*style={{ position: 'absolute', top: -12, right: 2, backgroundColor : "#33ccff" }}>*/}
+                                            <IconBase name="checkmark-circle" color={"#33ccff"} style={{position: 'absolute', top: -12, right: -8, fontSize: 22, color : "#33ccff"}}/>
+                                    {/*</Badge>*/}
                                 </Button>
                                 <Button style={{backgroundColor : "#f0f0f0", color : "#fff", width : 80, height : 80, margin : 5}}
                                         disabled={false}

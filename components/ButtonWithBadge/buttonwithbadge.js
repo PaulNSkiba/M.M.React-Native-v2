@@ -3,11 +3,9 @@
  */
 import React, {Fragment, Component} from 'react';
 import { SafeAreaView,  StyleSheet,  ScrollView,  View,  Text,  StatusBar, Dimensions} from 'react-native';
-import { Avatar, Badge, Icon, withBadge } from 'react-native-elements'
-import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, AddDay, toYYYYMMDD, daysList} from '../../js/helpersLight'
-import {    Container, Header, Left, Body, Right, Button,
-    Title, Content,  Footer, FooterTab,
-    Form, Item, Input, Label} from 'native-base';
+import { Badge, Icon } from 'react-native-elements'
+import { mapStateToProps, AddDay, toYYYYMMDD } from '../../js/helpersLight'
+import { Button } from 'native-base';
 import styles from '../../css/styles'
 import {connect} from 'react-redux';
 import { RFPercentage, RFValue } from "react-native-responsive-fontsize";
@@ -22,10 +20,7 @@ class ButtonWithBadge extends Component {
 
         const windowRatio = Dimensions.get('window').width? Dimensions.get('window').height / Dimensions.get('window').width : 1.9
         const todayMessages = this.props.userSetup.localChatMessages.filter(item=>(new Date(item.msg_date).toLocaleDateString())===(new Date().toLocaleDateString())).length
-        // console.log("homework", this.props.userSetup.homework)
         const test = true
-        // console.log('test', test)
-        // if (this.props.kind==='homework')
         const homework = this.props.userSetup.homework.length?this.props.userSetup.homework.filter(item=>{
             if (item.hasOwnProperty('ondate')) item.homework_date = new Date(item.ondate)
                 return toYYYYMMDD(new Date(item.homework_date)) === toYYYYMMDD(AddDay((new Date()), 1))
@@ -35,7 +30,6 @@ class ButtonWithBadge extends Component {
         if (this.props.kind==='marks') console.log("MARKS_COUNT", this.props.value)
         return (
         <Button style={this.props.enabled?{backgroundColor : "#A9A9A9", color : "#fff"}:{backgroundColor : "#f0f0f0", color : "#fff"}}
-                // disabled={this.props.disabled}
                 badge vertical
                 active={this.props.enabled&&(!this.props.disabled)}
                 onPress={()=> {

@@ -226,6 +226,25 @@ class MessageList extends Component {
                     </View>
         }
     }
+    onChangeText=(key, text)=>{
+        this.setState({curMessage : text})
+    }
+    updateMsg=(id)=>{
+        let json = `{   "id":${id}, 
+                        "message": "${this.state.curMessage}"
+                        }`;
+        console.log(json);
+
+        instanceAxios().post(`${API_URL}chat/add/${id}`, json)
+            .then(res=>{
+                console.log("Удачно записано")
+            })
+            .catch(res=>{
+                console.log("Ошибка записи")
+            })
+
+        console.log("UPDATE", this.state.curMessage)
+    }
     render() {
 
          // console.log("addmsgs", this.props.addmsgs)
@@ -322,7 +341,7 @@ class MessageList extends Component {
         else
             messages = this.props.messages
         // console.log('MESSAGES', this.props.localmessages, messages)
-        const subjects = this.props.userSetup.selectedSubjects.map(item=>{
+        const subjects = this.props.userSetup.selectedSubjects.filter(item=>item.subj_key!=="#xxxxxx").map(item=>{
             return {
                     label : item.subj_name_ua.toUpperCase(),
                     value : item.id
@@ -468,7 +487,7 @@ class MessageList extends Component {
                                 <View>
                                         <Textarea style={styles.msgUpdateTextarea}
                                             // onKeyPress={this._handleKeyDown}
-                                            // onChangeText={text=>this.onChangeText('curMessage', text)}
+                                                  onChangeText={text=>this.onChangeText('curMessage', text)}
                                             // onFocus={()=>{this.props.setstate({showFooter : false})}}
                                             // onBlur={()=>{this.props.setstate({showFooter : true})}}
                                                   placeholder="Внесите изменения..."  type="text"
@@ -476,7 +495,7 @@ class MessageList extends Component {
                                                   value={this.state.curMessage}
                                         />
                                     <TouchableOpacity
-                                        onPress={this.updateMsg}>
+                                        onPress={()=>this.updateMsg(this.state.currentHomeworkID)}>
                                         <View style={styles.updateMsg}>
                                             <Text style={styles.updateMsgText} >СОХРАНИТЬ ИЗМЕНЕНИЯ</Text>
                                         </View>
@@ -531,8 +550,7 @@ class MessageList extends Component {
                     decelerationRate={0.5}
                     onContentSizeChange={( contentWidth, contentHeight ) => {
                         this.refs.scrollView.scrollToEnd()
-                    }}
-                >
+                    }}>
 
                     {messages.length?
                         messages.map((message, i) =>{

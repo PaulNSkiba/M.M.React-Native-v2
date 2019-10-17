@@ -3,17 +3,14 @@
  */
 import React from 'react';
 import { StyleSheet, Text, View, TextInput} from 'react-native';
-import { AsyncStorage } from '@react-native-community/async-storage';
 import { connect } from 'react-redux';
 import {Spinner} from 'native-base';
 import {    Container, Header, Left, Body, Right, Button,
     Icon, Title, Content,  Footer, FooterTab, Badge,
     Form, Item, Input, Label} from 'native-base';
-import { instanceAxios, mapStateToProps /*, langLibrary as langLibraryF*/ } from '../../js/helpersLight'
+import { instanceAxios, mapStateToProps } from '../../js/helpersLight'
 import LoginBlock from '../LoginBlock/loginBlock'
-import HeaderBlock from '../HeaderBlock/headerBlock'
 import ChatMobile from '../ChatMobile/chatmobile'
-import styles from '../../css/styles'
 
 class ChatBlock extends React.Component {
     constructor(props) {
@@ -40,8 +37,6 @@ class ChatBlock extends React.Component {
                             btnclose={() => { this.setState({displayChat: !this.state.displayChat}) }}
                             display={this.state.displayChat} newmessage={this.newChatMessage}
                         />
-                    // </View>
-                // </View>
                 :null}
             </View>
         </View>)

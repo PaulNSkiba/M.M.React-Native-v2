@@ -15,11 +15,11 @@ import {API_URL} from '../../config/config'
 import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, AddDay, toYYYYMMDD, daysList, instanceAxios} from '../../js/helpersLight'
 import { RNCamera } from 'react-native-camera';
 import { connect } from 'react-redux'
-// import { stylesCamera } from '../../css/camera'
-// import ImageView from 'react-native-image-view';
 import {SingleImage,wrapperZoomImages,ImageInWraper} from 'react-native-zoom-lightbox';
 import ImageResizer from 'react-native-image-resizer';
 import ImgToBase64 from 'react-native-image-base64';
+// import { stylesCamera } from '../../css/camera'
+// import ImageView from 'react-native-image-view';
 // import '../../ChatMobile/chatmobile.css'
 
 const insertTextAtIndices = (text, obj) => {

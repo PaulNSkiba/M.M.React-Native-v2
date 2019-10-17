@@ -58,11 +58,9 @@ import {connect} from 'react-redux'
 import RNFetchBlob from 'rn-fetch-blob'
 import ImageZoom from 'react-native-image-pan-zoom';
 import { API_URL } from '../../config/config'
-
-// import MessageList from '../MessageList/messagelist'
-// import '../../ChatMobile/chatmobile.css'
-
+import AccordionCustom from '../AccordionCustom/accordioncustom'
 import {PermissionsAndroid} from 'react-native';
+import styles from '../../css/styles'
 //
 // READ_CALENDAR: 'android.permission.READ_CALENDAR'
 // WRITE_CALENDAR: 'android.permission.WRITE_CALENDAR'
@@ -228,13 +226,51 @@ class HomeworkBlock extends Component {
     updateMsg = () => {
 
     }
+    getHomeWorksForAccordion=()=>{
+        const daysArr = daysList().map(item => {
+            let newObj = {};
+            newObj.label = item.name;
+            newObj.value = item.id;
+            newObj.date = item.date;
+            return newObj;
+        })
+        // const initialDay = this.getNextStudyDay(daysArr)[0];
+        const { localChatMessages: homeworkorig } = this.props.userSetup
 
+        // По умолчанию выбираем домашку на завтра...
+        console.log("getHomeWorksForAccordion: daysArr", daysArr)
+        return daysArr.map((itemDate, key)=>{
+            const homework = homeworkorig.length ? homeworkorig.filter(
+                item => {
+                    // console.log("HOMEWORK", item)
+                    if (!(item.hasOwnProperty("homework_date"))) return false
+                    if (item.homework_date === null) return false
+                    if (item.homework_date.length === 8) {
+                        return (toYYYYMMDD(dateFromYYYYMMDD(item.homework_date)) === toYYYYMMDD(new Date(itemDate.date)))
+                    }
+                    else
+                        return (toYYYYMMDD(new Date(item.homework_date)) === toYYYYMMDD(new Date(itemDate.date)))
+                }) : []
+
+            // console.log("homework", homework, item, key)
+            return   <View key={key} style={{flex: 1}}>
+                        <View style={[styles.msgList, {flex: 7}, {marginBottom: 5}]}>
+                            {homework.length ? <ScrollView
+                                // style={{ backgroundColor: "#ffe9ee"}}
+                                ref="scrollViewHW"
+                                onContentSizeChange={(contentWidth, contentHeight) => {
+                                    console.log("onContentSizeChange", contentHeight)
+                                    this.refs.scrollViewHW.scrollToEnd()
+                                }}>
+                                {homework.length ? this.getHomeworkItems(homework) : null}
+                            </ScrollView> : null}
+                        </View>
+
+                    </View>
+        })
+    }
     render() {
         let messages = []
-        // if (this.props.isnew)
-        //     messages = this.props.localmessages //this.props.chat.localChatMessages.map(item=>prepareMessageToFormat(item))
-        // else
-        //     messages = this.props.messages
 
         const daysArr = daysList().map(item => {
             let newObj = {};
@@ -247,22 +283,20 @@ class HomeworkBlock extends Component {
         const {userName, localChatMessages: homeworkorig, classID} = this.props.userSetup
 
         // По умолчанию выбираем домашку на завтра...
-
         // console.log("daysArr", daysArr)
-
         for (i = 0; i < daysArr.length; i++) {
             let arr = homeworkorig.filter(item => {
                 // console.log("HomeWork", item.date, daysArr[i].date, toYYYYMMDD(new Date(item.date)), toYYYYMMDD(new Date(daysArr[i].date)))
                 return toYYYYMMDD(new Date(item.homework_date)) === toYYYYMMDD(new Date(daysArr[i].date))
             })
 
-            daysArr[i].label = daysArr[i].label + (arr.length ? ' [' + arr.length + ']' : '')
+            // daysArr[i].label = daysArr[i].label + (arr.length ? ' [' + arr.length + ']' : '')
+            daysArr[i].count = arr.length
             // console.log("daysArr2", daysArr[i].label, arr.length)
         }
 
         console.log("getHomeworkItems", daysArr, this.props.userSetup)
-        // const homeworks = homeworkorig
-        // console.log("homework", homeworks)
+
         const homework = homeworkorig.length ? homeworkorig.filter(
             item => {
                 // console.log("HOMEWORK", item)
@@ -275,9 +309,7 @@ class HomeworkBlock extends Component {
                     return (toYYYYMMDD(new Date(item.homework_date)) === toYYYYMMDD(AddDay((new Date()), this.state.selDate.value)))
             }) : 0
         let img = '', imgPath = ''
-        // const dirs = RNFetchBlob.fs.dirs;
-        // const path = dirs.DCIMDir + "/image64.png";
-        // imgPath = path
+
         if (this.state.previewID) {
             console.log("write file", JSON.parse(this.state.previewImage).base64, JSON.parse(this.state.previewImage))
             // img = `data:image/png;base64,${JSON.parse(homework.filter(item => item.id === this.state.previewID)[0].attachment3).base64}`
@@ -290,20 +322,12 @@ class HomeworkBlock extends Component {
             //     .then(res => {console.log("File : ", res)})
             //     .catch(res => console.log("FileWrite: Error", res))
         }
+        // console.log("IMG_PATH", imgPath)
 
-        console.log("IMG_PATH", imgPath)
-        const images = [{
-            props: {
-                // Or you can set source directory.
-                url: img,
-                // source: '/storage/emulated/0/DCIM/image64.png'
-            }
-        }]
         // В счётчике обновления делаем на завтра
         return (
             <View>
-                {/*{this.state.isSpinner ? <View style={{position : "absolute", top : Dimensions.get('window').height / 2}}><Spinner color="#7DA8E6"/></View> : null}*/}
-                {/*{this.props.showLogin?<LoginBlock updateState={this.props.updateState}/>:null}*/}
+
                 <View style={this.props.hidden ? styles.hidden : styles.chatContainerNewHW}>
                     <View style={styles.msgList}>
                         <Modal
@@ -368,38 +392,55 @@ class HomeworkBlock extends Component {
                         </Modal>
                         <Container>
                             <Tabs>
-                                <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text style={{color: "#fff"}}>ЗАДАНИЯ</Text></TabHeading>}>
-                                    <View style={{flex: 1}}>
-                                        <View style={[styles.msgList, {flex: 7}, {marginBottom: 70}]}>
-                                            <ScrollView
-                                                ref="scrollViewHW"
-                                                onContentSizeChange={(contentWidth, contentHeight) => {
-                                                    console.log("onContentSizeChange", contentHeight)
-                                                    this.refs.scrollViewHW.scrollToEnd()
-                                                }}>
-                                                {homework.length ? this.getHomeworkItems(homework) : null}
-                                            </ScrollView>
-                                        </View>
-                                        <View style={{flex: 1}}>
+                                {/*<Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text style={{color: "#fff"}}>ЗАДАНИЯ</Text></TabHeading>}>*/}
+                                    {/*<View style={{flex: 1}}>*/}
 
-                                        </View>
-                                    </View>
+                                        {/*<View style={[styles.msgList, {flex: 7}, {marginBottom: 70}]}>*/}
+                                            {/*<ScrollView*/}
+                                                {/*ref="scrollViewHW"*/}
+                                                {/*onContentSizeChange={(contentWidth, contentHeight) => {*/}
+                                                    {/*console.log("onContentSizeChange", contentHeight)*/}
+                                                    {/*this.refs.scrollViewHW.scrollToEnd()*/}
+                                                {/*}}>*/}
+                                                {/*{homework.length ? this.getHomeworkItems(homework) : null}*/}
+                                            {/*</ScrollView>*/}
+                                        {/*</View>*/}
+                                        {/*<View style={{flex: 1}}>*/}
+
+                                        {/*</View>*/}
+                                    {/*</View>*/}
+                                {/*</Tab>*/}
+                                {/*<Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text*/}
+                                    {/*style={{color: "#fff"}}>{`НА ${this.state.selDate.label}`}</Text></TabHeading>}>*/}
+
+                                    {/*<View style={styles.homeworkSubjectList}>*/}
+
+                                        {/*<RadioForm*/}
+                                            {/*// style={{ paddingBottom : 20 }}*/}
+                                            {/*dataSource={daysArr}*/}
+                                            {/*itemShowKey="label"*/}
+                                            {/*itemRealKey="value"*/}
+                                            {/*circleSize={16}*/}
+                                            {/*initial={initialDay}*/}
+                                            {/*formHorizontal={false}*/}
+                                            {/*labelHorizontal={true}*/}
+                                            {/*onPress={(item) => this.onSelectDay(item)}*/}
+                                        {/*/>*/}
+                                    {/*</View>*/}
+                                {/*</Tab>*/}
+                                <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text
+                                    style={{color: "#fff"}}>{`ЗАДАНИЯ`}</Text></TabHeading>}>
+                                    <AccordionCustom data={daysArr}  data2={this.getHomeWorksForAccordion()} ishomework={true}/>
                                 </Tab>
                                 <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text
-                                    style={{color: "#fff"}}>{`НА ${this.state.selDate.label}`}</Text></TabHeading>}>
-                                    <View style={styles.homeworkSubjectList}>
-                                        <RadioForm
-                                            // style={{ paddingBottom : 20 }}
-                                            dataSource={daysArr}
-                                            itemShowKey="label"
-                                            itemRealKey="value"
-                                            circleSize={16}
-                                            initial={initialDay}
-                                            formHorizontal={false}
-                                            labelHorizontal={true}
-                                            onPress={(item) => this.onSelectDay(item)}
-                                        />
-                                    </View>
+                                    style={{color: "#fff"}}>{`ЗАМЕТКИ`}</Text></TabHeading>}>
+                                    <AccordionCustom data={[
+                                { label: "Родительский комитет", content: "Родительский комитет" },
+                                { label: "Реквизиты оплат", content: "Реквизиты оплат" },
+                                { label: "Инфа от классного", content: "Инфа от классного" },
+                                { label: "Инфа от школы", content: "Инфа от школы" }
+                                                            ]}
+                                                     ishomework={false}/>
                                 </Tab>
                             </Tabs>
                         </Container>
@@ -409,6 +450,7 @@ class HomeworkBlock extends Component {
         )
     }
 }
+
 const mapDispatchToProps = dispatch => {
     return ({
         onReduxUpdate: (key, payload) => dispatch({type: key, payload: payload}),
