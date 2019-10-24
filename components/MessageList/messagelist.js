@@ -47,6 +47,7 @@ class MessageList extends Component {
             curMessage : null,
             previewImage : null,
             isSpinner : false,
+            selTag : {value : 0}
             };
         this.curMsgDate = new Date('19000101')
         this.onMessageDblClick = this.onMessageDblClick.bind(this)
@@ -57,12 +58,6 @@ class MessageList extends Component {
         this.getImage = this.getImage.bind(this)
     }
     componentWillMount(){
-        // if (this.props.isnew&&this.props.localmessages.length)
-        //     this.curMsgDate = new Date(this.props.localmessages.slice(-1)[0].msg_date)
-        // else
-        //     this.curMsgDate = dateFromYYYYMMDD(toYYYYMMDD(new Date()))
-        //
-        // console.log("WILLMOUNT", this.curMsgDate, this.props.localmessages, this.props.localmessages.slice(-1)[0])
         }
     getImage=async (id)=>{
         console.log("getImage", id)
@@ -186,6 +181,17 @@ class MessageList extends Component {
     onSelectDay=item=>{
         this.setState({selDate : item})
         // console.log(item.value)
+    }
+    onSelectTag=item=>{
+        if (item.value) {
+            this.setState({selTag: item})
+            const json = `{
+                        "id" : ${this.state.currentHomeworkID},
+                        "tagid" : ${item.value}
+                    }`
+            instanceAxios().post(`${API_URL}chat/add/${this.state.currentHomeworkID}`, json)
+        }
+            // console.log(item.value)
     }
     getNextStudyDay=arr=>{
         let i = 0; obj = {};
@@ -352,36 +358,41 @@ class MessageList extends Component {
 
         let initialDay = this.getNextStudyDay(daysArr)[0];
 
-        console.log("initilDay.1", this.state.curDateKey, initialDay, this.getCurStudyDay(daysArr, new Date(this.state.curDateKey))[0])
+        // console.log("initilDay.1", this.state.curDateKey, initialDay, this.getCurStudyDay(daysArr, new Date(this.state.curDateKey))[0])
 
         if (!(this.state.curDateKey===null))
             initialDay = this.getCurStudyDay(daysArr, new Date(this.state.curDateKey))[0];
 
         // initialDay = 1
 
-        console.log("initilDay.2", this.state.selDate, this.getNextStudyDay(daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;}))[1])
+        // console.log("initilDay.2", this.state.selDate, this.getNextStudyDay(daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;}))[1])
 
             const {userID} = this.props.userSetup
         let isImage = false
 
-        const tagsArr = [
-            {
-                value : 1,
-                label : "Родительский комитет"
-            },
-            {
-                value : 2,
-                label : "Реквизиты оплат"
-            },
-            {
-                value : 3,
-                label : "Инфа от классного"
-            },
-            {
-                value : 4,
-                label : "Инфа от школы"
-            },
-        ]
+        let tagsArr = []
+        tagsArr = this.props.userSetup.chatTags.map(item=> {
+            return {value: item.id, label: `${item.name}[${item.short}]` }
+        })
+        tagsArr.unshift({value: 0, label: "нет"})
+        //     [
+        //     {
+        //         value : 1,
+        //         label : "Родительский комитет"
+        //     },
+        //     {
+        //         value : 2,
+        //         label : "Реквизиты оплат"
+        //     },
+        //     {
+        //         value : 3,
+        //         label : "Инфа от классного"
+        //     },
+        //     {
+        //         value : 4,
+        //         label : "Инфа от школы"
+        //     },
+        // ]
         if (this.state.previewID) {
             console.log("write file", JSON.parse(this.state.previewImage).base64, JSON.parse(this.state.previewImage))
             // img = `data:image/png;base64,${JSON.parse(homework.filter(item => item.id === this.state.previewID)[0].attachment3).base64}`
@@ -502,7 +513,7 @@ class MessageList extends Component {
                                     </TouchableOpacity>
                                 </View>
                             </Tab>
-                            <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text style={{color: "#fff"}}>ЗАКЛАДКИ</Text></TabHeading>}>
+                            <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text style={{color: "#fff"}}>ЗАМЕТКИ</Text></TabHeading>}>
                                 <View style={styles.homeworkSubjectList}>
                                     <RadioForm
                                         // style={{ paddingBottom : 20 }}
@@ -513,7 +524,7 @@ class MessageList extends Component {
                                         // initial={initialDay}
                                         formHorizontal={false}
                                         labelHorizontal={true}
-                                        onPress={(item) => this.onSelectDay(item)}
+                                        onPress={(item) => this.onSelectTag(item)}
                                     />
                                 </View>
                             </Tab>
@@ -588,7 +599,7 @@ class MessageList extends Component {
                                             {this.getDateSeparator(msg_date.length===8?dateFromYYYYMMDD(msg_date):new Date(msg_date))}
 
                                             <TouchableWithoutFeedback   key={i} id={"msgarea-"+msg.id}
-                                                                        delayLongPress={750}
+                                                                        delayLongPress={500}
                                                                         onLongPress={user_id===userID?()=>this.onLongPressMessage(msg.id, homework_subj_id, (homework_date===undefined)?null:homework_date, msg.text):null}
                                                                         >
                                             <View key={msg.id}
@@ -652,7 +663,9 @@ class MessageList extends Component {
                                                 {hw.length?<View key={'idhw'+i} style={ownMsg?[styles.msgRightIshw, {color : 'white'}]:[styles.msgLeftIshw, {color : 'white'}]}>
                                                     <Text style={{color : 'white'}}>{hw}</Text>
                                                 </View>:null}
-
+                                                {msg.tagid?<View style={{ position : "absolute", right : 5, top : -5, display : "flex", alignItems : "center"}}>
+                                                    <View><Icon style={{fontSize: 20, color: '#4472C4'}} name="bookmark"/></View>
+                                                </View>:null}
                                             </View>
                                             </TouchableWithoutFeedback>
                                         </View>

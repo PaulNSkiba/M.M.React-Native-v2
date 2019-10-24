@@ -75,15 +75,15 @@ class App extends Component {
             if (classID) {
                 instanceAxios().get(API_URL + `class/getstat/${classID}/${studentId}'/0`)
                     .then(response => {
-                        console.log('_handleAppStateChange', response)
+                        // console.log('_handleAppStateChange', response)
                     })
                     .catch(response=> {
-                        console.log("_handleAppStateChange_ERROR", response)
+                        // console.log("_handleAppStateChange_ERROR", response)
                     })
             }
         }
         else {
-            console.log('AppState: ', nextAppState);
+            // console.log('AppState: ', nextAppState);
         }
         this.setState({appState: nextAppState});
     };
@@ -131,7 +131,7 @@ class App extends Component {
         const {marks, localChatMessages} = this.props.userSetup
         // const homeworks = localChatMessages.filter(item=>(item.homework_date!==null)).filter(item=>toYYYYMMDD(new Date(item.homework_date))===toYYYYMMDD(AddDay((new Date()), 1)))
         // console.log("RENDER_APP", marks.length, this.props.userSetup, Dimensions.get('window').width, Dimensions.get('window').height)
-        console.log("RENDER_APP")
+        // console.log("RENDER_APP")
 
         AsyncStorage.getItem("myMarks.marksReadCount")
             .then(res => {

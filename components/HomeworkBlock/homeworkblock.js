@@ -223,6 +223,66 @@ class HomeworkBlock extends Component {
             })
         )
     }
+    getTagItems = arr => {
+        return ( arr.map((item, key) => {
+                let msg = prepareMessageToFormat(item, true)
+                let hw = msg.hasOwnProperty('hwdate') && (!(msg.hwdate === undefined)) ? (toLocalDate(msg.hwdate, "UA", false, false)) + ':' + msg.subjname : ''
+                let i = key
+                let isImage = false
+                console.log("GETTAGITEM", item, msg)
+
+                if (item !== undefined && item.attachment3 !== null && item.attachment3 !== undefined) {
+                    isImage = true
+                }
+
+                return (
+                    <View key={key} id={"msg-" + msg.id} style={{marginTop: 10}}>
+                        <View key={msg.id}
+                              style={(hw.length ? [styles.msgRightSide, styles.homeworkBorder] : [styles.msgRightSide, styles.homeworkNoBorder])}>
+                            <View key={'id' + i} style={styles.msgRightAuthor}><Text
+                                style={styles.msgAuthorText}>{item.student_name ? item.student_name : this.props.userSetup.userName}</Text></View>
+                            {isImage ?
+                                <View style={{display: "flex", flex: 1, flexDirection: "row"}}>
+                                    <TouchableOpacity onPress={() => {
+                                        this.getImage(msg.id)
+                                    }}>
+                                        <View style={{flex: 1}}>
+                                            <Image
+                                                source={{uri: `data:image/png;base64,${JSON.parse(item.attachment3).base64}`}}
+                                                style={{
+                                                    width: 100, height: 100,
+                                                    // marginBottom : 15,
+                                                    borderRadius: 15,
+                                                    overflow: "hidden", margin: 7
+                                                }}/>
+                                        </View>
+                                    </TouchableOpacity>
+                                    <View key={'msg' + i} id={"msg-text-" + i}
+                                          style={[styles.msgText,
+                                              {flex: 3, marginLeft: 20, marginTop: 10}]}>
+                                        <Text>{msg.text}</Text>
+                                    </View>
+                                </View>
+                                : <View key={'msg' + i} id={"msg-text-" + i} style={styles.msgText}>
+                                    <Text>{msg.text}</Text>
+                                </View>}
+                            <View style={msg.id ? styles.btnAddTimeDone : styles.btnAddTime}>
+                                <Text style={msg.id ? styles.btnAddTimeDone : styles.btnAddTime}>{msg.time}</Text>
+                            </View>
+                            {hw.length ?
+                            <View key={'idhw' + i} style={[styles.msgRightIshw, {color: 'white'}]}>
+                                <Text style={{color: 'white'}}>{hw}</Text>
+                            </View> : null}
+                            {msg.tagid?<View style={{ position : "absolute", right : 5, top : -5, display : "flex", alignItems : "center"}}>
+                                <View><Icon style={{fontSize: 20, color: '#4472C4'}} name="bookmark"/></View>
+                            </View>:null}
+                        </View>
+                    </View>
+                )
+                // return <View key={key}><Text>{msg.text}</Text></View>
+            })
+        )
+    }
     updateMsg = () => {
 
     }
@@ -269,8 +329,51 @@ class HomeworkBlock extends Component {
                     </View>
         })
     }
+    getTagsForAccordion=()=>{
+        const chatTags = this.props.userSetup.chatTags.map(item => {
+            let newObj = {};
+            newObj.label = `${item.name}[${item.short}]`;
+            newObj.value = item.id;
+            return newObj;
+        })
+        const { localChatMessages: homeworkorig } = this.props.userSetup
+
+        // По умолчанию выбираем домашку на завтра...
+        console.log("getTagsForAccordion: chatTags", chatTags)
+        return chatTags.map((itemTag, key)=>{
+            const homework = homeworkorig.length ? homeworkorig.filter(
+                item => {
+                    // console.log("ITEMTAG", item, itemTag.value, item.tagid)
+                    // if (!(item.hasOwnProperty("homework_date"))) return false
+                    // if (item.homework_date === null) return false
+                    // if (item.homework_date.length === 8) {
+                    //     return (toYYYYMMDD(dateFromYYYYMMDD(item.homework_date)) === toYYYYMMDD(new Date(itemDate.date)))
+                    // }
+                    // else
+                    //     return (toYYYYMMDD(new Date(item.homework_date)) === toYYYYMMDD(new Date(itemDate.date)))
+                    return itemTag.value===item.tagid
+                }) : []
+
+            console.log("HOMEWORK", itemTag, homework)
+            return   <View key={key} style={{flex: 1}}>
+                <View style={[styles.msgList, {flex: 7}, {marginBottom: 5}]}>
+                    {homework.length ? <ScrollView
+                        // style={{ backgroundColor: "#ffe9ee"}}
+                        ref="scrollViewHW"
+                        onContentSizeChange={(contentWidth, contentHeight) => {
+                            console.log("onContentSizeChange", contentHeight)
+                            this.refs.scrollViewHW.scrollToEnd()
+                        }}>
+                        {homework.length ? this.getTagItems(homework) : null}
+                    </ScrollView> : null}
+                </View>
+
+            </View>
+        })
+    }
     render() {
-        let messages = []
+        // let messages = []
+        const {userName, localChatMessages: homeworkorig, classID} = this.props.userSetup
 
         const daysArr = daysList().map(item => {
             let newObj = {};
@@ -280,21 +383,28 @@ class HomeworkBlock extends Component {
             return newObj;
         })
         const initialDay = this.getNextStudyDay(daysArr)[0];
-        const {userName, localChatMessages: homeworkorig, classID} = this.props.userSetup
 
         // По умолчанию выбираем домашку на завтра...
-        // console.log("daysArr", daysArr)
         for (i = 0; i < daysArr.length; i++) {
             let arr = homeworkorig.filter(item => {
                 // console.log("HomeWork", item.date, daysArr[i].date, toYYYYMMDD(new Date(item.date)), toYYYYMMDD(new Date(daysArr[i].date)))
                 return toYYYYMMDD(new Date(item.homework_date)) === toYYYYMMDD(new Date(daysArr[i].date))
             })
-
-            // daysArr[i].label = daysArr[i].label + (arr.length ? ' [' + arr.length + ']' : '')
             daysArr[i].count = arr.length
-            // console.log("daysArr2", daysArr[i].label, arr.length)
         }
-
+        const chatTags = this.props.userSetup.chatTags.map(item => {
+            let newObj = {};
+            newObj.label = `${item.name}[${item.short}]`;
+            newObj.value = item.id;
+            return newObj;
+        })
+        for (i = 0; i < chatTags.length; i++) {
+            let arr = homeworkorig.filter(item => {
+                // console.log("HomeWork", item.date, daysArr[i].date, toYYYYMMDD(new Date(item.date)), toYYYYMMDD(new Date(daysArr[i].date)))
+                return item.tagid === chatTags[i].value
+            })
+            chatTags[i].count = arr.length
+        }
         console.log("getHomeworkItems", daysArr, this.props.userSetup)
 
         const homework = homeworkorig.length ? homeworkorig.filter(
@@ -325,6 +435,14 @@ class HomeworkBlock extends Component {
         // console.log("IMG_PATH", imgPath)
 
         // В счётчике обновления делаем на завтра
+        let index = 0;
+        for (let i = 0; i < daysArr.length; i++) {
+            if (daysArr[i].value > 0 && daysArr[i].count > 0) {
+                index = i;
+                break;
+            }
+        }
+
         return (
             <View>
 
@@ -392,55 +510,13 @@ class HomeworkBlock extends Component {
                         </Modal>
                         <Container>
                             <Tabs>
-                                {/*<Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text style={{color: "#fff"}}>ЗАДАНИЯ</Text></TabHeading>}>*/}
-                                    {/*<View style={{flex: 1}}>*/}
-
-                                        {/*<View style={[styles.msgList, {flex: 7}, {marginBottom: 70}]}>*/}
-                                            {/*<ScrollView*/}
-                                                {/*ref="scrollViewHW"*/}
-                                                {/*onContentSizeChange={(contentWidth, contentHeight) => {*/}
-                                                    {/*console.log("onContentSizeChange", contentHeight)*/}
-                                                    {/*this.refs.scrollViewHW.scrollToEnd()*/}
-                                                {/*}}>*/}
-                                                {/*{homework.length ? this.getHomeworkItems(homework) : null}*/}
-                                            {/*</ScrollView>*/}
-                                        {/*</View>*/}
-                                        {/*<View style={{flex: 1}}>*/}
-
-                                        {/*</View>*/}
-                                    {/*</View>*/}
-                                {/*</Tab>*/}
-                                {/*<Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text*/}
-                                    {/*style={{color: "#fff"}}>{`НА ${this.state.selDate.label}`}</Text></TabHeading>}>*/}
-
-                                    {/*<View style={styles.homeworkSubjectList}>*/}
-
-                                        {/*<RadioForm*/}
-                                            {/*// style={{ paddingBottom : 20 }}*/}
-                                            {/*dataSource={daysArr}*/}
-                                            {/*itemShowKey="label"*/}
-                                            {/*itemRealKey="value"*/}
-                                            {/*circleSize={16}*/}
-                                            {/*initial={initialDay}*/}
-                                            {/*formHorizontal={false}*/}
-                                            {/*labelHorizontal={true}*/}
-                                            {/*onPress={(item) => this.onSelectDay(item)}*/}
-                                        {/*/>*/}
-                                    {/*</View>*/}
-                                {/*</Tab>*/}
                                 <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text
                                     style={{color: "#fff"}}>{`ЗАДАНИЯ`}</Text></TabHeading>}>
-                                    <AccordionCustom data={daysArr}  data2={this.getHomeWorksForAccordion()} ishomework={true}/>
+                                    <AccordionCustom data={daysArr}  data2={this.getHomeWorksForAccordion()} ishomework={true} index={index}/>
                                 </Tab>
                                 <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text
                                     style={{color: "#fff"}}>{`ЗАМЕТКИ`}</Text></TabHeading>}>
-                                    <AccordionCustom data={[
-                                { label: "Родительский комитет", content: "Родительский комитет" },
-                                { label: "Реквизиты оплат", content: "Реквизиты оплат" },
-                                { label: "Инфа от классного", content: "Инфа от классного" },
-                                { label: "Инфа от школы", content: "Инфа от школы" }
-                                                            ]}
-                                                     ishomework={false}/>
+                                    <AccordionCustom data={chatTags} data2={this.getTagsForAccordion()} ishomework={true}/>
                                 </Tab>
                             </Tabs>
                         </Container>

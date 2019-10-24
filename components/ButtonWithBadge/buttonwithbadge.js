@@ -27,14 +27,14 @@ class ButtonWithBadge extends Component {
             }
         ).length:0
         // console.log("ButtonWithBadge", this.props.icontype, this.props.iconname, todayMessages, homework)
-        if (this.props.kind==='marks') console.log("MARKS_COUNT", this.props.value)
+        // if (this.props.kind==='marks') console.log("MARKS_COUNT", this.props.value)
         return (
         <Button style={this.props.enabled?{backgroundColor : "#A9A9A9", color : "#fff"}:{backgroundColor : "#f0f0f0", color : "#fff"}}
                 badge vertical
                 active={this.props.enabled&&(!this.props.disabled)}
                 onPress={()=> {
                     this.props.setstate({selectedFooter: this.props.stateid, showLogin: false})
-                    console.log("onButtonPress")
+                    // console.log("onButtonPress")
                 }
                 }>
             {(this.props.kind==='chat'&&(todayMessages||this.props.value))?

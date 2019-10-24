@@ -87,31 +87,15 @@ class AccordionCustom extends Component {
     }
 
     render() {
-        {/*<Text*/
-        }
-        {/*style={{*/
-        }
-        {/*backgroundColor: "#e3f1f1",*/
-        }
-        {/*padding: 10,*/
-        }
-        {/*fontStyle: "italic",*/
-        }
-        {/*}}*/
-        }
-        {/*>*/
-        }
-        {/*{item.content}*/
-        }
-        {/*</Text>*/
-        }
+
+        // console.log("dataArray", index, this.state.dataArray)
         return (
             <Container>
                 <Content padder style={{backgroundColor: "white"}}>
                     <Accordion
                         dataArray={this.state.dataArray}
                         animation={true}
-                        expanded={true}
+                        expanded={this.props.index}
                         renderHeader={this._renderHeader}
                         renderContent={this._renderContent}
                         expandedIconStyle={{ color: "#b40530" }}

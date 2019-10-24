@@ -3,16 +3,18 @@
  */
 import React from 'react';
 import {connect} from 'react-redux';
-import { StyleSheet, Text, View, Image} from 'react-native';
+import { StyleSheet, Text, View, Image, Modal, Dimensions, TouchableOpacity} from 'react-native';
 import { Header, Left, Body, Right, Button, Title } from 'native-base';
 import { Icon } from 'react-native-elements'
 import {instanceAxios, mapStateToProps} from '../../js/helpersLight'
-import { version} from '../../config/config'
+import { version, AUTH_URL} from '../../config/config'
 import LogginByToken from '../../components/LoggingByToken/loggingbytoken'
 import styles from '../../css/styles'
 import {RFPercentage, RFValue} from "react-native-responsive-fontsize";
 import Logo from '../../img/LogoMyMsmall.png'
+import LogoBlack from '../../img/LogoMyMsmallBlack.png'
 import OfflineNotice from '../OfflineNotice/offlinenotice'
+import { QRCode } from 'react-native-custom-qr-codes';
 
 class HeaderBlock extends React.Component {
     constructor(props) {
@@ -27,6 +29,7 @@ class HeaderBlock extends React.Component {
             userName: '',
             netOnline: false,
             netType: '',
+            showQR : false,
         }
     }
     componentDidMount() {
@@ -34,13 +37,58 @@ class HeaderBlock extends React.Component {
     render = () => {
         return (
             <Header style={styles.header}>
+                <Modal
+                    animationType="slide"
+                    transparent={false}
+                    visible={this.state.showQR}
+                    onRequestClose={() => {
+                        // Alert.alert('Modal has been closed.');
+                    }}>
+                    <View style={{
+                        width: Dimensions.get('window').width * 0.99,
+                        height: Dimensions.get('window').height * 0.99,
+                        display : "flex",
+                        justifyContent : "center",
+                        alignItems : "center",
+                    }}>
+                        {/*<QRCode className='qrcode'*/}
+                                {/*value={'https://mymarks.info/student/add/OUnU0wbadrnUcKIX4qyVoY0sotQQ7Zumqcbb7nUG'}*/}
+                                {/*size={300}*/}
+                                {/*fgColor='black'*/}
+                                {/*bgColor='white'*/}
+                                {/*logo={Logo}*/}
+                        {/*/>*/}
+                        <QRCode innerEyeStyle='square' logo={LogoBlack} content={`${AUTH_URL}/student/add/${this.props.userSetup.addUserToken}`}/>
+
+                        <TouchableOpacity
+                            style={{position: "absolute", top: 10, right: 10, zIndex: 10}}
+                            onPress={() => this.setState({showQR: false})}>
+                            <View style={{
+
+                                paddingTop: 5, paddingBottom: 5,
+                                paddingLeft: 15, paddingRight: 15, borderRadius: 5,
+                                borderWidth: 2, borderColor: "#33ccff", zIndex: 10,
+                            }}>
+                                <Text style={{
+                                    fontSize: 20,
+                                    color: "#33ccff",
+                                    zIndex: 10,
+                                }}
+                                >X</Text>
+                            </View>
+                        </TouchableOpacity>
+                    </View>
+
+                </Modal>
                 {this.props.token.length ?
                     <LogginByToken email={this.props.email} token={this.props.token} logout={false}/> :
                     null}
                 {this.props.userSetup.token.length?this.props.updateState("userToken", this.props.userSetup.token):null}
                 {this.props.updateState("marksInBaseCount", this.props.userSetup.markscount)}
                 <Left>
-                    <Image source={Logo}/>
+                    <TouchableOpacity onPress={()=>this.setState({showQR:true})}>
+                        <Image source={Logo}/>
+                    </TouchableOpacity>
                 </Left>
                 <Body style={{position: "relative", flex: 1, flexDirection: "row"}}>
                 <View>

@@ -2,7 +2,7 @@
  * Created by Paul on 27.08.2019.
  */
 import React from 'react';
-import {StyleSheet, Text, View, TextInput} from 'react-native';
+import {StyleSheet, Text, View, TextInput, Dimensions, Modal, TouchableOpacity} from 'react-native';
 import {AsyncStorage} from '@react-native-community/async-storage';
 import {connect} from 'react-redux';
 import {
@@ -15,11 +15,11 @@ import {instanceAxios, mapStateToProps, msgTimeOut /*, langLibrary as langLibrar
 import {userLoggedIn, userLoggedInByToken, userLoggedOut} from '../../actions/userAuthActions'
 import Dialog, {DialogFooter, DialogButton, DialogContent} from 'react-native-popup-dialog';
 import styles from '../../css/styles'
-// import { addFriend } from './FriendActions';
 import {LOGINUSER_URL, API_URL} from '../../config/config'
 import FacebookLogin from '../FacebookLogin/facebooklogin'
-import { LoginButton, AccessToken, LoginManager } from 'react-native-fbsdk';
-
+import {LoginButton, AccessToken, LoginManager} from 'react-native-fbsdk';
+import Video from 'react-native-video';
+import VideoFile from '../../download/1.Android-Studying.mp4'
 
 class LoginBlock extends React.Component {
     constructor(props) {
@@ -34,6 +34,7 @@ class LoginBlock extends React.Component {
             userID: 0,
             userName: '',
             sendMailButtonDisabled: false,
+            showVideo: false,
             // buttonClicked : false,
             // loading : false,
             // buttonClicked : false,
@@ -105,7 +106,7 @@ class LoginBlock extends React.Component {
         // this.refs.nameLogin.blur()
         // this.refs.nameLogin.setNativeProps({'editable': false});
         // this.refs.nameLogin.setNativeProps({'editable':true});
-        instanceAxios().get(API_URL +'mail/'+this.state.username)
+        instanceAxios().get(API_URL + 'mail/' + this.state.username)
             .then(response => {
                 console.log("forgotPwd", response)
             })
@@ -114,7 +115,8 @@ class LoginBlock extends React.Component {
             })
         this.setState({sendMailButtonDisabled: true})
     }
-    handleFacebookLogin () {
+
+    handleFacebookLogin() {
         LoginManager.logInWithReadPermissions(['public_profile', 'email', 'user_friends']).then(
             function (result) {
                 if (result.isCancelled) {
@@ -128,16 +130,62 @@ class LoginBlock extends React.Component {
             }
         )
     }
+
     render() {
         const {logging, loginmsg, logBtnClicked} = this.props.user
         console.log("LOGIN_RENDER", this.props.user)
         // const showModal = this.showLogin&&logBtnClicked&&(!loginmsg.length)
         return (
             <View style={{backgroundColor: "#fff"}}>
+                <Modal
+                    animationType="slide"
+                    transparent={false}
+                    visible={this.state.showVideo}
+                    onRequestClose={() => {
+                        // Alert.alert('Modal has been closed.');
+                    }}>
+                    <View style={{
+                        // borderWidth: 2,
+                        // borderColor: "#f00",
+
+                        width: Dimensions.get('window').width * 1,
+                        height: Dimensions.get('window').height * 0.94,
+                        // marginBottom : 50,
+                    }}>
+                        <Video
+                            // source={{uri: `${API_URL}download/1.Android-StudingSmall.mp4`}}//{VideoFile}
+                            source={VideoFile}
+                            resizeMode="cover"
+                            style={StyleSheet.absoluteFill}
+                            // muted={true}
+                            controls={true}
+                            //{uri: `${API_URL}download/1.Android-Studing.mp4`} // Can be a URL or a local file.
+                        />
+
+                        <TouchableOpacity
+                            style={{position: "absolute", top: 10, right: 10, zIndex: 10}}
+                            onPress={() => this.setState({showVideo: false})}>
+                            <View style={{
+
+                                paddingTop: 5, paddingBottom: 5,
+                                paddingLeft: 15, paddingRight: 15, borderRadius: 5,
+                                borderWidth: 2, borderColor: "#33ccff", zIndex: 10,
+                            }}>
+                                <Text style={{
+                                    fontSize: 20,
+                                    color: "#33ccff",
+                                    zIndex: 10,
+                                }}
+                                >X</Text>
+                            </View>
+                        </TouchableOpacity>
+                    </View>
+
+                </Modal>
                 {this.props.user.logging ? <View
                     style={{position: "absolute", flex: 1, alignSelf: 'center', marginTop: 240, zIndex: 100}}>
                     <Spinner color="#33ccff"/>
-                    </View> : null}
+                </View> : null}
                 <Form>
                     <View>
                         <Dialog
@@ -176,23 +224,23 @@ class LoginBlock extends React.Component {
                     </Button>
 
                     {/*<LoginButton*/}
-                        {/*style={{ width: "100%", height: 48, marginTop : 10, padding : 10 }}*/}
-                        {/*onLoginFinished={*/}
-                            {/*(error, result) => {*/}
-                                {/*if (error) {*/}
-                                    {/*console.log("login has error: " + result.error);*/}
-                                {/*} else if (result.isCancelled) {*/}
-                                    {/*console.log("login is cancelled.");*/}
-                                {/*} else {*/}
-                                    {/*AccessToken.getCurrentAccessToken().then(*/}
-                                        {/*(data) => {*/}
-                                            {/*console.log(data.accessToken.toString())*/}
-                                        {/*}*/}
-                                    {/*)*/}
-                                {/*}*/}
-                            {/*}*/}
-                        {/*}*/}
-                        {/*onLogoutFinished={() => console.log("logout.")}/>*/}
+                    {/*style={{ width: "100%", height: 48, marginTop : 10, padding : 10 }}*/}
+                    {/*onLoginFinished={*/}
+                    {/*(error, result) => {*/}
+                    {/*if (error) {*/}
+                    {/*console.log("login has error: " + result.error);*/}
+                    {/*} else if (result.isCancelled) {*/}
+                    {/*console.log("login is cancelled.");*/}
+                    {/*} else {*/}
+                    {/*AccessToken.getCurrentAccessToken().then(*/}
+                    {/*(data) => {*/}
+                    {/*console.log(data.accessToken.toString())*/}
+                    {/*}*/}
+                    {/*)*/}
+                    {/*}*/}
+                    {/*}*/}
+                    {/*}*/}
+                    {/*onLogoutFinished={() => console.log("logout.")}/>*/}
 
                     {/*<FacebookLogin/>*/}
 
@@ -207,10 +255,18 @@ class LoginBlock extends React.Component {
                               disabled={this.state.sendMailButtonDisabled}>
                             {!this.state.sendMailButtonDisabled ? `Забыли пароль - отправить на${this.state.username && this.state.username.length ? (': ' + this.state.username) : ' почту'}?` : "Отправлено"}</Text>
                     </Button>
-                    {this.props.userSetup.userID?<Button block warning style={[styles.inputButton, {marginTop : 20}]} onPress={() => this.props.onUserLoggingOut()}>
+                    {this.props.userSetup.userID ? <Button block warning style={[styles.inputButton, {marginTop: 20}]}
+                                                           onPress={() => this.props.onUserLoggingOut()}>
                         <Text style={styles.loginButton}>ВЫХОД</Text>
-                    </Button>:null}
+                    </Button> : null}
                 </Form>
+                <View style={{marginTop: 40}}>
+                    <Button block info style={[styles.inputButton, {marginTop: 20}]}
+                            onPress={() => this.setState({showVideo: true})}>
+                        <Icon name='videocam'/>
+                        <Text style={[styles.loginButton, {"color": "#fff"}]}>ОБУЧАЮЩЕЕ ВИДЕО</Text>
+                    </Button>
+                </View>
             </View>
         )
 

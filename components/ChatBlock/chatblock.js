@@ -2,7 +2,7 @@
  * Created by Paul on 28.08.2019.
  */
 import React from 'react';
-import { StyleSheet, Text, View, TextInput} from 'react-native';
+import { StyleSheet, Text, View, TextInput, AppState} from 'react-native';
 import { connect } from 'react-redux';
 import {Spinner} from 'native-base';
 import {    Container, Header, Left, Body, Right, Button,

@@ -28,7 +28,9 @@ const initialState = (check)=>{
             chatSessionID : '', classObj : { chatroom_id : 0},
             newMsgCount : 0, countryCode : "EN", langLibrary : {}, chatSSL : true,
             localChatMessages : [], isMobile : true, photoPath : [], markscount : 0,
-            needRenew : false,
+            needRenew : false, chatTags : [],
+                budget : [], budgetpays : [],
+                renderBudget : 1,
         }
     return obj
 }
@@ -170,6 +172,15 @@ export function userSetupReducer(state = initialState(true), action) {
         case 'PHOTO_PATH' : {
             return{...state, photoPath: action.payload}
         }
+        case 'CHAT_TAGS' : {
+            return{...state, chatTags: action.payload}
+        }
+        case 'BUDGET_UPDATE' :
+            return{...state, budget: action.payload}
+        case 'BUDGETPAYS_UPDATE' :
+            return{...state, budgetpays: action.payload}
+        case 'RENDER_BUDGET' :
+            return{...state, renderBudget: action.payload}
         // case "INIT_CHAT_MESSAGES" : {
         //     return{...state, localChatMessages: action.payload}
         // }

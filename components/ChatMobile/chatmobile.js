@@ -4,7 +4,7 @@
 import React, { Component } from 'react'
 import { connect } from 'react-redux'
 import { store } from '../../store/configureStore'
-import { StyleSheet, Text, View, Image, Modal, TextInput, TouchableWithoutFeedback } from 'react-native';
+import { StyleSheet, Text, View, Image, Modal, TextInput, TouchableWithoutFeedback, AppState } from 'react-native';
 import { Icon } from 'react-native-elements'
 import NetInfo from "@react-native-community/netinfo";
 import {    Container, Header, Left, Body, Right, Button,
@@ -67,6 +67,8 @@ class ChatMobile extends Component {
             curMessage : '',
             modalVisible: false,
             isConnected: true,
+            appState : AppState.currentState,
+            appStateChanged : false,
         }
         this.now = new Date()
         this.editedMsgID = 0
@@ -85,6 +87,8 @@ class ChatMobile extends Component {
     componentDidMount(){
         // console.log("this.props.isnew", this.props.isnew)
         NetInfo.isConnected.addEventListener('connectionChange', this.handleConnectivityChange);
+        AppState.addEventListener('change', this._handleAppStateChange);
+        this.getTags()
 
         if (this.props.isnew)
             this.initLocalPusher()
@@ -113,7 +117,75 @@ class ChatMobile extends Component {
     componentWillUnmount() {
         if (this.typingTimer) clearInterval(this.typingTimer)
         NetInfo.isConnected.removeEventListener('connectionChange', this.handleConnectivityChange);
+        AppState.removeEventListener('change', this._handleAppStateChange);
     }
+    getTags=async ()=>{
+        await instanceAxios().get(`${API_URL}chat/tags/${this.props.userSetup.classID}`)
+            .then(res=>this.props.onReduxUpdate("CHAT_TAGS", res.data))
+            .catch(res=>console.log("tagError"))
+    }
+    _handleAppStateChange = (nextAppState) => {
+        const {classID, studentId, localChatMessages, markscount} = this.props.userSetup
+        if (this.state.appState.match(/inactive|background/) && nextAppState === 'active') {
+            console.log('AppState: ', 'App has come to the foreground!', this.state.appState, nextAppState);
+            if (classID) {
+                instanceAxios().get(API_URL + `class/getstat/${classID}/${studentId}'/0`)
+                    .then(response => {
+                        console.log('_handleAppStateChange', response, this.props.userSetup)
+                        // homeworks: 13
+                        // marks: 0
+                        // msgs: 250
+                        // news: 3
+                        // ToDO: News исправим позже
+                        const today = toYYYYMMDD(new Date())
+                        const homeworks_count = localChatMessages.filter(item=>(item.homework_date!==null&&(toYYYYMMDD(new Date(item.homework_date))>=today)))
+                        if ((response.data.msgs!==localChatMessages.slice(-1).id)||(markscount!==response.data.marks)||(homeworks_count!==response.data.homeworks)) {
+                            instanceAxios().get(API_URL + `class/getstat/${classID}/${studentId}'/1`)
+                                .then(response => {
+                                    // console.log('NewData', response, this.props.userSetup)
+                                    const msgs = response.data.msgs
+                                    let arr = this.state.localChatMessages
+                                    console.log("RESPONSE", msgs)
+                                    if (msgs.length) {
+                                        msgs.forEach(msgitem=>{
+                                            let isinmsg = false
+                                            arr = arr.map(item=>{
+                                                if (item.id === msgitem.id) {
+                                                    item = msgitem
+                                                    isinmsg = true
+                                                }
+                                                return item
+                                            })
+                                            if (!isinmsg) {
+                                                if (toYYYYMMDD(new Date(msgitem.msg_date))>=toYYYYMMDD(new Date()))
+                                                    arr.push(msgitem)
+                                                else
+                                                    arr.unshift(msgitem)
+                                            }
+                                        })
+                                    }
+                                    this.setState({localChatMessages : arr})
+                                    console.log("Загружено по оффлайну!")
+                                    this.props.onReduxUpdate("UPDATE_HOMEWORK", response.data.msgs.filter(item=>(item.homework_date!==null)))
+                                    this.props.onReduxUpdate("ADD_CHAT_MESSAGES", response.data.msgs)
+                                    this.props.onReduxUpdate("ADD_MARKS", response.data.marks)
+                                })
+                                .catch(response=> {
+                                    console.log("NewData_ERROR", response)
+                                })
+                        }
+                    })
+                    .catch(response=> {
+                        console.log("handleConnectivityChange_ERROR", response)
+                    })
+            }
+        }
+        else {
+            console.log('AppState: ', nextAppState);
+        }
+        this.setState({appState: nextAppState});
+    };
+
     handleConnectivityChange = isConnected => {
         const {classID, studentId, localChatMessages, markscount} = this.props.userSetup
         if ((this.state.isConnected!==isConnected)&&isConnected) {
@@ -199,7 +271,6 @@ class ChatMobile extends Component {
         this.props.onReduxUpdate("USER_LOGGEDIN_DONE")
     }
     initChatMessages=async ()=>{
-        // console.log("initChatMessages", this.props.userSetup.localChatMessages, this.props.userSetup.classID)
         if (this.props.isnew) {
             this.getChatMessages(this.props.userSetup.classID)
         }
@@ -797,7 +868,7 @@ class ChatMobile extends Component {
             showEmojiPicker,
         } = this.state;
 
-        console.log("RENDER_CHAT")
+        // console.log("RENDER_CHAT")
         return (
             <View style={this.props.hidden?styles.hidden:styles.chatContainerNew}>
                 <View style={{flex : 7}}>
@@ -849,7 +920,8 @@ class ChatMobile extends Component {
                                         addmsgs={this.state.addMsgs}
                                         sendmessage={this.sendMessage} isnew={this.props.isnew}
                                         addhomework={this.addHomeWork}
-                                        forceupdate={this.props.forceupdate}/>
+                                        forceupdate={this.props.forceupdate}
+                                        tags={this.state.tags}/>
                     </View>
                     <View style={styles.whoTyping}>
                         <Text>{this.state.typingUsers.size > 0?"Сообщение набира" + ((this.state.typingUsers.size===1?"е":"ю") + "т: ") + Array.from(this.state.typingUsers.keys()).join(', '):""}</Text>

@@ -436,6 +436,7 @@ export const prepareMessageToFormat=(msg, returnObject)=>{
     obj.attachment3 = msg.attachment3
     obj.attachment4 = msg.attachment4
     obj.attachment5 = msg.attachment5
+    obj.tagid = msg.tagid
     if (msg.hasOwnProperty('homework_date')) {
         if (!(msg.homework_date === null)) {
             obj.hwdate = new Date(msg.homework_date.length===8?dateFromYYYYMMDD(msg.homework_date):msg.homework_date)
@@ -573,3 +574,17 @@ const getWeek = (curDate) => {
     const firstJan = new Date(now.getFullYear(),0,1)
     return Math.ceil((((now - firstJan) / 86400000) + firstJan.getDay())/7)
 }
+export const addMonths= (dateObject, numberMonths) => {
+    var day = dateObject.getDate(); // returns day of the month number
+
+    // avoid date calculation errors
+    dateObject.setHours(20);
+
+    // add months and set date to last day of the correct month
+    dateObject.setMonth(dateObject.getMonth() + numberMonths + 1, 0);
+
+    // set day number to min of either the original one or last day of month
+    dateObject.setDate(Math.min(day, dateObject.getDate()));
+
+    return dateObject;
+};

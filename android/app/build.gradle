@@ -132,9 +132,9 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 2
-        versionName "1.08.158"
+        versionName "1.08.188"
 		missingDimensionStrategy 'react-native-camera', 'general'
-
+		multiDexEnabled true
     }
     splits {
         abi {
@@ -222,6 +222,8 @@ android {
 }
 
 dependencies {
+	//compile project(':react-native-video')
+	//mplementation "androidx.appcompat:appcompat:1.0.0"
     implementation fileTree(dir: "libs", include: ["*.jar"])
     implementation "com.facebook.react:react-native:+"  // From node_modules
 
