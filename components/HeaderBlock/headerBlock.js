@@ -58,7 +58,8 @@ class HeaderBlock extends React.Component {
                                 {/*bgColor='white'*/}
                                 {/*logo={Logo}*/}
                         {/*/>*/}
-                        <QRCode innerEyeStyle='square' logo={LogoBlack} content={`${AUTH_URL}/student/add/${this.props.userSetup.addUserToken}`}/>
+                        {/*{console.log("QR", `${AUTH_URL}/student/add/${this.props.userSetup.addUserToken}`)}*/}
+                        <QRCode innerEyeStyle='square' logo={LogoBlack} ecl={"H"} content={`${AUTH_URL}/student/add/${this.props.userSetup.addUserToken}`}/>
 
                         <TouchableOpacity
                             style={{position: "absolute", top: 10, right: 10, zIndex: 10}}

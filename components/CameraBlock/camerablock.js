@@ -35,11 +35,15 @@ class CameraBlock extends Component {
             photoPath : this.props.userSetup.photoPath,
             showPreview : false,
             prevuri : '',
+            uriAdded : [],
         };
         this.addToChat = this.addToChat.bind(this)
     }
-    addToChat = (data, data100) => {
+    addToChat = (data, data100, uri) => {
         const msg = this.prepareJSON(data, data100)
+        let arr = this.state.uriAdded
+        arr.push(uri)
+        this.setState({uriAdded : arr})
         this.sendMessage(msg)
     }
     sendMessage(text) {
@@ -137,7 +141,8 @@ class CameraBlock extends Component {
     render () {
         // const daysArr = daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;})
         // const initialDay = this.getNextStudyDay(daysArr)[0];
-        console.log("PhotoPath", this.state.photoPath, this.state.prevuri)
+        // console.log("PhotoPath", this.state.photoPath, this.state.prevuri)
+        console.log("uriAdded", this.state.uriAdded)
         return (
             <Container>
                 <View style={styles.modalView}>
@@ -205,7 +210,7 @@ class CameraBlock extends Component {
                                                             <Thumbnail source={{uri: item.uri, isStatic: true}}/>
                                                         </TouchableOpacity>
                                                         <TouchableOpacity
-                                                            onPress={() => this.addToChat(JSON.stringify(item.data), JSON.stringify(item.data100))}>
+                                                            onPress={() => this.addToChat(JSON.stringify(item.data), JSON.stringify(item.data100), item.uri)}>
                                                             <Body style={{
                                                                 borderWidth: 2,
                                                                 borderColor: "#7DA8E6",
@@ -215,8 +220,9 @@ class CameraBlock extends Component {
                                                                 display : "flex",
                                                                 alignItems: "center",
                                                                 justifyContent: "center",
+                                                                backgroundColor : this.state.uriAdded.includes(item.uri)?"#C6EFCE":"#fff"
                                                             }}>
-                                                            <Text>Добавить в чат</Text>
+                                                            <Text>{this.state.uriAdded.includes(item.uri)?"Добавлен в чат":"Добавить в чат"}</Text>
                                                             <Text note>{item.time.toLocaleTimeString()}</Text>
                                                             </Body>
                                                         </TouchableOpacity>

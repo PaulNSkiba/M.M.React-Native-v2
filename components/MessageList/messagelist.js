@@ -47,7 +47,8 @@ class MessageList extends Component {
             curMessage : null,
             previewImage : null,
             isSpinner : false,
-            selTag : {value : 0}
+            selTag : {value : 0},
+            isEdited : false,
             };
         this.curMsgDate = new Date('19000101')
         this.onMessageDblClick = this.onMessageDblClick.bind(this)
@@ -168,7 +169,9 @@ class MessageList extends Component {
                 const todayMessages = this.props.userSetup.localChatMessages.filter(item=>(new Date(item.msg_date).toLocaleDateString())===(new Date().toLocaleDateString()))
                 const homeworks = this.props.userSetup.localChatMessages.filter(item=>(item.homework_date!==null))
 
-                this.props.forceupdate(todayMessages.length, homeworks.length)
+                // this.props.forceupdate(todayMessages.length, homeworks.length)
+
+
                 // this.props.onReduxUpdate(, newmessages)
             }
             console.log("messages", messages)
@@ -233,7 +236,7 @@ class MessageList extends Component {
         }
     }
     onChangeText=(key, text)=>{
-        this.setState({curMessage : text})
+        this.setState({curMessage : text, isEdited : true})
     }
     updateMsg=(id)=>{
         let json = `{   "id":${id}, 
@@ -243,6 +246,7 @@ class MessageList extends Component {
 
         instanceAxios().post(`${API_URL}chat/add/${id}`, json)
             .then(res=>{
+                this.setState({isEdited : false})
                 console.log("Удачно записано")
             })
             .catch(res=>{
@@ -393,11 +397,12 @@ class MessageList extends Component {
         //         label : "Инфа от школы"
         //     },
         // ]
+        let img = ''
         if (this.state.previewID) {
             console.log("write file", JSON.parse(this.state.previewImage).base64, JSON.parse(this.state.previewImage))
             // img = `data:image/png;base64,${JSON.parse(homework.filter(item => item.id === this.state.previewID)[0].attachment3).base64}`
             img = `data:image/png;base64,${JSON.parse(this.state.previewImage).base64}`
-            console.log("write.2")
+            // console.log("write.2", img)
             // const Base64Code = JSON.parse(this.state.previewImage).base64 //base64Image is my image base64 string
             // const dirs = RNFetchBlob.fs.dirs;
             // imgPath = dirs.DCIMDir + "/image64.png";
@@ -508,7 +513,7 @@ class MessageList extends Component {
                                     <TouchableOpacity
                                         onPress={()=>this.updateMsg(this.state.currentHomeworkID)}>
                                         <View style={styles.updateMsg}>
-                                            <Text style={styles.updateMsgText} >СОХРАНИТЬ ИЗМЕНЕНИЯ</Text>
+                                            <Text style={this.state.isEdited?styles.updatedMsgText:styles.updateMsgText} >{this.state.isEdited?"СОХРАНИТЬ ИЗМЕНЕНИЯ":"ВНЕСИТЕ ИЗМЕНЕНИЯ"}</Text>
                                         </View>
                                     </TouchableOpacity>
                                 </View>
@@ -590,7 +595,7 @@ class MessageList extends Component {
                                 let hw = msg.hasOwnProperty('hwdate')&&(!(msg.hwdate===undefined))&&(!(msg.hwdate===null))?(toLocalDate(msg.hwdate.lenght===8?dateFromYYYYMMDD(msg.hwdate):msg.hwdate, "UA", false, false))+':'+msg.subjname:''
                                 let ownMsg = (username===this.props.userSetup.userName)
 
-                                console.log("RENDER MESSAGE_LIST")
+                                // console.log("RENDER MESSAGE_LIST")
                                 const {user_id, msg_date, homework_subj_id, homework_date} = message
                                 return (this.props.hwdate===null||(!(this.props.hwdate===null)&&((new Date(this.props.hwdate)).toLocaleDateString()===(new Date(msg.hwdate)).toLocaleDateString())))?
 
@@ -619,7 +624,7 @@ class MessageList extends Component {
                                                 {/*:null}*/}
 
                                                 {/*style={this.state.editKey===i?{visibility:"hidden"}:null}*/}
-                                                <View key={'id'+i} style={ownMsg?styles.msgRightAuthor:styles.msgLeftAuthor} ><Text style={styles.msgAuthorText}>{username}</Text></View>
+                                                <View key={'id'+i} style={[ownMsg?styles.msgRightAuthor:styles.msgLeftAuthor, msg.tagid?styles.authorBorder:'']} ><Text style={styles.msgAuthorText}>{username}</Text></View>
 
                                                 {urlMatches.length > 0?(
                                                     <View key={'msgpreview'+i} id={"msg-text-"+i} style={this.state.editKey===i?{visibility:"hidden"}:null} className="msg-text">
@@ -663,8 +668,8 @@ class MessageList extends Component {
                                                 {hw.length?<View key={'idhw'+i} style={ownMsg?[styles.msgRightIshw, {color : 'white'}]:[styles.msgLeftIshw, {color : 'white'}]}>
                                                     <Text style={{color : 'white'}}>{hw}</Text>
                                                 </View>:null}
-                                                {msg.tagid?<View style={{ position : "absolute", right : 5, top : -5, display : "flex", alignItems : "center"}}>
-                                                    <View><Icon style={{fontSize: 20, color: '#4472C4'}} name="bookmark"/></View>
+                                                {msg.tagid?<View style={{ position : "absolute", right : 3, top : -7, display : "flex", alignItems : "center"}}>
+                                                    <View><Icon style={{fontSize: 15, color: '#b40530'}} name="medical"/></View>
                                                 </View>:null}
                                             </View>
                                             </TouchableWithoutFeedback>

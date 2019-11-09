@@ -62,12 +62,12 @@ export const userLoggedInByToken = (email, token, kind, langLibrary) => {
             "token": token,
             "kind": kind,
         };
-        console.log("userLoggedInByToken", LOGINUSER_URL, data);
+        // console.log("userLoggedInByToken", LOGINUSER_URL, data);
         // document.body.style.cursor = 'progress';
         dispatch ({type: 'USER_LOGGING'})
         instanceAxios().post(LOGINUSER_URL, data, null)
             .then(response => {
-                console.log('USER_LOGGEDIN.1', response.data);
+                // console.log('USER_LOGGEDIN.1', response.data);
                 // langLibrary?langLibrary:langLibraryF(localStorage.getItem("myCountryCode")?localStorage.getItem("myCountryCode"):"EN")
                 dispatch({type: 'USER_LOGGEDIN', payload: response.data, langLibrary : "EN"});
                 dispatch({type: 'ADD_CHAT_MESSAGES', payload : response.data.chatrows});

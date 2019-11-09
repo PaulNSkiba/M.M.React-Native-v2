@@ -90,14 +90,22 @@ class ETCBlock extends Component {
                                         disabled={false}
                                         badge vertical
                                         active={true}
-                                        onPress={()=>{this.setState({showBudget: true})}}>
+                                        onPress={()=>{this.props.userSetup.isadmin===4 ? null : this.setState({showBudget: true})}}>
                                     <Icon size={52} color={"#4472C4"} active type={'material'} name={'payment'} inverse />
                                     <Text style={{fontSize: RFPercentage(1.6)}}>{"Бюджет"}</Text>
                                     {/*<Badge*/}
                                            {/*witdth={10}*/}
                                            {/*fontSize={10}*/}
                                            {/*style={{ position: 'absolute', top: -12, right: 2, backgroundColor : "#33ccff" }}>*/}
-                                            <IconBase name="checkmark-circle" color={"#33ccff"} style={{position: 'absolute', top: -12, right: -8, fontSize: 22, color : "#33ccff"}}/>
+                                    {this.props.userSetup.isadmin === 4 ? null :
+                                        <IconBase name="checkmark-circle" color={"#33ccff"} style={{
+                                            position: 'absolute',
+                                            top: -12,
+                                            right: -8,
+                                            fontSize: 22,
+                                            color: "#33ccff"
+                                        }}/>
+                                    }
                                     {/*</Badge>*/}
                                 </Button>
                                 <Button style={{backgroundColor : "#f0f0f0", color : "#fff", width : 80, height : 80, margin : 5}}

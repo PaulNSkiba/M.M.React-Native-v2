@@ -3,11 +3,11 @@
  */
 import React, {Component} from 'react';
 import {connect} from 'react-redux';
-import {StyleSheet, View, Image, Dimensions, ScrollView,} from 'react-native';
+import {StyleSheet, View, Image, Dimensions, ScrollView, Spinner} from 'react-native';
 import {
     Container, Header, Left, Body, Right, Button,
     Title, Content, Footer, FooterTab, TabHeading, Tabs, Tab,
-    Form, Item, Input, Label, Textarea, CheckBox, ListItem, Thumbnail, Card, CardItem, Text
+    Form, Item, Input, Label, Textarea, CheckBox, List, ListItem, Thumbnail, Card, CardItem, Text
 } from 'native-base';
 import {Avatar, Badge, Icon, withBadge} from 'react-native-elements'
 import {bindActionCreators} from 'redux';
@@ -37,7 +37,8 @@ class Budget extends React.Component {
             factOuts: [],
             curYear: (new Date().getFullYear()),
             factInsHeader: [],
-            years : []
+            years : [],
+            isSpinner: false,
         }
         this.headArray = [
             {name: "Имя", width: 50, item : {id :-1}},
@@ -53,6 +54,7 @@ class Budget extends React.Component {
     }
 
     initData() {
+        this.setState({isSpinner : true})
         instanceAxios().get(`${API_URL}budgetpays/get/${this.props.userSetup.classID}`)
             .then(res => {
 
@@ -83,10 +85,12 @@ class Budget extends React.Component {
                     })
                     this.props.onReduxUpdate("BUDGET_UPDATE", res.data)
                     console.log("getbudget", res)
+                    this.setState({isSpinner : false})
                 }
             )
             .catch(res => {
                 console.log("getbudgetError", res)
+                this.setState({isSpinner : false})
             })
     }
 
@@ -145,6 +149,61 @@ class Budget extends React.Component {
         // console.log("exitBudget")
         this.props.onexit()
     }
+    pcntOfPayments=(factInsHeader)=>{
+        let studList = this.props.userSetup.students.filter(item => item.isout !== 1).map((item, key) => {
+                return {
+                    name: item.student_name,
+                    id : item.id,
+                    datein : item.datein
+                }
+            }
+        )
+        let cells = 0, payedcells = 0
+        studList.map((itemStud, key) => {
+            const budget = this.props.userSetup.budget.filter(item => item.student_id === itemStud.id)
+            factInsHeader.map((itemHead, key) => {
+                let curSum = null, id = 0, paydate = null
+                if (budget !== undefined && budget.length) {
+                    const arr = budget.filter(item => {
+                            paydate = itemHead.item.isregular === 1 ? itemHead.realdate : itemHead.item.paydate
+                            return item.student_id === itemStud.id
+                                && item.payment_id === itemHead.item.id
+                                && (toYYYYMMDD(new Date(item.paydate))) === toYYYYMMDD(new Date(paydate))
+                        }
+                    )
+                    if (arr.length) {
+                        id = arr[0].id
+                        curSum = arr[0].sum
+                        // console.log("CURSUM", id, curSum)
+                    }
+                }
+
+                if (!(new Date(itemStud.datein) > new Date(paydate)) && itemHead.item.id > 0 && !(itemHead.item.issaldo > 0) && (new Date(paydate)) <= new Date()) cells++
+                if (curSum > 0) payedcells++
+            })
+        })
+        return (cells > 0)?Math.round(payedcells / cells * 100):''
+        }
+    getStudentCredit=(id, year)=>{
+        return null
+    }
+    cashLeaves=(curYear)=>{
+        let leftSum = 0
+        this.state.planOuts.filter(item=>{
+            const inThisYear = (new Date(item.paydate)).getFullYear()===curYear
+            const endYear = item.payend===null?curYear:(new Date(item.payend)).getFullYear()
+            const regularNotFinished = (new Date(item.paydate)).getFullYear()<=curYear&&((endYear>=curYear)&&item.isregular===1)
+            // console.log("PLANSIN", item, inThisYear, regularNotFinished, endYear)
+            return item.sum>0 && (inThisYear|| regularNotFinished)
+        }).forEach((item)=>{
+                console.log("cashLeaves", item, leftSum)
+              if (item.issaldo===null)
+                  leftSum = leftSum - item.sum
+              else
+                  leftSum = leftSum + item.sum
+        })
+        return leftSum
+    }
     render = () => {
         // let studList = [
         //     {name : "Иваненко", credit : 2, payment1 : 0, payment2 : 1, payment3 : 1, payment4 : 0, out:"Бумага"},
@@ -167,8 +226,11 @@ class Budget extends React.Component {
             }
         )
 
+
         console.log("Budget")
         const {years} = this.state
+        let index = 0
+        years.forEach((item, key)=>item===(new Date()).getFullYear()?index=key:null)
         return (
             <View style={styles.modalView}>
                 <View style={{height: (Dimensions.get('window').height - 100)}}>
@@ -183,106 +245,155 @@ class Budget extends React.Component {
                             {/*</TabHeading>}>*/}
                         {/*</Tab>*/}
 
-                        <Tab disabled={true} heading={<TabHeading style={styles.tabHeaderWhen}>
-                                <Text style={{color: "#fff"}}>{"ПЕРИОД:"}</Text>
-                            </TabHeading>}>
-                        </Tab>
+                        {/*<Tab disabled={true} heading={<TabHeading style={styles.tabHeaderWhen}>*/}
+                                {/*<Text style={{color: "#fff"}}>{"ПЕРИОД:"}</Text>*/}
+                            {/*</TabHeading>}>*/}
+                        {/*</Tab>*/}
                         {this.state.years.map((item, key)=>{
                             const curYear = item
                             console.log("YEAR", curYear)
-
+                            let prcnt = 0, cells = 0, payedcells = 0
                             const factInsHeader = this.prepPaymentsHeaderAndRowArray(this.state.planIns, curYear)
                             console.log("FACTINSHEADER", factInsHeader)
-
+                            // style={styles.tabHeaderWhen}
                           return <Tab key={"year"+key} heading={<TabHeading style={styles.tabHeaderWhen}>
                                       <Text style={{color: "#fff"}}>{item}</Text></TabHeading>}>
 
 
                                 <Tabs>
-                                    <Tab heading={<TabHeading style={{color : "#387541", backgroundColor : '#C6EFCE'}}><Text
-                                    style={{color: "#387541"}}>{"ВЗНОСЫ"}</Text></TabHeading>}>
-                                    {factInsHeader.length ?
-                                    <View>
-                                    <View style={{flexDirection: "row",height: 40,marginTop: 4,marginLeft: 4,marginRight: 4}}>
-                                    {factInsHeader.map((item, key) => {
-                                    switch (key) {
-                                    case 0 :
-                                    return <View key={"st" + key} style={{backgroundColor: "rgba(64, 155, 230, 0.16)",
-                                    width: 50,borderWidth: .5,borderColor: "#7DA8E6"}}>
-                                    <Text style={{textAlign: "center",fontSize: RFPercentage(1.3)}}>
-                                    {item.name}
-                                    </Text>
-                                    </View>
-                                    break;
-                                    case 1 :
-                                    return <View key={"st" + key} style={{
-                                    backgroundColor: "rgba(64, 155, 230, 0.16)",
-                                    width: 22,borderWidth: .5,borderColor: "#7DA8E6"}}>
-                                    <Text style={{textAlign: "center",fontSize: RFPercentage(1.3)}}>
-                                    {item.name}
-                                    </Text>
-                                    </View>
-                                    break;
-                                    default :
-                                    return <View style={{backgroundColor: "rgba(64, 155, 230, 0.16)",
-                                    width: 22,borderWidth: .5,borderColor: "#7DA8E6"}}>
-                                    <Text style={{textAlign: "center",fontSize: RFPercentage(1.3)}}>{item.name}</Text>
-                                    </View>
-                                    break;
-                                    }
-                                    })}
-                                    </View>
+                                    <Tab heading={<TabHeading
+                                        style={{color: "#387541", backgroundColor: '#C6EFCE'}}><Text
+                                        style={{color: "#387541"}}>{`ВЗНОСЫ [${this.pcntOfPayments(factInsHeader)}%]`}</Text></TabHeading>}>
+                                        {factInsHeader.length ?
+                                            <View>
+                                                <View style={{
+                                                    flexDirection: "row",
+                                                    height: 40,
+                                                    marginTop: 4,
+                                                    marginLeft: 4,
+                                                    marginRight: 4
+                                                }}>
+                                                    {factInsHeader.map((item, key) => {
+                                                        switch (key) {
+                                                            case 0 :
+                                                                return <View key={"st" + key} style={{
+                                                                    backgroundColor: "rgba(64, 155, 230, 0.16)",
+                                                                    width: 50, borderWidth: .5, borderColor: "#7DA8E6"
+                                                                }}>
+                                                                    <Text style={{
+                                                                        textAlign: "center",
+                                                                        fontSize: RFPercentage(1.3)
+                                                                    }}>
+                                                                        {item.name}
+                                                                    </Text>
+                                                                </View>
+                                                                break;
+                                                            case 1 :
+                                                                return <View key={"st" + key} style={{
+                                                                    backgroundColor: "rgba(64, 155, 230, 0.16)",
+                                                                    width: 22, borderWidth: .5, borderColor: "#7DA8E6"
+                                                                }}>
+                                                                    <Text style={{
+                                                                        textAlign: "center",
+                                                                        fontSize: RFPercentage(1.3)
+                                                                    }}>
+                                                                        {item.name}
+                                                                    </Text>
+                                                                </View>
+                                                                break;
+                                                            default :
+                                                                return <View style={{
+                                                                    backgroundColor: "rgba(64, 155, 230, 0.16)",
+                                                                    width: 22, borderWidth: .5, borderColor: "#7DA8E6"
+                                                                }}>
+                                                                    <Text style={{
+                                                                        textAlign: "center",
+                                                                        fontSize: RFPercentage(1.3)
+                                                                    }}>{item.name}</Text>
+                                                                </View>
+                                                                break;
+                                                        }
+                                                    })}
+                                                </View>
                                     <ScrollView style={{marginBottom: 60}} showsHorizontalScrollIndicator={true}>
                                     {studList.map((itemStud, key) =>{
                                     // console.log("studList", itemStud)
                                     const budget = this.props.userSetup.budget.filter(item=>item.student_id===itemStud.id)
                                     return <View style={{flexDirection: "row", marginLeft: 4, marginRight: 4}}>
-                                    <View key={"st" + key}
-                                    style={{width: 50, borderWidth: .5, borderColor: "#7DA8E6"}}>
-                                    <Text style={{fontSize: RFPercentage(1.5), color : itemStud.id=== this.props.userSetup.studentId ? "#1890e6" : "#000"}}>{itemStud.name}</Text></View>
-                                    <View key={"credit" + key}
-                                    style={{width: 22, borderWidth: .5, borderColor: "#7DA8E6"}}><Text
-                                    style={{textAlign: "center"}}>{itemStud.credit}</Text></View>
-                                    {factInsHeader.map((itemHead, key) => {
-                                    let curSum = null, id = 0, paydate = null
-                                    if (budget !== undefined && budget.length) {
-                                    const arr = budget.filter(item => {
-                                    // console.log("FILTER", item.student_id , itemStud.id, item.payment_id, itemHead.item.id,
-                                    paydate = itemHead.item.isregular === 1 ? itemHead.realdate : itemHead.item.paydate
-                                    return item.student_id === itemStud.id
-                                    && item.payment_id === itemHead.item.id
-                                    && (toYYYYMMDD(new Date(item.paydate))) === toYYYYMMDD(new Date(paydate))
-                                    }
-                                    )
-                                    if (arr.length) {
-                                    id = arr[0].id
-                                    curSum = arr[0].sum
-                                    // console.log("CURSUM", id, curSum)
-                                    }
-                                    }
-                                    return key > 1 ? <View style={{width: 22,borderWidth: .5,borderColor: "#7DA8E6",
-                                    backgroundColor: new Date(itemStud.datein) > new Date(paydate) ? "#C9C9C9" : curSum > 0 ? (itemHead.item.isregular === 1? "#C6EFCE": "#87DD97") : "#fff"
-                                    }}>
-                                    </View> : null
+                                    <View key={"st" + key} style={{width: 50, borderWidth: .5, borderColor: "#7DA8E6"}}>
+                                        <Text style={{fontSize: RFPercentage(1.5), color : itemStud.id=== this.props.userSetup.studentId ? "#1890e6" : "#000"}}>{itemStud.name}</Text></View>
+                                        <View key={"credit" + key} style={{width: 22, borderWidth: .5, borderColor: "#7DA8E6"}}>
+                                            <Text style={{textAlign: "center", fontSize: RFPercentage(1.7)}}>{this.getStudentCredit(itemStud.id, curYear)}</Text></View>
+                                            {factInsHeader.map((itemHead, key) => {
+                                                let curSum = null, id = 0, paydate = null
+                                                if (budget !== undefined && budget.length) {
+                                                    const arr = budget.filter(item => {
+                                                            // console.log("FILTER", item.student_id , itemStud.id, item.payment_id, itemHead.item.id,
+                                                            paydate = itemHead.item.isregular === 1 ? itemHead.realdate : itemHead.item.paydate
+                                                            return item.student_id === itemStud.id
+                                                                && item.payment_id === itemHead.item.id
+                                                                && (toYYYYMMDD(new Date(item.paydate))) === toYYYYMMDD(new Date(paydate))
+                                                        }
+                                                    )
+                                                    if (arr.length) {
+                                                        id = arr[0].id
+                                                        curSum = arr[0].sum
+                                                        // console.log("CURSUM", id, curSum)
+                                                    }
+                                                }
+
+                                                if (!(new Date(itemStud.datein) > new Date(paydate))) cells++
+                                                if (curSum > 0) payedcells++
+                                                if (cells > 0) prcnt = Number(payedcells / cells * 100)
+
+                                                return key > 1 ? <View style={{width: 22,borderWidth: .5,borderColor: "#7DA8E6",
+                                                backgroundColor: new Date(itemStud.datein) > new Date(paydate) ?
+                                                    "#C9C9C9" :
+                                                    curSum > 0 ?
+                                                        (itemHead.item.isregular === 1?
+                                                            "#C6EFCE":
+                                                            "#87DD97") :
+                                                        "#fff"
+                                                }}>
+                                        </View> : null
                                     })
+
                                     }
+
                                     </View>})}
-                                    {this.state.planIns.filter(item=>(new Date(item.paydate)).getFullYear()===curYear||((new Date(item.paydate)).getFullYear()<curYear&&(new Date(item.payend)).getFullYear()===null&&item.isregular===1)).filter(item=>item.issaldo===null).map((item, key)=><View>
-                                    <Card>
-                                    <CardItem>
-                                    <Left><Text>{item.short}</Text></Left>
-                                    <Body><Text>{item.name}</Text><Text note>{`c ${(new Date(item.paydate)).toLocaleDateString()} ${item.payend!==null?(" по "+ (new Date(item.payend)).toLocaleDateString()):''}`}</Text></Body>
-                                    <Right><Text>{item.sum}</Text><Text note>{`${item.isregular===1?"раз/месяц":"разовый"}`}</Text></Right>
-                                    </CardItem>
-                                    </Card>
-                                    </View>)}
+                                    <List>
+                                    {this.state.planIns.filter(item=>{
+                                        const inThisYear = (new Date(item.paydate)).getFullYear()===curYear
+                                        const endYear = item.payend===null?curYear:(new Date(item.payend)).getFullYear()
+                                        const regularNotFinished = (new Date(item.paydate)).getFullYear()<=curYear&&((endYear>=curYear)&&item.isregular===1)
+                                        // console.log("PLANSIN", item, inThisYear, regularNotFinished, endYear)
+                                        return item.sum>0 && (inThisYear|| regularNotFinished)
+                                    }).filter(item=>item.issaldo===null).map((item, key)=>
+                                    <ListItem>
+                                        <View style={{width : 70, textAlign : "left"}}><Text>{item.short}</Text></View>
+                                        <View style={{width : 160}}><Text>{item.name}</Text><Text style={{fontSize : RFPercentage(1.5)}} note>{`${item.isregular===1?"c":""} ${(new Date(item.paydate)).toLocaleDateString()} ${item.payend!==null?(" по "+ (new Date(item.payend)).toLocaleDateString()):''}`}</Text></View>
+                                        <View style={{width : 70}}><Text>{item.sum}</Text><Text style={{fontSize : RFPercentage(1.5)}} note>{`${item.isregular===1?"раз/месяц":"разовый"}`}</Text></View>
+                                        </ListItem>)}
+                                    </List>
                                     </ScrollView>
                                              </View>
                                              : null}
                                      </Tab>
                                      <Tab heading={<TabHeading style={{color : "#b40530", backgroundColor : '#ffd3d1'}}>
-                                        <Text style={{color: "#b40530"}}>{"РАСХОДЫ"}</Text></TabHeading>}>
-                                         <Text>{"РАСХОДЫ"}</Text>
+                                        <Text style={{color: "#b40530"}}>{`РАСХОДЫ[${this.cashLeaves(curYear)}]`}</Text></TabHeading>}>
+                                         <List>
+                                             {this.state.planOuts.filter(item=>{
+                                                 const inThisYear = (new Date(item.paydate)).getFullYear()===curYear
+                                                 const endYear = item.payend===null?curYear:(new Date(item.payend)).getFullYear()
+                                                 const regularNotFinished = (new Date(item.paydate)).getFullYear()<=curYear&&((endYear>=curYear)&&item.isregular===1)
+                                                 // console.log("PLANSIN", item, inThisYear, regularNotFinished, endYear)
+                                                 return item.sum>0 && (inThisYear|| regularNotFinished)
+                                             }).filter(item=>item.issaldo===null).map((item, key)=>
+                                                 <ListItem>
+                                                     <View style={{width : 230, textAlign : "left"}}><Text>{item.name}</Text><Text style={{fontSize : RFPercentage(1.5)}} note>{`${item.isregular===1?"c":""} ${(new Date(item.paydate)).toLocaleDateString()} ${item.payend!==null?(" по "+ (new Date(item.payend)).toLocaleDateString()):''}`}</Text></View>
+                                                     <View style={{width : 70}}><Text>{item.sum}</Text><Text style={{fontSize : RFPercentage(1.5)}} note>{`${item.isregular===1?"раз/месяц":"разовый"}`}</Text></View>
+                                                 </ListItem>)}
+                                         </List>
                                      </Tab>
                                 </Tabs>
 
@@ -291,6 +402,7 @@ class Budget extends React.Component {
                          }
 
                     </Tabs>:null}
+                    {/*{this.state.isSpinner?<Spinner color="#7DA8E6"/>:null}*/}
                 </View>
                 <View style={{flex: 1}}>
                     <Footer style={styles.header}>

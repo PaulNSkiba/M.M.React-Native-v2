@@ -21,11 +21,12 @@ class ButtonWithBadge extends Component {
         const windowRatio = Dimensions.get('window').width? Dimensions.get('window').height / Dimensions.get('window').width : 1.9
         const todayMessages = this.props.userSetup.localChatMessages.filter(item=>(new Date(item.msg_date).toLocaleDateString())===(new Date().toLocaleDateString())).length
         const test = true
-        const homework = this.props.userSetup.homework.length?this.props.userSetup.homework.filter(item=>{
-            if (item.hasOwnProperty('ondate')) item.homework_date = new Date(item.ondate)
-                return toYYYYMMDD(new Date(item.homework_date)) === toYYYYMMDD(AddDay((new Date()), 1))
-            }
-        ).length:0
+        const hwarray = this.props.userSetup.localChatMessages.filter(item=>(item.homework_date!==null))
+        const homework = hwarray.length?hwarray.filter(item=>{
+                        if (item.hasOwnProperty('ondate')) item.homework_date = new Date(item.ondate)
+                            return toYYYYMMDD(new Date(item.homework_date)) === toYYYYMMDD(AddDay((new Date()), 1))
+                        }
+                    ).length:0
         // console.log("ButtonWithBadge", this.props.icontype, this.props.iconname, todayMessages, homework)
         // if (this.props.kind==='marks') console.log("MARKS_COUNT", this.props.value)
         return (

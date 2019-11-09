@@ -199,8 +199,8 @@ class App extends Component {
                             <FooterTab style={styles.header}>
                                 <ButtonWithBadge
                                     enabled={this.state.selectedFooter === 0}
-                                    disabled={this.state.showLogin}
-                                    onpress={this.setstate}
+                                    disabled={this.state.showLogin} //  || (this.props.userSetup.userID === 0)
+                                    onpress={this.setstate} // this.props.userSetup.userID?this.setstate:null
                                     name={"Чат"}
                                     icontype={'material'}
                                     iconname={'message'}
@@ -212,8 +212,8 @@ class App extends Component {
 
                                 <ButtonWithBadge
                                     enabled={this.state.selectedFooter === 1}
-                                    disabled={this.state.showLogin}
-                                    onpress={this.setstate}
+                                    disabled={this.state.showLogin} //  || (this.props.userSetup.userID === 0)
+                                    onpress={this.setstate} // this.props.userSetup.userID?this.setstate:null
                                     name={"Домашка"}
                                     icontype={'material'}
                                     iconname={'notifications'}
@@ -225,8 +225,8 @@ class App extends Component {
 
                                 <ButtonWithBadge
                                     enabled={this.state.selectedFooter === 2}
-                                    disabled={this.state.showLogin}
-                                    onpress={this.setstate}
+                                    disabled={this.state.showLogin} //  || (this.props.userSetup.userID === 0)
+                                    onpress={this.setstate} // this.props.userSetup.userID?this.setstate:null
                                     name={"Оценки"}
                                     icontype={'material'}
                                     iconname={'timeline'}
@@ -238,21 +238,21 @@ class App extends Component {
 
                                 <ButtonWithBadge
                                     enabled={this.state.selectedFooter === 3}
-                                    disabled={this.state.showLogin}
-                                    onpress={this.setstate}
+                                    disabled={this.state.showLogin} //  || (this.props.userSetup.userID === 0)
+                                    onpress={this.setstate} // this.props.userSetup.userID?this.setstate:null
                                     name={"Info"}
                                     icontype={'material'}
                                     iconname={'info'}
                                     badgestatus={'warning'}
                                     kind={'info'}
-                                    value={1}
+                                    value={this.props.userSetup.classNews.filter(item=>item.is_news===2).length}
                                     setstate={this.setstate}
                                     stateid={3}/>
 
                                 <ButtonWithBadge
                                     enabled={this.state.selectedFooter === 4}
-                                    disabled={this.state.showLogin}
-                                    onpress={this.setstate}
+                                    disabled={this.state.showLogin} //  || (this.props.userSetup.userID === 0)
+                                    onpress={this.setstate} // this.props.userSetup.userID?this.setstate:null
                                     name={"Камера"}
                                     icontype={'material'}
                                     iconname={'camera'}
@@ -264,8 +264,8 @@ class App extends Component {
 
                                 <ButtonWithBadge
                                     enabled={this.state.selectedFooter === 5}
-                                    disabled={this.state.showLogin}
-                                    onpress={this.setstate}
+                                    disabled={this.state.showLogin} //  || (this.props.userSetup.userID === 0)
+                                    onpress={this.setstate} // this.props.userSetup.userID?this.setstate:null
                                     name={"etc"}
                                     icontype={'material'}
                                     iconname={'apps'}

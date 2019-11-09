@@ -131,10 +131,11 @@ android {
         applicationId "com.mymv2"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 2
+        versionCode 3
         versionName "1.08.188"
 		missingDimensionStrategy 'react-native-camera', 'general'
 		multiDexEnabled true
+		resConfigs "en", "US"
     }
     splits {
         abi {

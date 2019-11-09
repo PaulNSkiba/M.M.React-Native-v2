@@ -2,7 +2,7 @@
  * Created by Paul on 14.10.2019.
  */
 import React, {Component} from "react";
-import {Container, Header, Content, Icon, Accordion, Text, View, Left, Body, Right} from "native-base";
+import {Container, Header, Content, Icon, Accordion, Text, View, Left, Body, Right, ScrollView} from "native-base";
 import {connect} from 'react-redux'
 import {RFPercentage, RFValue} from "react-native-responsive-fontsize";
 import {
@@ -31,14 +31,14 @@ class AccordionCustom extends Component {
                 title = item.label.toUpperCase();
                 item.label = item.label.toUpperCase();
                 item.content = this.props.ishomework? this.props.data2.filter((item2, key2) => key2 === key)[0] : null;
-                // console.log(item.content)
+                // console.log("AccordionCustom: item", item.content)
                 return item;
             })
         }
     }
 
     componentDidMount() {
-        // console.log("componentDidMount", this.props.data2)
+        // console.log("componentDidMount:data", this.props.data)
         // const dataArray = this.props.data.map(item=>{
         //     item.content = "Lorem ipsum dolor sit amet"
         //     return item
@@ -66,7 +66,8 @@ class AccordionCustom extends Component {
                     }}>{item.label}</Text>
                 </Left>
                 <Body>
-                    <Text style={{fontWeight: "600", color: "#b40530"}}>{item.count ? item.count : null}{"  "}</Text>
+                {item.count?<Text style={{fontWeight: "600", color: "#b40530"}}>{item.count}{"  "}</Text>:null}
+                {/*{item.date?<Text style={{fontWeight: "400", color: "#4472C4", fontSize : RFPercentage(1.5)}}>{item.date}{"  "}</Text>:null}*/}
                 </Body>
                 {expanded
                     ? <Icon style={{fontSize: 18}} name="arrow-up"/>
@@ -77,18 +78,15 @@ class AccordionCustom extends Component {
 
     _renderContent(item) {
         return (
-            <View
-                // style={{backgroundColor: "#E0E0E0"}}
-            >
+            <View>
                 {item.content}
             </View>
-
         );
     }
 
     render() {
 
-        // console.log("dataArray", index, this.state.dataArray)
+        // console.log("Accordion: dataArray", this.state.dataArray)
         return (
             <Container>
                 <Content padder style={{backgroundColor: "white"}}>

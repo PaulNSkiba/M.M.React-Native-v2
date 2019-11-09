@@ -88,7 +88,7 @@ class ChatMobile extends Component {
         // console.log("this.props.isnew", this.props.isnew)
         NetInfo.isConnected.addEventListener('connectionChange', this.handleConnectivityChange);
         AppState.addEventListener('change', this._handleAppStateChange);
-        this.getTags()
+        // this.getTags()
 
         if (this.props.isnew)
             this.initLocalPusher()

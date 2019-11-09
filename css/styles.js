@@ -91,13 +91,14 @@ export default styles = StyleSheet.create({
         margin : 8,
         // width: "85%",
         width : "95%",
-        height : 50,
-        padding : 2,
+        height : 55,
+        padding : 0.5,
         backgroundColor: "white",
         alignSelf : "flex-start",
         // resize: none,
         // outline: none,
         borderRadius: 10,
+        fontSize : 14,
     },
     btnAddMessage : {
         // display: "flex",
@@ -225,6 +226,8 @@ export default styles = StyleSheet.create({
     header : {
         backgroundColor : "#f0f0f0",
         color : "black",
+        borderBottomColor: '#c7c7c7',
+        borderBottomWidth: 1,
     },
     myTitle : {
         // textDecoration: "underline",
@@ -335,6 +338,7 @@ export default styles = StyleSheet.create({
         backgroundColor: "#33ccff",
         fontWeight: "600",
         right : 10,
+        // zIndex : 10,
     },
     msgLeftAuthor : {
         color : "#ffffff",
@@ -350,6 +354,11 @@ export default styles = StyleSheet.create({
         borderColor : "#33ccff",
         backgroundColor: "#33ccff",
         fontWeight: "600",
+        // zIndex : 10,
+    },
+    authorBorder : {
+        // borderWidth: 0,
+        // borderColor : "#b40530",
     },
     btnAddTime : {
         position : "absolute",
@@ -542,6 +551,17 @@ export default styles = StyleSheet.create({
         textAlign : "center",
         backgroundColor : "#E0E0E0",
         color : "#4472C4",
+        width : "100%",
+        height : "100%",
+        paddingTop : 7,
+    },
+    updatedMsgText : {
+        display : "flex",
+        justifyContent: "center",
+        alignItems : "center",
+        textAlign : "center",
+        color : "#E0E0E0",
+        backgroundColor : "#4472C4",
         width : "100%",
         height : "100%",
         paddingTop : 7,
