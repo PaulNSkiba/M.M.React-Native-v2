@@ -28,10 +28,9 @@ const initialState = (check)=>{
             chatSessionID : '', classObj : { chatroom_id : 0},
             newMsgCount : 0, countryCode : "EN", langLibrary : {}, chatSSL : true,
             localChatMessages : [], isMobile : true, photoPath : [], markscount : 0,
-            needRenew : false, chatTags : [],
-            budget : [], budgetpays : [],
-            renderBudget : 1, classNews : [],
-        }
+            needRenew : false, chatTags : [], budget : [], budgetpays : [], renderBudget : 1, classNews : [],
+            statsBudget : null, statsBudgetPays : null,
+            }
     return obj
 }
 
@@ -47,7 +46,7 @@ export function userSetupReducer(state = initialState(true), action) {
                     selected_subjects, selected_subj, students, marks,
                     mark_dates, best_lines, avg_lines, avg_marks, addUserToken,
                     lastmarkssent, emails, homework, stats2, stats3, mark_date,
-                    avgclassmarks, classObj, chatrows, markscount, classNews, tags} = action.payload;
+                    avgclassmarks, classObj, chatrows, markscount, classNews, tags, statsBudget, statsBudgetPays} = action.payload;
             let {   name : userName, id : userID, isadmin } = action.payload.user;
             let {   class_number, pupil_count, year_name, perioddayscount,
                     markblank_id, markblank_alias, selected_marker, titlekind,
@@ -66,7 +65,7 @@ export function userSetupReducer(state = initialState(true), action) {
                 isadmin, studentName, studentId, marks, mark_dates, best_lines, avg_lines, avg_marks, addUserToken,
                 cnt_marks, stud_cnt, subj_cnt, lastmarkssent, emails, homework, stats2 : stats2[0], stats3 : stats3[0],
                 mark_date, avgclassmarks, langLibrary : action.langLibrary, localChatMessages : chatrows, markscount,
-                classNews, chatTags : tags,
+                classNews, chatTags : tags, statsBudget, statsBudgetPays
                 }
             // saveToLocalStorageOnDate("userSetupDate", toYYYYMMDD(new Date()))
             // saveToLocalStorageOnDate("userSetup", JSON.stringify(setup))

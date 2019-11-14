@@ -131,8 +131,8 @@ android {
         applicationId "com.mymv2"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 3
-        versionName "1.08.188"
+        versionCode 6
+        versionName "1.08.208"
 		missingDimensionStrategy 'react-native-camera', 'general'
 		multiDexEnabled true
 		resConfigs "en", "US"
@@ -227,6 +227,7 @@ dependencies {
 	//mplementation "androidx.appcompat:appcompat:1.0.0"
     implementation fileTree(dir: "libs", include: ["*.jar"])
     implementation "com.facebook.react:react-native:+"  // From node_modules
+	implementation 'com.android.support:multidex:1.0.3'
 
     if (enableHermes) {
       def hermesPath = "../../node_modules/hermesvm/android/";

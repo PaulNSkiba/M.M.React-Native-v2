@@ -11,7 +11,7 @@ import {
 } from 'native-base';
 import {Avatar, Badge, Icon, withBadge} from 'react-native-elements'
 import {bindActionCreators} from 'redux';
-import {instanceAxios, mapStateToProps, addMonths, toYYYYMMDD} from '../../js/helpersLight'
+import {instanceAxios, mapStateToProps, addMonths, toYYYYMMDD, dateFromTimestamp} from '../../js/helpersLight'
 import {LOGINUSER_URL, version, API_URL} from '../../config/config'
 import {userLoggedIn, userLoggedInByToken, userLoggedOut} from '../../actions/userAuthActions'
 import LogginByToken from '../../components/LoggingByToken/loggingbytoken'
@@ -229,6 +229,7 @@ class Budget extends React.Component {
 
         console.log("Budget")
         const {years} = this.state
+        const {statsBudgetPays, statsBudget} = this.props.userSetup
         let index = 0
         years.forEach((item, key)=>item===(new Date()).getFullYear()?index=key:null)
         return (
@@ -263,7 +264,12 @@ class Budget extends React.Component {
                                 <Tabs>
                                     <Tab heading={<TabHeading
                                         style={{color: "#387541", backgroundColor: '#C6EFCE'}}><Text
-                                        style={{color: "#387541"}}>{`ВЗНОСЫ [${this.pcntOfPayments(factInsHeader)}%]`}</Text></TabHeading>}>
+                                        style={{color: "#387541"}}>{`ВЗНОСЫ [${this.pcntOfPayments(factInsHeader)}%]`}</Text>
+                                        <Text
+                                            style={{color: "#387541", position: 'absolute', top : 0, right : 0, fontSize : 9.5}}>
+                                            {(new Date(dateFromTimestamp(statsBudget)) instanceof Date)?(new Date(dateFromTimestamp(statsBudget))).toLocaleDateString() + ' ' +  (new Date(dateFromTimestamp(statsBudget))).toLocaleTimeString():null}
+                                        </Text>
+                                    </TabHeading>}>
                                         {factInsHeader.length ?
                                             <View>
                                                 <View style={{
@@ -380,7 +386,12 @@ class Budget extends React.Component {
                                              : null}
                                      </Tab>
                                      <Tab heading={<TabHeading style={{color : "#b40530", backgroundColor : '#ffd3d1'}}>
-                                        <Text style={{color: "#b40530"}}>{`РАСХОДЫ[${this.cashLeaves(curYear)}]`}</Text></TabHeading>}>
+                                        <Text style={{color: "#b40530"}}>{`РАСХОДЫ[${this.cashLeaves(curYear)}]`}</Text>
+                                         <Text
+                                             style={{color: "#b40530", position: 'absolute', top : 0, right : 0, fontSize : 9.5}}>
+                                             {(new Date(dateFromTimestamp(statsBudgetPays)) instanceof Date)?(new Date(dateFromTimestamp(statsBudgetPays))).toLocaleDateString() + ' ' +  (new Date(dateFromTimestamp(statsBudgetPays))).toLocaleTimeString():null}
+                                         </Text>
+                                     </TabHeading>}>
                                          <List>
                                              {this.state.planOuts.filter(item=>{
                                                  const inThisYear = (new Date(item.paydate)).getFullYear()===curYear

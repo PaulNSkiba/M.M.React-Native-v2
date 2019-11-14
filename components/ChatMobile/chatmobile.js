@@ -60,16 +60,15 @@ class ChatMobile extends Component {
             showEmojiPicker : false,
             newMessage: '',
             messagesNew : [],
-            Echo : {},
-            Echo2 : {},
             typingUsers : new Map(),
-            localChatMessages : [],
+            localChatMessages : this.props.userSetup.localChatMessages,
             curMessage : '',
             modalVisible: false,
             isConnected: true,
             appState : AppState.currentState,
             appStateChanged : false,
         }
+        this.Echo = null
         this.now = new Date()
         this.editedMsgID = 0
         this.roomId = this.props.userSetup.classObj.chatroom_id // this.props.chatroomID //
@@ -84,18 +83,37 @@ class ChatMobile extends Component {
         this.sendMessage = this.sendMessage.bind(this)
         this.addMessage = this.addMessage.bind(this)
     }
+    shouldComponentUpdate(nextProps, nextState) {
+        if (nextProps.userSetup.userID&&this.Echo===null) {
+            if (this.props.isnew) {
+                console.log("shoulUpdateEcho", nextProps.userSetup.userID, this.Echo)
+                this.initLocalPusher()
+            }
+            else {
+                this.initNetPusher()
+            }
+        }
+        else {
+            if ((!nextProps.userSetup.userID) && this.Echo!==null) {
+                this.Echo.disconnect()
+                this.Echo = null
+            }
+        }
+        return true
+    }
     componentDidMount(){
         // console.log("this.props.isnew", this.props.isnew)
         NetInfo.isConnected.addEventListener('connectionChange', this.handleConnectivityChange);
         AppState.addEventListener('change', this._handleAppStateChange);
-        // this.getTags()
 
         if (this.props.isnew)
             this.initLocalPusher()
         else {
             this.initNetPusher()
         }
+
         this.initChatMessages()
+
         // if (this.typingTimer) clearTimeout(this.typingTimer)
         this.typingTimer = setInterval(()=>{
             // console.log("setInterval-tag")
@@ -261,7 +279,7 @@ class ChatMobile extends Component {
         instanceAxios().get(API_URL +`chat/get/${classID}`, [], null)
             .then(resp => {
                 this.setState({localChatMessages : resp.data})
-                console.log("Загружено!")
+                console.log("getChatMessages : Загружено!", resp.data)
                 this.props.onReduxUpdate("UPDATE_HOMEWORK", resp.data.filter(item=>(item.homework_date!==null)))
                 this.props.onReduxUpdate("ADD_CHAT_MESSAGES", resp.data)
             })
@@ -289,7 +307,7 @@ class ChatMobile extends Component {
     }
     initLocalPusher=()=>{
         // let {token} = store.getState().user
-        // console.log("initLocalPusher: token", token)
+        console.log("initLocalPusher: token")
         // let {chatSSL} = this.props.userSetup
 
         const {chatSSL} = this.props.userSetup
@@ -302,12 +320,12 @@ class ChatMobile extends Component {
         echo.connect()
         let channelName = 'class.'+this.props.userSetup.classID
 
-        this.setState({Echo: echo})
-
+        // this.setState({Echo: echo})
+        this.Echo = echo
         console.log('websocket', echo, channelName, chatSSL)
         if (chatSSL) {
             console.log('websocket-listening', echo)
-            echo.private(channelName)
+            echo.join(channelName)
                 .listen('ChatMessageSSL', (e) => {
                     console.log("FILTER-SSL", e.message)
 
@@ -424,6 +442,19 @@ class ChatMobile extends Component {
                     }
                     console.log('typing', e.name);
                 })
+                .here((users) => {
+                    this.setState({users : users});
+                    console.log("USERS", users)
+                })
+                .joining((user) => {
+                    console.log("USERS.JOIN", this.state.users, user)
+                    this.setState({users : [...this.state.users, user]})
+               })
+                .leaving((person) => {
+                    // this.users = this.users.filter(item=>item !== person);
+                    console.log("USERS.LEAVE", this.state.users, person)
+                    this.setState({users : this.state.users.filter(item=>item !== person)})
+                });
         }
         else
             echo.channel(channelName)
@@ -601,7 +632,7 @@ class ChatMobile extends Component {
         if (this.props.isnew) {
             
             let channelName = 'class.'+this.props.userSetup.classID
-            this.state.Echo.private(channelName)
+            this.Echo.join(channelName)
                 .whisper('typing', {
                         name: this.props.userSetup.userName
                     })
@@ -848,7 +879,7 @@ class ChatMobile extends Component {
 
         if (this.props.isnew) {
             let channelName = 'class.'+this.props.userSetup.classID
-            this.state.Echo.private(channelName)
+            this.Echo.join(channelName)
                 .whisper('typing', {
                     name: this.props.userSetup.userName
                 })
@@ -924,7 +955,11 @@ class ChatMobile extends Component {
                                         tags={this.state.tags}/>
                     </View>
                     <View style={styles.whoTyping}>
-                        <Text>{this.state.typingUsers.size > 0?"Сообщение набира" + ((this.state.typingUsers.size===1?"е":"ю") + "т: ") + Array.from(this.state.typingUsers.keys()).join(', '):""}</Text>
+                        {/*<Text>{this.state.typingUsers.size > 0?"Сообщение набира" + ((this.state.typingUsers.size===1?"е":"ю") + "т: ") + Array.from(this.state.typingUsers.keys()).join(', '):""}</Text>*/}
+                        <Icon size={18} color={"#4472C4"} style={[{alighSelf : "flex-start"}]} name='person'/>
+                        <Text style={{color : "#4472C4", fontSize : 12}} >{this.state.users.length?`[${this.state.users.length}]:`:null}</Text>
+                        <Text style={{color : "#4472C4", fontSize : 12}}>{this.state.typingUsers.size > 0?
+                            ` ... ${Array.from(this.state.typingUsers.keys()).length>2?(Array.from(this.state.typingUsers.keys()).length + " человека"):Array.from(this.state.typingUsers.keys()).join(', ')} ... `:null}</Text>
                     </View>
                 </View>
                 <View style={styles.addMsgContainer}>

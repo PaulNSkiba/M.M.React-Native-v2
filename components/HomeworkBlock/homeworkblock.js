@@ -133,7 +133,6 @@ class HomeworkBlock extends Component {
         this.getHomeworkItems = this.getHomeworkItems.bind(this)
         this.getImage = this.getImage.bind(this)
     }
-
     componentDidMount() {
         requestSDPermission()
     }
@@ -154,6 +153,7 @@ class HomeworkBlock extends Component {
             })
             daysArr[i].count = arr.length
         }
+        console.log("HomeWorkblock: daysArr", daysArr, this.props.userSetup.localChatMessages, this.props.userSetup.localChatMessages.filter(item=>(item.homework_date!==null)), this.props.userSetup.homework)
         return daysArr
     }
     onSelectDay = item => {

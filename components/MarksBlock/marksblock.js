@@ -5,6 +5,7 @@ import React, { Component } from 'react'
 import {    StyleSheet, Text, View, Image, ScrollView,
             TouchableHighlight, Modal, Radio, TouchableOpacity, FlatList, Dimensions } from 'react-native';
 import {    Container, TabHeading, Tabs, Tab, } from 'native-base';
+import { dateFromTimestamp } from '../../js/helpersLight'
 // import { ListView } from 'deprecated-react-native-listview';
 import RadioForm from 'react-native-radio-form';
 import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, AddDay, toYYYYMMDD, daysList, toLocalDate} from '../../js/helpersLight'
@@ -206,7 +207,7 @@ class MarksBlock extends Component {
         const initialDay = this.getNextStudyDay(daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;}))[0];
 
         console.log("MARKS_RENDER")
-        let {marks} = this.props.userSetup, mark = "", subjmarks = ""
+        let {marks, stats3} = this.props.userSetup, mark = "", subjmarks = ""
          return (
 
             <Container>
@@ -225,6 +226,9 @@ class MarksBlock extends Component {
                                     <View style={globalStyles.head}>
                                         <View key={1000}>
                                             <Text style={globalStyles.headerCellFirst}>{"Предмет"}</Text>
+                                            <Text style={{position : "absolute", top : 0, left : 0, fontSize : 8.5, paddingLeft : 4, paddingRight : 4, borderBottomRightRadius : 3, color : "#fff", backgroundColor : "#4472C4"}}>
+                                                {(new Date(dateFromTimestamp(stats3.max)) instanceof Date)?(new Date(dateFromTimestamp(stats3.max))).toLocaleDateString() + ' ' +  (new Date(dateFromTimestamp(stats3.max))).toLocaleTimeString():null}
+                                                </Text>
                                         </View>
                                         {  rootItem.arr.map((item, key) =>
                                         // console.log("Cell", item, key)

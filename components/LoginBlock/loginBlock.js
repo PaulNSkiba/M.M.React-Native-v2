@@ -133,7 +133,7 @@ class LoginBlock extends React.Component {
 
     render() {
         const {logging, loginmsg, logBtnClicked} = this.props.user
-        console.log("LOGIN_RENDER", this.props.user)
+        // console.log("LOGIN_RENDER", this.props.user)
         // const showModal = this.showLogin&&logBtnClicked&&(!loginmsg.length)
         return (
             <View style={{backgroundColor: "#fff"}}>

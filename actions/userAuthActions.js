@@ -20,7 +20,7 @@ export const userLoggedIn = (email, pwd, provider, provider_id, langLibrary) => 
         dispatch ({type: 'USER_LOGGING'})
         instanceAxios().post(LOGINUSER_URL, JSON.stringify(data), null)
             .then(response => {
-                console.log('USER_LOGGEDIN.1', response.data);
+                // console.log('USER_LOGGEDIN.1', response.data);
                 switch (response.data.loggedin) {
                     case false :
                         dispatch({type: 'USER_PWD_MISSEDMATCH', payload: response.data.message})

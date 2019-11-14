@@ -5,8 +5,9 @@
  * @format
  * @flow
  */
-import React, {Fragment, Component} from 'react';
-import {SafeAreaView, StyleSheet, ScrollView, View, Text, StatusBar, Dimensions, AppState} from 'react-native';
+import React, {Component} from 'react';
+import {SafeAreaView, StyleSheet, ScrollView, View, Text, StatusBar} from 'react-native';
+import { Dimensions, AppState, Platform} from 'react-native';
 import axios from 'axios';
 import {API_URL}        from './config/config'
 import { Container, Footer, FooterTab, Spinner, } from 'native-base';
@@ -21,6 +22,11 @@ import ETCBlock from './components/ETCBlock/etcblock'
 import ButtonWithBadge from './components/ButtonWithBadge/buttonwithbadge'
 import styles from './css/styles'
 import {instanceAxios} from './js/helpersLight'
+
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
+import AntDesign from 'react-native-vector-icons/AntDesign'
+import Ionicons from 'react-native-vector-icons/Ionicons'
+import Foundation from 'react-native-vector-icons/Foundation'
 
 class App extends Component {
     constructor(props) {
@@ -50,23 +56,34 @@ class App extends Component {
     }
     componentDidMount() {
         // console.log("COMPONENT_DID_MOUNT")
-        AppState.addEventListener('change', this._handleAppStateChange);
-        this.getSessionID();
-        AsyncStorage.getItem("myMarks.data")
-            .then(res => {
-                    const dataSaved = JSON.parse(res)
-                    if (!(res === null)) {
-                        // console.log("componentDidMount.1", dataSaved)
-                        const langLibrary = {}
-                        const {email, token} = dataSaved
-                        this.setState({userEmail: email, userToken: token})
+        if ((Platform.OS === 'ios') || ((Platform.OS === 'android')&& (Platform.Version > 22))) // > 5.1
+        {
+            MaterialIcons.loadFont()
+            Ionicons.loadFont()
+            AntDesign.loadFont()
+            Foundation.loadFont()
+
+            AppState.addEventListener('change', this._handleAppStateChange);
+            this.getSessionID();
+            AsyncStorage.getItem("myMarks.data")
+                .then(res => {
+                        const dataSaved = JSON.parse(res)
+                        if (!(res === null)) {
+                            // console.log("componentDidMount.1", dataSaved)
+                            const langLibrary = {}
+                            const {email, token} = dataSaved
+                            this.setState({userEmail: email, userToken: token})
+                        }
                     }
-                }
-            )
+                )
+        }
      }
     componentWillUnmount() {
-        AppState.removeEventListener('change', this._handleAppStateChange);
-    }
+        if ((Platform.OS === 'ios') || ((Platform.OS === 'android')&& (Platform.Version > 22))) // > 5.1
+        {
+            AppState.removeEventListener('change', this._handleAppStateChange);
+        }
+        }
     _handleAppStateChange = (nextAppState) => {
         const {classID, studentId} = this.props.userSetup
         if (this.state.appState.match(/inactive|background/) && nextAppState === 'active') {
@@ -282,6 +299,5 @@ class App extends Component {
         )
     }
 }
-
 
 export default App;

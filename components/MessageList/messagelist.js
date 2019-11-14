@@ -347,9 +347,10 @@ class MessageList extends Component {
         // console.log("RENDERMESSAGES", this.props.isnew, this.state.messages, this.props.userSetup)
         let messages = []
         if (this.props.isnew)
-            messages = this.props.localmessages //this.props.chat.localChatMessages.map(item=>prepareMessageToFormat(item))
+            messages = this.props.localmessages
         else
             messages = this.props.messages
+
         // console.log('MESSAGES', this.props.localmessages, messages)
         const subjects = this.props.userSetup.selectedSubjects.filter(item=>item.subj_key!=="#xxxxxx").map(item=>{
             return {
