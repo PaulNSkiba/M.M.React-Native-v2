@@ -6,7 +6,7 @@
  */
 import React, { Component } from 'react'
 import {    StyleSheet, Text, View, Image, ScrollView,
-            TouchableHighlight, Modal, Radio, TouchableOpacity } from 'react-native';
+            TouchableHighlight, Modal, Radio, TouchableOpacity, Animated, Dimensions, Keyboard } from 'react-native';
 import {    Container, Header, Left, Body, Right, Button, Card, CardItem,
             Title, Content,  Footer, FooterTab, TabHeading, Tabs, Tab, Badge,
             Form, Item, Input, Label, Textarea, CheckBox, Spinner } from 'native-base';
@@ -40,6 +40,9 @@ class HelpBlock extends Component {
             showFooter : true,
             isSpinner : false,
             showMsg : false,
+            viewHeight : Dimensions.get('window').height,
+            activeTab : 0,
+            keyboardShowed : false,
             newsArr : this.props.userSetup.classNews.filter(item=>item.is_news===2).map(item => {
                 let newObj = {};
                 newObj.label = `${item.msg_header}`;
@@ -58,36 +61,22 @@ class HelpBlock extends Component {
         this.session_id =  AsyncStorage.getItem('chatSessionID')
     }
     componentDidMount(){
-        // this.getNews()
+        this.keyboardDidShowSub = Keyboard.addListener('keyboardDidShow', this.handleKeyboardDidShow);
+        this.keyboardDidHideSub = Keyboard.addListener('keyboardDidHide', this.handleKeyboardDidHide);
     }
-    // getNextStudyDay=arr=>{
-    //     let i = 0; obj = {};
-    //     arr.forEach((item, index)=>{
-    //         if (item.value > 0 && i===0) {
-    //             i = index;
-    //             obj = item;
-    //         }
-    //     })
-    //     return [i, obj];
-    // }
-    // getNews=()=>{
-    //     const {classID, userID} = this.props.userSetup
-    //     // console.log('getChatMessages', this.props.userSetup.classID, classID)
-    //     instanceAxios().get(API_URL +`chat/getserv/${classID}/${userID}`, [], null)
-    //         .then(resp => {
-    //             console.log('getNews', resp.data)
-    //             this.setState({ questions : resp.data.filter(item=>item.is_news===null),
-    //                             updates : resp.data.filter(item=>item.is_news===1),
-    //                             news : resp.data.filter(item=>item.is_news===2)})
-    //             this.props.onReduxUpdate("UPDATE_NEWS", resp.data)
-    //         })
-    //         .catch(error => {
-    //             console.log('getNewsError', error)
-    //         })
-    // }
+    componentWillUnmount() {
+        this.keyboardDidShowSub.remove();
+        this.keyboardDidHideSub.remove();
+    }
+    measureView(event: Object) {
+        console.log(`*** event: ${JSON.stringify(event.nativeEvent)}`);
+        // you'll get something like this here:
+        // {"target":1105,"layout":{"y":0,"width":256,"x":32,"height":54.5}}
+    }
     addQuestionToService=()=>{
         // Если вопрос, то отправляем электронку на админский ящик
-        // this.props.onReduxUpdate("ADD_CHAT_MESSAGES", arrChat)
+        this._textarea.setNativeProps({'editable': false});
+        this._textarea.setNativeProps({'editable':true});
         if (!this.state.curMessage.length) return
         // this.setState({isSpinner : true})
         const {studentId, userID, classID} = this.props.userSetup
@@ -110,28 +99,29 @@ class HelpBlock extends Component {
             .then(response => {
                 // console.log('ADD_MSG', response)
                 if (this.state.isNews) {
-                    let arr = this.state.news
+                    let arr = this.props.userSetup.classNews//this.state.news
                     // console.log("NEWS", text)
                     arr.unshift(response.data)
+                    this.props.onReduxUpdate("UPDATE_NEWS", arr)
 
-                    this.refs.textarea.setNativeProps({'editable':false});
-                    this.refs.textarea.setNativeProps({'editable':true});
+                    this._textarea.setNativeProps({'editable': false});
+                    this._textarea.setNativeProps({'editable':true});
                     this.props.setstate({showFooter : true})
                     this.setState({news : arr, curMessage : '', showFooter : true, isSpinner : false})
                 }
                 else {
                     // console.log("QUESTION", text)
-                    let arr = this.state.questions
-
+                    let arr = this.props.userSetup.classNews //this.state.questions
                     arr.unshift(response.data)
+                    this.props.onReduxUpdate("UPDATE_NEWS", arr)
 
                     this.sendMail('paul.n.skiba@gmail.com', this.state.curMessage)
 
-                    this.refs.textarea.setNativeProps({'editable':false});
-                    this.refs.textarea.setNativeProps({'editable':true});
-
+                    this._textarea.setNativeProps({'editable': false});
+                    this._textarea.setNativeProps({'editable':true});
                     console.log("SETSTATE", arr)
                     this.props.setstate({showFooter : true})
+
                     this.setState({questions : arr, curMessage : '', showFooter : true})
                 }
             })
@@ -226,30 +216,34 @@ class HelpBlock extends Component {
     getQuestionsForAccordion=()=>{
 
     }
+    handleKeyboardDidShow = (event) => {
+        const { height: windowHeight } = Dimensions.get('window');
+        const keyboardHeight = event.endCoordinates.height;
+        console.log("keyboardHeight", keyboardHeight)
+        // const currentlyFocusedField = TextInputState.currentlyFocusedField();
+        const currentlyFocusedField = this._animatedView;
+        this.setState({viewHeight : (windowHeight - keyboardHeight), keyboardShowed : true})
+        console.log("handleKeyboardDidShow")
+    }
+
+    handleKeyboardDidHide = () => {
+        const { height: windowHeight } = Dimensions.get('window');
+        this.setState({viewHeight : windowHeight, keyboardShowed : false})
+        console.log("handleKeyboardDidHide")
+    }
+
+    setActiveTab=i=>this.setState({activeTab:i})
+
     render () {
         // const daysArr = daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;})
         const {newsArr, updatesArr, updates, news} = this.state
-        // let newsArr = this.props.userSetup.classNews.filter(item=>item.is_news===2).map(item => {
-        //     let newObj = {};
-        //     newObj.label = `${item.msg_header}`;
-        //     newObj.value = item.id;
-        //     newObj.count = toLocalDate(new Date(item.msg_date), "UA", false, false);
-        //     return newObj;
-        // })
-        // let updatesArr = this.props.userSetup.classNews.filter(item=>item.is_news===1).map(item => {
-        //     let newObj = {};
-        //     newObj.label = `${item.build_number}`;
-        //     newObj.value = item.id;
-        //     newObj.count = toLocalDate(new Date(item.msg_date), "UA", false, false);
-        //     return newObj;
-        // })
-        // const updates = this.getUpdateForAccordion()
-        // const news = this.getNewsForAccordion()
-        // console.log("HelpBlock", newsArr, this.props.userSetup.classNews)
+        console.log("HelpBlock", this.state.viewHeight)
         return (
-            <View>
-                 <Tabs>
-                         <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text style={{color: "#fff"}}>НОВОСТИ</Text></TabHeading>}>
+            <View >
+                 <Tabs onChangeTab={({ i, ref, from }) => this.setActiveTab(i)} style={this.state.activeTab===2?{height:this.state.viewHeight}:null}>
+                         <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text style={{color: "#fff"}}>НОВОСТИ</Text></TabHeading>}
+                                onPress={()=>console.log("Tab1_Clicked")}
+                              >
                              <View style={styles.homeworkSubjectList}>
                                  <Container style={{flex: 1, width : "100%", flexDirection: 'column', position: "relative"}}>
                                      {/*<View style={{flex: 3, borderWidth : 1, borderColor : "#4472C4"}}>*/}
@@ -302,15 +296,20 @@ class HelpBlock extends Component {
                                 </Container>
                             </View>
                         </Tab>
-                        <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text style={{color: "#fff"}}>ВОПРОС-ОТВЕТ</Text></TabHeading>}>
-                            <Container style={{flex: 1, width : "100%", flex : 1, flexDirection: 'column', position: "relative"}}>
-                                <View style={[styles.chatContainerNew, {flex: 1}]}>
+                        <Tab style={{height:this.state.viewHeight}} heading={<TabHeading style={styles.tabHeaderWhen}><Text style={{color: "#fff"}}>ВОПРОС-ОТВЕТ</Text></TabHeading>}>
+                            {/*<Container style={{width : "100%", flexDirection: 'column', position: "relative"}}>*/}
+                                {/*<View style={[styles.chatContainerNew, {flex: 1}]}>*/}
+                                <View
+                                    ref={component => this._animatedView = component}
+                                    collapsable={false}
+                                    onLayout={(event) => {this.measureView(event)}}
+                                    style={[styles.chatContainerNew, {flex: 1}, {height:this.state.viewHeight}]}>
                                     {this.state.isSpinner ? <View
                                         style={{position: "absolute", flex: 1, alignSelf: 'center', marginTop: 240, zIndex: 100}}>
                                         <Spinner color="#33ccff"/>
                                     </View> : null}
-
-                                            <View style={this.state.showFooter?{flex: 7}:{flex: 1.5}}>
+                                    {/*this.state.showFooter?{flex: 7}:{flex: 1.5}*/}
+                                            <View style={{flex : 7}}>
                                                 <ScrollView>
                                                 {/*<Text>Блок вопросов</Text>*/}
                                                     {this.props.userSetup.classNews.filter(item=>item.is_news===null).map((item, i)=>
@@ -341,7 +340,8 @@ class HelpBlock extends Component {
                                                     </Card>)}
                                                 </ScrollView>
                                             </View>
-                                            <View style={[styles.addMsgContainer, {flex: 4}]}>
+                                    {/*, {flex: 4}*/}
+                                            <View style={[styles.addMsgContainer, {flex: this.state.keyboardShowed? 5: 3.5}]}>
                                                 <View>
                                                     <Dialog
                                                         visible={this.state.showMsg}
@@ -373,11 +373,10 @@ class HelpBlock extends Component {
                                                 <View style={{flex: 7}}>
                                                                 <Textarea
                                                                     style={styles.msgAddTextarea}
-                                                                    // onKeyPress={this._handleKeyDown}
-                                                                    ref="textarea"
+                                                                    ref={component => this._textarea = component}
                                                                     onSubmitEditing={() => {
-                                                                        this.refs.textarea.setNativeProps({'editable':false});
-                                                                        this.refs.textarea.setNativeProps({'editable':true});
+                                                                        this._textarea.setNativeProps({'editable':false});
+                                                                        this._textarea.setNativeProps({'editable':true});
                                                                     }}
                                                                     onChangeText={text=>this.onChangeText('curMessage', text)}
                                                                     onFocus={()=>{this.props.setstate({showFooter : false}); this.setState({showFooter : false})}}
@@ -395,30 +394,11 @@ class HelpBlock extends Component {
                                                         size={40}
                                                         onPress={()=>{this.setState({isSpinner : true}); this.addQuestionToService()}} />
                                                 </View>
-                                                <View style={{width : 10}}></View>
+                                                <View style={{width : 4}}></View>
                                             </View>
-                                        {/*</Footer>*/}
-                                            {/*<View style={{flex : 1, width: "100%", borderWidth : 1, backgroundColor : "#008"}}>*/}
-                                                {/*<Textarea style={styles.msgAddTextarea}*/}
-                                                    {/*// onKeyPress={this._handleKeyDown}*/}
-                                                    {/*// onChangeText={text=>this.onChangeText('curMessage', text)}*/}
-                                                    {/*// onFocus={()=>{this.props.setstate({showFooter : false})}}*/}
-                                                    {/*// onBlur={()=>{this.props.setstate({showFooter : true})}}*/}
-                                                          {/*placeholder="Задать вопрос разработчику..."  type="text"*/}
-                                                          {/*ref={input=>{this.inputMessage=input}}*/}
-                                                          {/*value={this.state.curMessage}*/}
-                                                {/*/>*/}
-                                                {/*<TouchableOpacity*/}
-                                                    {/*onPress={this.updateMsg}>*/}
-                                                    {/*<View style={styles.updateMsg}>*/}
-                                                        {/*<Text style={styles.updateMsgText} >ОТПРАВИТЬ ВОПРОС</Text>*/}
-                                                    {/*</View>*/}
-                                                {/*</TouchableOpacity>*/}
-                                             {/*</View>*/}
-                                     {/*</View>*/}
                                 </View>
 
-                            </Container>
+                            {/*</Container>*/}
 
                         </Tab>
                     </Tabs>

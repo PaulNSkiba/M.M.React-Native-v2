@@ -10,7 +10,7 @@ import { StyleSheet, Text, View, Image, ScrollView,
 import { Avatar, Badge, Icon, withBadge } from 'react-native-elements'
 import {    Container, Header, Left, Body, Right, Button,
     Title, Content, Card, CardItem,  Footer, FooterTab, TabHeading, Tabs, Tab,
-    Form, Item, Input, Label, Textarea, CheckBox, ListItem, Thumbnail } from 'native-base';
+    Form, Item, Input, Label, Textarea, CheckBox, ListItem, Thumbnail, Spinner } from 'native-base';
 import {API_URL} from '../../config/config'
 import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, AddDay, toYYYYMMDD, daysList, instanceAxios} from '../../js/helpersLight'
 import { RNCamera } from 'react-native-camera';
@@ -36,6 +36,7 @@ class CameraBlock extends Component {
             showPreview : false,
             prevuri : '',
             uriAdded : [],
+            isSpinner : false,
         };
         this.addToChat = this.addToChat.bind(this)
     }
@@ -63,6 +64,7 @@ class CameraBlock extends Component {
     }
     takePicture = async() => {
         if (this.camera) {
+            this.setState({isSpinner : true})
             const options = { quality: 0.7, base64: true, width : 960, format: 'png', result: 'file', };
             const data = await this.camera.takePictureAsync(options);
             console.log("Picture", data)
@@ -83,11 +85,16 @@ class CameraBlock extends Component {
                             this.props.onReduxUpdate("PHOTO_PATH", arr)
                             console.log("PHOTO_DATA", data.uri);
                             // doSomethingWith(base64String))
+                            this.setState({isSpinner : false})
                         })
-                        .catch(err => console.log("ImgToBase64:Err"));
+                        .catch(err => {console.log("ImgToBase64:Err")
+                            this.setState({isSpinner : false})
+                        });
                 })
-                .catch(err=>
-                console.log("Resize:Err", err))
+                .catch(err=>{
+                    console.log("Resize:Err", err)
+                    this.setState({isSpinner : false})
+                })
 
         }
     };
@@ -149,6 +156,10 @@ class CameraBlock extends Component {
                     <Tabs>
                         <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text style={{color: "#fff"}}>КАМЕРА</Text></TabHeading>}>
                             <View style={styles.cameraBlock}>
+                                {this.state.isSpinner ? <View
+                                    style={{position: "absolute", flex: 1, alignSelf: 'center', marginTop: 240, zIndex: 100}}>
+                                    <Spinner color="#33ccff"/>
+                                </View> : null}
                                 <RNCamera
                                     ref={ref => {this.camera = ref;}}
                                     // captureTarget={Camera.constants.CaptureTarget.disk}

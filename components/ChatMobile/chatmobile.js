@@ -4,7 +4,8 @@
 import React, { Component } from 'react'
 import { connect } from 'react-redux'
 import { store } from '../../store/configureStore'
-import { StyleSheet, Text, View, Image, Modal, TextInput, TouchableWithoutFeedback, AppState } from 'react-native';
+import { StyleSheet, Text, View, Image, Modal, TextInput, TouchableWithoutFeedback, AppState,
+         Animated, Dimensions, Keyboard } from 'react-native';
 import { Icon } from 'react-native-elements'
 import NetInfo from "@react-native-community/netinfo";
 import {    Container, Header, Left, Body, Right, Button,
@@ -67,6 +68,8 @@ class ChatMobile extends Component {
             isConnected: true,
             appState : AppState.currentState,
             appStateChanged : false,
+            shift: new Animated.Value(0),
+            viewHeight : Dimensions.get('window').height,
         }
         this.Echo = null
         this.now = new Date()
@@ -101,10 +104,22 @@ class ChatMobile extends Component {
         }
         return true
     }
+    measureView(event: Object) {
+        console.log(`*** event: ${JSON.stringify(event.nativeEvent)}`);
+        // you'll get something like this here:
+        // {"target":1105,"layout":{"y":0,"width":256,"x":32,"height":54.5}}
+    }
     componentDidMount(){
         // console.log("this.props.isnew", this.props.isnew)
+
+        // Print component dimensions to console
+        console.log("chatMobile", this._animatedView)
+
+
         NetInfo.isConnected.addEventListener('connectionChange', this.handleConnectivityChange);
         AppState.addEventListener('change', this._handleAppStateChange);
+        this.keyboardDidShowSub = Keyboard.addListener('keyboardDidShow', this.handleKeyboardDidShow);
+        this.keyboardDidHideSub = Keyboard.addListener('keyboardDidHide', this.handleKeyboardDidHide);
 
         if (this.props.isnew)
             this.initLocalPusher()
@@ -136,6 +151,8 @@ class ChatMobile extends Component {
         if (this.typingTimer) clearInterval(this.typingTimer)
         NetInfo.isConnected.removeEventListener('connectionChange', this.handleConnectivityChange);
         AppState.removeEventListener('change', this._handleAppStateChange);
+        this.keyboardDidShowSub.remove();
+        this.keyboardDidHideSub.remove();
     }
     getTags=async ()=>{
         await instanceAxios().get(`${API_URL}chat/tags/${this.props.userSetup.classID}`)
@@ -611,6 +628,8 @@ class ChatMobile extends Component {
     }
     addMessage=()=>{
 
+        this._textarea.setNativeProps({'editable': false});
+        this._textarea.setNativeProps({'editable':true});
 
         const obj = this.prepareJSON()
 
@@ -621,12 +640,11 @@ class ChatMobile extends Component {
             if (this.props.isnew) {
                 this.setState({messages: [...this.state.messages, objForState]})
             }
-
             this.sendMessage(obj, 0, false)
         }
     }
     _handleKeyDown = (e) => {
-        console.log("_handleKeyDown", e.nativeEvent.key, e.nativeEvent)
+        // console.log("_handleKeyDown", e.nativeEvent.key, e.nativeEvent)
         let key = e.nativeEvent.key
 
         if (this.props.isnew) {
@@ -797,15 +815,15 @@ class ChatMobile extends Component {
                 instanceAxios().post(API_URL + 'chat/add' + (id?`/${id}`:''), text)
                     .then(response => {
                         console.log('ADD_MSG', response)
-                        this.refs.textarea.setNativeProps({'editable':false});
-                        this.refs.textarea.setNativeProps({'editable':true});
+                        // this._textarea.setNativeProps({'editable':false});
+                        // this._textarea.setNativeProps({'editable':true});
                         this.props.setstate({showFooter : true})
                         this.setState({curMessage : ''})
                     })
                     .catch(response=> {
                             console.log("AXIOUS_ERROR", response)
-                            this.refs.textarea.setNativeProps({'editable': false});
-                            this.refs.textarea.setNativeProps({'editable':true});
+                            // this._textarea.setNativeProps({'editable': false});
+                            // this._textarea.setNativeProps({'editable':true});
                             this.props.setstate({showFooter: true})
                             this.setState({curMessage: ''})
                         }
@@ -861,7 +879,7 @@ class ChatMobile extends Component {
         //         native: o.native,
         //     })))
 
-        console.log("onChangeText", val.length>=6&&val.slice(-6))
+        // console.log("onChangeText", val.length>=6&&val.slice(-6))
         if (val.length > 1&&(!(val.length>=6&&val.slice(-6)==='http:/'))&&(!(val.length>=7&&val.slice(-7)==='https:/'))) {
             let smile = emojiIndex
                 .search(val.slice(-2))
@@ -894,33 +912,77 @@ class ChatMobile extends Component {
     onTextIput=()=>{
         this.props.setstate({showFooter : false})
     }
-    render() {
-        const {
-            showEmojiPicker,
-        } = this.state;
+    handleKeyboardDidShow = (event) => {
+        const { height: windowHeight } = Dimensions.get('window');
+        const keyboardHeight = event.endCoordinates.height;
+        console.log("keyboardHeight", keyboardHeight)
+        // const currentlyFocusedField = TextInputState.currentlyFocusedField();
+        const currentlyFocusedField = this._animatedView;
+        this.setState({viewHeight : (windowHeight - keyboardHeight)})
+        console.log("handleKeyboardDidShow")
+        return;
+        this._animatedView.measure((originX, originY, width, height, pageX, pageY) => {
+            const fieldHeight = height;
+            const fieldTop = pageY;
+            const gap = (windowHeight - keyboardHeight) - (fieldTop + fieldHeight);
+            console.log("gap", gap)
+            if (gap >= 0) {
+                return;
+            }
+            Animated.timing(
+                this.state.shift,
+                {
+                    toValue: gap,
+                    duration: 1000,
+                    useNativeDriver: true,
+                }
+            ).start();
+        });
+    }
 
+    handleKeyboardDidHide = () => {
+        const { height: windowHeight } = Dimensions.get('window');
+        this.setState({viewHeight : (windowHeight)})
+        console.log("handleKeyboardDidHide")
+        return;
+        Animated.timing(
+            this.state.shift,
+            {
+                toValue: 0,
+                duration: 1000,
+                useNativeDriver: true,
+            }
+        ).start();
+    }
+    render() {
+        const { showEmojiPicker, shift } = this.state;
+        // { transform: [{translateY: shift}]} ,
         // console.log("RENDER_CHAT")
         return (
-            <View style={this.props.hidden?styles.hidden:styles.chatContainerNew}>
+            <View
+                ref={component => this._animatedView = component}
+                collapsable={false}
+                onLayout={(event) => {this.measureView(event)}}
+                style={[this.props.hidden?styles.hidden:styles.chatContainerNew, {height:this.state.viewHeight}]}>
                 <View style={{flex : 7}}>
                      {showEmojiPicker ? (
                      <View className="picker-background">
-                     <Picker set="emojione"
-                     onSelect={this.addEmoji}
-                     style={{ position: 'absolute', overflow : 'auto',
-                     zIndex: '30', height : '400px', width : '340px',
-                     marginTop : '10px', background : 'white'}}
-                     emojiSize={20}
-                     include={['people']}
-                     i18n={{
-                     search: 'Поиск',
-                     categories: {
-                     search: 'Результаты поиска',
-                     recent: 'Недавние',
-                     people: 'Смайлы & Люди',
-                     }
-                     }}
-                     />
+                         <Picker set="emojione"
+                         onSelect={this.addEmoji}
+                         style={{ position: 'absolute', overflow : 'auto',
+                         zIndex: '30', height : '400px', width : '340px',
+                         marginTop : '10px', background : 'white'}}
+                         emojiSize={20}
+                         include={['people']}
+                         i18n={{
+                         search: 'Поиск',
+                         categories: {
+                         search: 'Результаты поиска',
+                         recent: 'Недавние',
+                         people: 'Смайлы & Люди',
+                         }
+                         }}
+                        />
                      </View>
                      ) : null}
                     {/*<View className={this.props.isnew?"msg-title-new":"msg-title"} onClick={this.props.btnclose}>*/}
@@ -963,8 +1025,7 @@ class ChatMobile extends Component {
                     </View>
                 </View>
                 <View style={styles.addMsgContainer}>
-                    {/*<Form style={styles.frmAddMsg}>*/}
-                        {/*<View className={styles.inputMsgBlock}>*/}
+
                             {/*<Button*/}
                                 {/*type="button"*/}
                                 {/*className="toggle-emoji"*/}
@@ -981,34 +1042,12 @@ class ChatMobile extends Component {
                                           onFocus={()=>{this.props.setstate({showFooter : false})}}
                                           onBlur={()=>{this.props.setstate({showFooter : true})}}
                                           placeholder="Введите сообщение..."  type="text"
-                                          ref="textarea"
+                                          ref={component => this._textarea = component}
                                           value={this.state.curMessage}
                                 />
-                                    {/*<TextInput*/}
-                                        {/*style={[styles.msgAddTextarea, {height : 50}]}*/}
-                                        {/*onKeyPress={this._handleKeyDown}*/}
-                                        {/*onChangeText={text=>this.onChangeText('curMessage', text)}*/}
-                                        {/*onFocus={()=>{this.props.setstate({showFooter : false})}}*/}
-                                        {/*onBlur={()=>{this.props.setstate({showFooter : true})}}*/}
-                                        {/*placeholder="Введите сообщение..."  type="text"*/}
-                                        {/*ref={input=>{this.inputMessage=input}}*/}
-                                        {/*value={this.state.curMessage}*/}
-                                    {/*/>*/}
+
                             </View>
-                            {/*<View style={{flex: 1}}>*/}
-                            {/*<Button style={styles.btnAddMessage} type="submit" onPress={this.addMessage}>*/}
-                                {/*<Image style={{height : 25}} source={addMsg}/>*/}
-                            {/*</Button>*/}
-                            {/*<Button*/}
-                                {/*icon={{*/}
-                                    {/*name: "arrow-right",*/}
-                                    {/*size: 15,*/}
-                                    {/*color: "white"*/}
-                                {/*}}*/}
-                                {/*style={styles.btnAddMessage}*/}
-                                {/*onPress={this.addMessage}*/}
-                                {/**/}
-                            {/*/>*/}
+
                             <View style={styles.btnAddMessage}>
                                 <Icon
                                     // raised
@@ -1019,30 +1058,7 @@ class ChatMobile extends Component {
                                     onPress={this.addMessage} />
                             </View>
 
-                            {/*</View>*/}
-                            {/*{!this.state.isServiceChat?<View style={styles.homeworkPlus} onClick={()=>{this.setState({hwPlus : !this.state.hwPlus})}}><Text>{this.state.hwPlus?"+":"-"} Домашка</Text></View>:""}*/}
-
-                        </View>
-
-                        {/*{!this.state.hwPlus?*/}
-                            {/*<View style={styles.addMsgHomeworkBlock}>*/}
-                                {/*<View style={styles.addMsgHomeworkTitle}><Text>Домашка</Text></View>*/}
-                                {/*<View id={"selDate"} style={!this.state.selDate?styles.addMsgHomeworkDay:[styles.addMsgHomeworkDay, styles.activeMsgBtn]} onClick={(e)=>{return e.target.nodeName === "DIV"&&e.target.id==="selDate"?this.setState({selDate: !this.state.selDate}):"";}}>*/}
-                                    {/*<View style={!this.state.dayUp?styles.showDaysSection: [styles.showDaysSection, styles.nonOpacity]}>{!this.state.dayUp?this.daysList():""}</View>*/}
-                                    {/*{this.dateString(this.state.curDate)}*/}
-                                    {/*<View style={styles.msgBtnUp} onClick={(e)=>{this.setState({dayUp: !this.state.dayUp});console.log(e.target.nodeName);e.preventDefault();}}><img src={this.state.dayUp?arrow_up:arrow_down} alt=""/></View></View>*/}
-                                {/*<View id={"selSubj"} style={!this.state.selDate?styles.addMsgHomeworkSubject:[styles.addMsgHomeworkSubject, styles.activeMsgBtn]} onClick={(e)=>{return e.target.nodeName === "DIV"&&e.target.id==="selSubj"?this.setState({selSubject: (!this.state.selSubject) }):""}}>*/}
-                                    {/*<View style={!this.state.subjUp?styles.showSubjSection:[styles.showSubjSection, styles.nonOpacity]}>{!this.state.subjUp?this.subjList():""}</View>*/}
-                                    {/*{this.state.selSubjkey===null?"ПРЕДМЕТ?":this.state.selSubjname}*/}
-                                    {/*<View style={styles.msgBtnUp} onClick={(e)=>{e.preventDefault(); this.setState({subjUp: !this.state.subjUp})}}><img src={this.state.subjUp?arrow_up:arrow_down} alt=""/></View></View>*/}
-
-                            {/*</View>*/}
-                            {/*:null}*/}
-                    {/*</Form>*/}
-                {/*</View>*/}
-
-
-
+                </View>
 
             </View>
 
