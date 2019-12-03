@@ -12,9 +12,10 @@ import {    Container, Header, Left, Body, Right, Button,
     Title, Content, Card, CardItem,  Footer, FooterTab, TabHeading, Tabs, Tab,
     Form, Item, Input, Label, Textarea, CheckBox, ListItem, Thumbnail, Spinner } from 'native-base';
 import {API_URL} from '../../config/config'
-import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, AddDay, toYYYYMMDD, daysList, instanceAxios} from '../../js/helpersLight'
+import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, addDay, toYYYYMMDD, daysList, instanceAxios} from '../../js/helpersLight'
 import { RNCamera } from 'react-native-camera';
 import { connect } from 'react-redux'
+import RNFS from 'react-native-fs';
 import {SingleImage,wrapperZoomImages,ImageInWraper} from 'react-native-zoom-lightbox';
 import ImageResizer from 'react-native-image-resizer';
 import ImgToBase64 from 'react-native-image-base64';
@@ -72,7 +73,9 @@ class CameraBlock extends Component {
             ImageResizer.createResizedImage(data.uri, 240, 240, 'PNG', 100)
                 .then(response => {
                     console.log("ImageResizer", response)
-                    ImgToBase64.getBase64String(response.uri)
+
+                    //ImgToBase64.getBase64String(response.uri)
+                    RNFS.readFile(response.uri, 'base64')
                         .then(base64String =>{
                             let data100 = {}
                             data100.base64 = base64String

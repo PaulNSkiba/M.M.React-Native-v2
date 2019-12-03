@@ -3,12 +3,12 @@
  */
 import React from 'react';
 import {StyleSheet, Text, View, TextInput, Dimensions, Modal, TouchableOpacity} from 'react-native';
-import {AsyncStorage} from '@react-native-community/async-storage';
+import {AsyncStorage} from 'react-native';
 import {connect} from 'react-redux';
 import {
     Container, Header, Left, Body, Right, Button,
     Icon, Title, Content, Footer, FooterTab, Badge,
-    Form, Item, Input, Label, Spinner
+    Form, Item, Input, Label, Spinner, CheckBox
 } from 'native-base';
 import {bindActionCreators} from 'redux';
 import {instanceAxios, mapStateToProps, msgTimeOut /*, langLibrary as langLibraryF*/} from '../../js/helpersLight'
@@ -20,6 +20,7 @@ import FacebookLogin from '../FacebookLogin/facebooklogin'
 import {LoginButton, AccessToken, LoginManager} from 'react-native-fbsdk';
 import Video from 'react-native-video';
 import VideoFile from '../../download/1.Android-Studying.mp4'
+// import AsyncStorage from '@react-native-community/async-storage';
 
 class LoginBlock extends React.Component {
     constructor(props) {
@@ -32,9 +33,10 @@ class LoginBlock extends React.Component {
             username: '',
             password: '',
             userID: 0,
-            userName: '',
+            // userName: '',
             sendMailButtonDisabled: false,
             showVideo: false,
+            checkSave : false,
             // buttonClicked : false,
             // loading : false,
             // buttonClicked : false,
@@ -45,7 +47,27 @@ class LoginBlock extends React.Component {
         this.clearError = this.clearError.bind(this)
         this.forgotPwd = this.forgotPwd.bind(this)
     }
+    componentDidMount(){
+        this.getSavedCreds()
+    }
+    getSavedCreds=()=>{
+        let credents = ''
+        AsyncStorage.getItem("credent#")
+            .then(res => {
+                credents = res
+                console.log("credents", credents, credents.slice(0,1), credents.slice(0,1)==="1")
+                if (credents.length){
+                    if (credents.slice(0,1)==="1"){
+                        // console.log(login, pwd)
+                        const username = credents.split("#")[1]
+                        const password = credents.split("#")[2]
+                        this.setState({checkSave : true, username, password})
+                    }
+                }
 
+            })
+            .catch(err => console.log("getSavedCreds", err));
+    }
     shouldComponentUpdate(nextProps, nextState) {
         const {logging, loginmsg, logBtnClicked} = this.props.user
         // console.log("shouldComponentUpdate", this.props.user,
@@ -84,9 +106,10 @@ class LoginBlock extends React.Component {
             provider = null,
             provider_id = null
 
-        // alert('onLogin', this.state.username, this.state.password)
-        // ToDO: Подсветить неверный пароль
+        this.saveCredentials(this.state.checkSave);
+
         // console.log("START_LOGIN", "!!!")
+        this.props.onReduxUpdate("SHOW_LOGIN", false)
 
         this.props.onReduxUpdate("USER_LOGGING")
         this.props.onReduxUpdate("LOG_BTN_CLICK")
@@ -130,7 +153,15 @@ class LoginBlock extends React.Component {
             }
         )
     }
-
+    saveCredentials=(save)=>{
+        if (save)
+            AsyncStorage.setItem('credent#', `1#${this.state.username}#${this.state.password}`)
+        else {
+            AsyncStorage.setItem('credent#', `0##`)
+        }
+        this.setState({checkSave : save})
+        console.log( save)
+    }
     render() {
         const {logging, loginmsg, logBtnClicked} = this.props.user
         // console.log("LOGIN_RENDER", this.props.user)
@@ -207,19 +238,32 @@ class LoginBlock extends React.Component {
                     </View>
 
                     <Item floatingLabel>
-                        <Label>Email</Label>
-                        <Input ref="nameLogin"
-                            // autoFocus={true}
-                               onChangeText={text => this.onChangeText('username', text)}
-                        />
+                            <Label>Email</Label>
+                            <Input ref={component => this._nameLogin = component}
+                                // autoFocus={true}
+                                   value={this.state.username}
+                                   onChangeText={text => this.onChangeText('username', text)}
+                            />
                     </Item>
-                    <Item floatingLabel last>
-                        <Label>Пароль</Label>
-                        <Input secureTextEntry={true}
-                               ref="pwdLogin"
-                               onChangeText={val => this.onChangeText('password', val)}/>
+                    <Item floatingLabel>
+                            <Label>Пароль</Label>
+                            <Input secureTextEntry={true}
+                                   value={this.state.password}
+                                   ref={component => this._pwdLogin = component}
+                                   onChangeText={val => this.onChangeText('password', val)}/>
                     </Item>
-                    <Button block info style={styles.inputButton} onPress={() => this.onLogin()}>
+                    {/*<TouchableOpacity onPress={()=>{this.setState({checkSave:!this.state.checkSave})}}>*/}
+                    <Item style={{ marginTop : 10, marginBottom : 5, borderColor : "#fff"}}>
+                            {/*<View style={{display : "flex", flex : 1, width : "100%"}}>*/}
+                           <View>
+                                <CheckBox checked={this.state.checkSave} onPress={()=>{this.saveCredentials(!this.state.checkSave)}} color="#62b1f6"/>
+                            </View>
+                            <View style={{ marginLeft : 20}}>
+                                <Text>{"Сохранить логин и пароль"}</Text>
+                            </View>
+                    </Item>
+                    {/*</TouchableOpacity>*/}
+                    <Button block info style={styles.inputButton} onPress={this.onLogin}>
                         <Text style={styles.loginButton}>Логин</Text>
                     </Button>
 
@@ -255,13 +299,13 @@ class LoginBlock extends React.Component {
                               disabled={this.state.sendMailButtonDisabled}>
                             {!this.state.sendMailButtonDisabled ? `Забыли пароль - отправить на${this.state.username && this.state.username.length ? (': ' + this.state.username) : ' почту'}?` : "Отправлено"}</Text>
                     </Button>
-                    {this.props.userSetup.userID ? <Button block warning style={[styles.inputButton, {marginTop: 20}]}
-                                                           onPress={() => this.props.onUserLoggingOut()}>
+                    {this.props.userSetup.userID ? <Button block warning style={[styles.inputButton, {marginTop: 15}]}
+                                                           onPress={()=>this.props.onUserLoggingOut(this.props.userSetup.token)}>
                         <Text style={styles.loginButton}>ВЫХОД</Text>
                     </Button> : null}
                 </Form>
-                <View style={{marginTop: 40}}>
-                    <Button block info style={[styles.inputButton, {marginTop: 20}]}
+                <View style={{marginTop: 5}}>
+                    <Button block info style={[styles.inputButton, {marginTop: 10}]}
                             onPress={() => this.setState({showVideo: true})}>
                         <Icon name='videocam'/>
                         <Text style={[styles.loginButton, {"color": "#fff"}]}>ОБУЧАЮЩЕЕ ВИДЕО</Text>

@@ -322,7 +322,7 @@ export function makeHeader(colCount, curTable, dateFrom) {
                 break;
             default:
                 curRow2.appendChild(curHeader)
-                var date = AddDay(dateFrom, (i-2))
+                var date = addDay(dateFrom, (i-2))
                 // console.log(date)
 
                 var shortDate = date.getDate() // + '.' + (date.getMonth() + 1)
@@ -343,9 +343,9 @@ export function getSpanCount(dateStart, dateCnt, woholidays) {
     var daysToReturn = 0;
     var curMonth = dateStart.getMonth()
     for (var i = 0; i < dateCnt; i++) {
-        if ((woholidays && AddDay(dateStart, i).getDay() > 0 && AddDay(dateStart, i).getDay() < 6) || (!woholidays))
+        if ((woholidays && addDay(dateStart, i).getDay() > 0 && addDay(dateStart, i).getDay() < 6) || (!woholidays))
         {
-            if (AddDay(dateStart, i).getMonth() === curMonth) {
+            if (addDay(dateStart, i).getMonth() === curMonth) {
                 daysToReturn++;
             }
         }
@@ -359,8 +359,8 @@ export function dateDiff(date1, date2) {
     return Math.floor((Date.UTC(dt2.getFullYear(), dt2.getMonth(), dt2.getDate()) - Date.UTC(dt1.getFullYear(), dt1.getMonth(), dt1.getDate()) ) /(1000 * 60 * 60 * 24));
 }
 export let arrOfWeekDays = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб']
-// AddDay function (format MM-DD-YYY)
-export function AddDay(strDate,intNum)
+
+export function addDay(strDate,intNum)
 {
     var sdate =  new Date(strDate);
     sdate.setDate(sdate.getDate()+intNum);

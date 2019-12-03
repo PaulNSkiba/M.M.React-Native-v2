@@ -8,7 +8,7 @@ import {    Container, TabHeading, Tabs, Tab, } from 'native-base';
 import { dateFromTimestamp } from '../../js/helpersLight'
 // import { ListView } from 'deprecated-react-native-listview';
 import RadioForm from 'react-native-radio-form';
-import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, AddDay, toYYYYMMDD, daysList, toLocalDate} from '../../js/helpersLight'
+import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, addDay, toYYYYMMDD, daysList, toLocalDate} from '../../js/helpersLight'
 import { connect } from 'react-redux'
 import { Table, TableWrapper, Row, Rows, Cell, Col } from 'react-native-table-component';
 import { RFPercentage, RFValue } from "react-native-responsive-fontsize";
@@ -213,7 +213,7 @@ class MarksBlock extends Component {
             <Container>
                 <View style={styles.modalView}>
                     {(this.state.dayPages!==null)&&this.state.dayPages.length?
-                    <Tabs  >
+                    <Tabs>
                         {this.state.dayPages.map((rootItem, key) =>
                             <Tab key={"tab" + key} heading={<TabHeading style={styles.tabHeaderWhen}>
                                 {/*{console.log("TAB", rootItem, rootItem.arr[0], rootItem.arr.slice(-1))}*/}
@@ -276,7 +276,14 @@ class MarksBlock extends Component {
                         )
                         }
                     </Tabs>
-                        :null}
+                        :<Tabs>
+                            <Tab key={"tab0"} heading={<TabHeading style={styles.tabHeaderWhen}>
+                            <Text style={{
+                                color: "#fff",
+                                fontSize: RFPercentage(1.5)
+                            }}>{"Нет оценок"}</Text>
+                            </TabHeading>}></Tab>
+                        </Tabs>}
                 </View>
             </Container>)
     }

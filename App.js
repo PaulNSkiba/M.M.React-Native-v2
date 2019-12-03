@@ -12,6 +12,7 @@ import axios from 'axios';
 import {API_URL}        from './config/config'
 import { Container, Footer, FooterTab, Spinner, } from 'native-base';
 import {AsyncStorage} from 'react-native';
+// import {AsyncStorage} from '@react-native-community/async-storage';
 import HeaderBlock from './components/HeaderBlock/headerBlock'
 import ChatBlock from './components/ChatBlock/chatblock'
 import HomeworkBlock from './components/HomeworkBlock/homeworkblock'
@@ -55,29 +56,33 @@ class App extends Component {
         this.setstate = this.setstate.bind(this)
     }
     componentDidMount() {
-        // console.log("COMPONENT_DID_MOUNT")
-        if ((Platform.OS === 'ios') || ((Platform.OS === 'android')&& (Platform.Version > 22))) // > 5.1
+        // console.log("COMPONENT_DID_MOUNT", Platform.OS, Platform.Version)
+        if ((Platform.OS === 'ios') || ((Platform.OS === 'android')&&(Platform.Version > 22))) // > 5.1
         {
             MaterialIcons.loadFont()
             Ionicons.loadFont()
             AntDesign.loadFont()
             Foundation.loadFont()
-
             AppState.addEventListener('change', this._handleAppStateChange);
             this.getSessionID();
+            // console.log("myMarks.data.1")
             AsyncStorage.getItem("myMarks.data")
                 .then(res => {
+                        // console.log("myMarks.data.2", res, JSON.parse(res))
                         const dataSaved = JSON.parse(res)
                         if (!(res === null)) {
                             // console.log("componentDidMount.1", dataSaved)
                             const langLibrary = {}
                             const {email, token} = dataSaved
-                            this.setState({userEmail: email, userToken: token})
+                            this.props.onReduxUpdate("UPDATE_TOKEN", token===null?'':token)
+                            this.setState({userEmail: email, userToken: token===null?'':token})
                         }
                     }
                 )
+                .catch(res=>console.log("localStorage:Error", res))
         }
-     }
+    }
+
     componentWillUnmount() {
         if ((Platform.OS === 'ios') || ((Platform.OS === 'android')&& (Platform.Version > 22))) // > 5.1
         {
@@ -87,7 +92,7 @@ class App extends Component {
     _handleAppStateChange = (nextAppState) => {
         const {classID, studentId} = this.props.userSetup
         if (this.state.appState.match(/inactive|background/) && nextAppState === 'active') {
-            console.log('AppState: ', 'App has come to the foreground!');
+            // console.log('AppState: ', 'App has come to the foreground!');
             // ToDO: Проверим изменения в перечне данных (на будущее попробуем подгружать новое)...
             if (classID) {
                 instanceAxios().get(API_URL + `class/getstat/${classID}/${studentId}'/0`)
@@ -137,6 +142,9 @@ class App extends Component {
     }
     setstate = (obj) => {
         this.setState(obj)
+        this.props.onReduxUpdate("UPDATE_PAGE", obj.selectedFooter)
+        obj.selectedFooter?this.props.onReduxUpdate("SHOW_LOGIN", false):null
+
     }
     fireRender = (msgs, homeworks) => {
         console.log("forceUpdate", homeworks)
@@ -145,10 +153,9 @@ class App extends Component {
 
     render() {
         let marksReadCount = 0
-        const {marks, localChatMessages} = this.props.userSetup
-        // const homeworks = localChatMessages.filter(item=>(item.homework_date!==null)).filter(item=>toYYYYMMDD(new Date(item.homework_date))===toYYYYMMDD(AddDay((new Date()), 1)))
+        const {marks, localChatMessages, userID, token} = this.props.userSetup
         // console.log("RENDER_APP", marks.length, this.props.userSetup, Dimensions.get('window').width, Dimensions.get('window').height)
-        // console.log("RENDER_APP")
+        // console.log("RENDER_APP", this.props.userSetup)
 
         AsyncStorage.getItem("myMarks.marksReadCount")
             .then(res => {
@@ -156,16 +163,16 @@ class App extends Component {
             })
             .catch(err => marksReadCount = 0);
 
+        // return (<View></View>)
         return (
                 <Container style={this.state.showFooter ? {flex: 1} : {flex: 1 }}>
                     <StatusBar barStyle="dark-content" hidden={false}/>
                     <HeaderBlock updateState={this.updateState} email={this.state.userEmail}
-                                 token={this.state.userToken} footer={this.state.selectedFooter}/>
+                                 token={(!this.props.user.logging)&&(!this.props.user.loggedin)?token:''} footer={this.state.selectedFooter}/>
                     {this.state.isSpinner ? <Spinner color="#7DA8E6"/> : null}
                     <Container >
-
                         <ChatBlock hidden={this.state.selectedFooter !== 0}
-                                   showLogin={this.state.showLogin || (!this.state.userToken.length)}
+                                   showLogin={this.props.userSetup.showLogin || (!token.length)}
                                    updateState={this.updateState}
                                    forceupdate={this.fireRender}
                                    setstate={this.setstate}

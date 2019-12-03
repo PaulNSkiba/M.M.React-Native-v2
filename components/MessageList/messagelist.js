@@ -6,9 +6,10 @@ import { StyleSheet, Text, View, Image, ScrollView,
         TouchableHighlight, Modal, Radio, TouchableOpacity, TouchableWithoutFeedback, Dimensions } from 'react-native';
 import {    Container, Header, Left, Body, Right, Button,
     Icon, Title, Content,  Footer, FooterTab, TabHeading, Tabs, Tab, Badge,
-    Form, Item, Input, Label, Textarea, CheckBox, ListItem, Thumbnail } from 'native-base';
+    Form, Item, Input, Label, Textarea, CheckBox, ListItem, Thumbnail, Spinner } from 'native-base';
+import {AsyncStorage} from 'react-native';
 import RadioForm from 'react-native-radio-form';
-import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, AddDay, toYYYYMMDD, daysList, toLocalDate, instanceAxios} from '../../js/helpersLight'
+import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, addDay, toYYYYMMDD, daysList, toLocalDate, instanceAxios, axios2, arrOfWeekDaysLocal} from '../../js/helpersLight'
 import {SingleImage,wrapperZoomImages,ImageInWraper} from 'react-native-zoom-lightbox';
 import LinkPreviewEx from '../LinkPreviewEx/linkpreviewex'
 import { connect } from 'react-redux'
@@ -36,7 +37,7 @@ class MessageList extends Component {
             messages : this.props.isnew?this.props.localmessages:this.props.messages,
             editKey: -1,
             modalVisible : false,
-            checkSchedule : true,
+            checkTimetable : false,
             selSubject : {value : 0},
             selDate : this.getNextStudyDay(daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;}))[1],
             currentHomeworkID : 0,
@@ -58,8 +59,29 @@ class MessageList extends Component {
         this.onLongPressMessage=this.onLongPressMessage.bind(this)
         this.getImage = this.getImage.bind(this)
     }
-    componentWillMount(){
+    componentDidMount(){
+        this.getSavedCreds()
         }
+    getSavedCreds=()=>{
+        let credents = ''
+        AsyncStorage.getItem("checkTimetable")
+            .then(res => {
+                credents = res
+                console.log("checkTimetable", credents)
+                if (credents.length){
+                    if (credents.slice(0,1)==="1"){
+                        this.setState({checkTimetable : true})
+                    }
+                }
+
+            })
+            .catch(err => console.log("getSavedCreds:error", err));
+    }
+    saveCredentials=(save)=>{
+        AsyncStorage.setItem('checkTimetable', `${save?1:0}`)
+        this.setState({checkTimetable : save})
+        console.log('checkTimetable', save)
+    }
     getImage=async (id)=>{
         console.log("getImage", id)
         // this.setState({isSpinner : true})
@@ -144,7 +166,7 @@ class MessageList extends Component {
                 let newmessages = messages.map(item=>{
                     if (item.id===currentHomeworkID) {
                         item.homework_subj_id = selSubject.value
-                        item.homework_date = toYYYYMMDD(AddDay(new Date(), selDate.value));
+                        item.homework_date = toYYYYMMDD(addDay(new Date(), selDate.value));
                         item.homework_subj_name = subject.subj_name_ua
                         item.homework_subj_key = subject.subj_key
                     }
@@ -160,7 +182,7 @@ class MessageList extends Component {
                 // Здесь будем апдейтить базу домашки
                 // txt, subj_key, subj_name_ua, ondate, chat_id
                 if (currentHomeworkID)
-                this.props.addhomework(homeworkMsg.message, subject.subj_key, subject.subj_name_ua, new Date(AddDay(new Date(), selDate.value)), currentHomeworkID)
+                this.props.addhomework(homeworkMsg.message, subject.subj_key, subject.subj_name_ua, new Date(addDay(new Date(), selDate.value)), currentHomeworkID)
 
                 this.setState({ currentHomeworkID : 0,
                                 selSubject : 0,
@@ -168,17 +190,66 @@ class MessageList extends Component {
 
                 const todayMessages = this.props.userSetup.localChatMessages.filter(item=>(new Date(item.msg_date).toLocaleDateString())===(new Date().toLocaleDateString()))
                 const homeworks = this.props.userSetup.localChatMessages.filter(item=>(item.homework_date!==null))
-
                 // this.props.forceupdate(todayMessages.length, homeworks.length)
-
-
                 // this.props.onReduxUpdate(, newmessages)
             }
             console.log("messages", messages)
         }
     }
+    getNextSubjDayInTimetable=(subjID, today)=>{
+        const {timetable} = this.props.userSetup
+        let checkDays = []
+        let nextDate = null;
+        if (timetable) {
+            for (let i = 1; i < 7; i++){
+                if ((today + i) < 7){
+                    checkDays.push({weekday : today + i, diff : i, dayname : arrOfWeekDaysLocal[(today + i)]})
+                }
+                else {
+                    checkDays.push({weekday : (today + i) - 7, diff : i, dayname : arrOfWeekDaysLocal[((today + i) - 7)]})
+                }
+            }
+        }
+        else {
+            return null;
+        }
+        for (let i = 0; i < checkDays.length; i++){
+            let tt = timetable.filter(item=>item!==null).filter(item=>item.weekday===checkDays[i].weekday&&item.subj_id===subjID)
+            checkDays[i].subj=!!tt.length
+        }
+        const daysArr = daysList().map(item => {
+            let newObj = {};
+            newObj.label = item.name;
+            newObj.value = item.id;
+            return newObj;
+        })
+
+        for (let i = 0; i < daysArr.length; i++){
+            if (daysArr[i].value&&nextDate===null) {
+                let tt = checkDays.filter(item=>item.diff===daysArr[i].value&&item.subj)
+                console.log("nextDate", tt)
+                if (tt.length) {
+                    nextDate=daysArr[i];
+                }
+            }
+        }
+        console.log("getNextSubjDayInTimetable", checkDays, subjID, nextDate, daysArr)
+        return nextDate;
+    }
     onSelectSubject=item=>{
-        this.setState({selSubject : item})
+        console.log("onSelectSubject", item)
+        let nextDay = null;
+        if (this.state.checkTimetable) {
+            const {timetable} = this.props.userSetup
+            if (timetable) {
+                const today = Number((new Date()).getDay() === 0 ? 6 : ((new Date()).getDay() - 1));
+                nextDay = this.getNextSubjDayInTimetable(item.value, today)
+                this.setState({selSubject: item, selDate : nextDay===null?this.state.selDate:nextDay})
+            }
+        }
+        else {
+            this.setState({selSubject: item})
+        }
         // console.log(item.value)
     }
     onSelectDay=item=>{
@@ -213,7 +284,7 @@ class MessageList extends Component {
     getCurStudyDay=(arr, date)=>{
         let i = 0; obj = {};
         arr.forEach((item, index)=>{
-            let arrDate = dateFromYYYYMMDD(toYYYYMMDD(AddDay(new Date(), item.value)))
+            let arrDate = dateFromYYYYMMDD(toYYYYMMDD(addDay(new Date(), item.value)))
             // console.log("getCurStudyDay", arrDate, item.value, date)
             if (toYYYYMMDD(arrDate) === toYYYYMMDD(date)) {
                 i = index;
@@ -226,7 +297,6 @@ class MessageList extends Component {
     getDateSeparator=(msgDate)=>{
         // console.log("getDateSeparator", msgDate, this.curMsgDate,
         //                                 toYYYYMMDD(new Date(msgDate)), toYYYYMMDD(new Date(this.curMsgDate)))
-
         if (toYYYYMMDD(new Date(msgDate)) !== toYYYYMMDD(new Date(this.curMsgDate))) {
             // console.log("DATE_SEPAR", msgDate, this.curMsgDate, toYYYYMMDD(new Date(msgDate)), toYYYYMMDD(new Date(this.curMsgDate)))
             this.curMsgDate = new Date(msgDate)
@@ -239,17 +309,18 @@ class MessageList extends Component {
         this.setState({curMessage : text, isEdited : true})
     }
     updateMsg=(id)=>{
+        this.setState({isSpinner : true})
         let json = `{   "id":${id}, 
                         "message": "${this.state.curMessage}"
                         }`;
-        console.log(json);
-
-        instanceAxios().post(`${API_URL}chat/add/${id}`, json)
+        // instanceAxios().post(`${API_URL}chat/add/${id}`, json)
+        axios2('post', `${API_URL}chat/add/${id}`, json)
             .then(res=>{
-                this.setState({isEdited : false})
+                this.setState({isEdited : false, isSpinner : false})
                 console.log("Удачно записано")
             })
             .catch(res=>{
+                this.setState({isSpinner : false})
                 console.log("Ошибка записи")
             })
 
@@ -423,6 +494,10 @@ class MessageList extends Component {
                         // Alert.alert('Modal has been closed.');
                     }}>
                     <View>
+                        {this.state.isSpinner ? <View
+                            style={{position: "absolute", flex: 1, alignSelf: 'center', marginTop: 240, zIndex: 100}}>
+                            <Spinner color="#33ccff"/>
+                        </View> : null}
                         {/*{messages.length&&this.state.previewID?*/}
                         {/*<SingleImage*/}
                             {/*uri={`data:image/png;base64,${JSON.parse(messages.filter(item=>item.id===this.state.previewID)[0].attachment3).base64}`}*/}
@@ -542,7 +617,7 @@ class MessageList extends Component {
                             </Text>
                         </ListItem>
                         <ListItem className={styles.editHomeworkCheckbox}>
-                            <CheckBox checked={this.state.checkSchedule} onPress={()=>{this.setState({checkSchedule:!this.state.checkSchedule})}} color="#b40530"/>
+                            <CheckBox checked={this.state.checkTimetable} onPress={()=>{this.saveCredentials(!this.state.checkTimetable)}} color="#b40530"/>
                             <Body>
                                 <Text>  Учитывать расписание при выборе даты</Text>
                             </Body>

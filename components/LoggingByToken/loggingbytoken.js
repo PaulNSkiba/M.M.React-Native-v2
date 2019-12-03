@@ -12,12 +12,8 @@ class LoggingByToken extends Component {
         this.state = {}
     }
     componentDidMount(){
-        // console.log("loggingbytoken", this.props.email, this.props.token)
-        // if (!this.props.logout)
-            this.props.onUserLoggingByToken(this.props.email, this.props.token, null, this.props.langLibrary);
-        // else
-        //     this.props.onUserLoggingOut(this.props.token, this.props.langLibrary)
-    }
+        this.props.onUserLoggingByToken(this.props.email, this.props.token, null, this.props.langLibrary);
+     }
     render(){
         return null;
     }

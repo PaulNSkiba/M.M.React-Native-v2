@@ -1,9 +1,6 @@
 /**
  * Created by Paul on 10.09.2019.
  */
-/**
- * Created by Paul on 10.09.2019.
- */
 import React, { Component } from 'react'
 import { StyleSheet, Text, View, Image, ScrollView,
          TouchableHighlight, Modal, Radio, TouchableOpacity } from 'react-native';
@@ -11,10 +8,12 @@ import {    Container, Header, Left, Body, Right, Button,
             Title, Content,  Footer, FooterTab, TabHeading, Tabs, Tab,
             Form, Item, Input, Label, Textarea, CheckBox, ListItem, Badge, Icon as IconBase } from 'native-base';
 import { Avatar, Icon, withBadge } from 'react-native-elements'
-import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, AddDay, toYYYYMMDD, daysList} from '../../js/helpersLight'
+import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, addDay, toYYYYMMDD, daysList} from '../../js/helpersLight'
 import { connect } from 'react-redux'
 import { RFPercentage, RFValue } from "react-native-responsive-fontsize";
 import Budget from '../Budget/budget'
+import StatBlock from '../StatBlock/statblock'
+import Timetable from '../Timetable/timetable'
 
 const insertTextAtIndices = (text, obj) => {
     return text.replace(/./g, function(character, index) {
@@ -27,6 +26,8 @@ class ETCBlock extends Component {
         super(props);
         this.state = {
             showBudget : false,
+            showStat : false,
+            showTimetable: false,
             // messages : this.props.messages,
             // editKey: -1,
             // modalVisible : false,
@@ -54,7 +55,7 @@ class ETCBlock extends Component {
     }
     onExit=()=> {
         console.log("Exit")
-        this.setState({showBudget: false})
+        this.setState({showBudget: false, showStat : false, showTimetable : false})
     }
     render () {
         const daysArr = daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;})
@@ -73,6 +74,30 @@ class ETCBlock extends Component {
                         </Body>
                     </View>
                 </Modal>
+                <Modal
+                    animationType="slide"
+                    transparent={false}
+                    visible={this.state.showStat}
+                    onRequestClose={() => {
+                    }}>
+                    <View>
+                        <Body>
+                            <StatBlock onexit={this.onExit}/>
+                        </Body>
+                    </View>
+                </Modal>
+                <Modal
+                    animationType="slide"
+                    transparent={false}
+                    visible={this.state.showTimetable}
+                    onRequestClose={() => {
+                    }}>
+                    <View>
+                        <Body>
+                            <Timetable onexit={this.onExit}/>
+                        </Body>
+                    </View>
+                </Modal>
                 <View style={styles.modalView}>
                     <Tabs>
                         <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text style={{color: "#fff"}}>ПРИЛОЖЕНИЯ</Text></TabHeading>}>
@@ -82,9 +107,16 @@ class ETCBlock extends Component {
                                         disabled={false}
                                         badge vertical
                                         active={true}
-                                        onPress={()=>{}}>
+                                        onPress={()=>{this.setState({showTimetable: true})}}>
                                     <Icon size={52} color={"#4472C4"} active type={'material'} name={'assignment'} inverse />
                                     <Text style={{fontSize: RFPercentage(1.6)}}>{"Расписание"}</Text>
+                                    <IconBase name="checkmark-circle" color={"#33ccff"} style={{
+                                        position: 'absolute',
+                                        top: -12,
+                                        right: -8,
+                                        fontSize: 22,
+                                        color: "#33ccff"
+                                    }}/>
                                 </Button>
                                 <Button style={{backgroundColor : "#f0f0f0", color : "#fff", width : 80, height : 80, margin : 5}}
                                         disabled={false}
@@ -93,10 +125,6 @@ class ETCBlock extends Component {
                                         onPress={()=>{this.props.userSetup.isadmin===4 ? null : this.setState({showBudget: true})}}>
                                     <Icon size={52} color={"#4472C4"} active type={'material'} name={'payment'} inverse />
                                     <Text style={{fontSize: RFPercentage(1.6)}}>{"Бюджет"}</Text>
-                                    {/*<Badge*/}
-                                           {/*witdth={10}*/}
-                                           {/*fontSize={10}*/}
-                                           {/*style={{ position: 'absolute', top: -12, right: 2, backgroundColor : "#33ccff" }}>*/}
                                     {this.props.userSetup.isadmin === 4 ? null :
                                         <IconBase name="checkmark-circle" color={"#33ccff"} style={{
                                             position: 'absolute',
@@ -106,10 +134,9 @@ class ETCBlock extends Component {
                                             color: "#33ccff"
                                         }}/>
                                     }
-                                    {/*</Badge>*/}
                                 </Button>
                                 <Button style={{backgroundColor : "#f0f0f0", color : "#fff", width : 80, height : 80, margin : 5}}
-                                        disabled={false}
+                                        disabled={true}
                                         badge vertical
                                         active={true}
                                         onPress={()=>{}}>
@@ -117,7 +144,7 @@ class ETCBlock extends Component {
                                     <Text style={{fontSize: RFPercentage(1.6)}}>{"Кружки"}</Text>
                                 </Button>
                                 <Button style={{backgroundColor : "#f0f0f0", color : "#fff", width : 80, height : 80, margin : 5}}
-                                        disabled={false}
+                                        disabled={true}
                                         badge vertical
                                         active={true}
                                         onPress={()=>{}}>
@@ -128,12 +155,19 @@ class ETCBlock extends Component {
                                         disabled={false}
                                         badge vertical
                                         active={true}
-                                        onPress={()=>{}}>
+                                        onPress={()=>{this.setState({showStat: true})}}>
                                     <Icon size={52} color={"#4472C4"} active type={'material'} name={'equalizer'} inverse />
                                     <Text style={{fontSize: RFPercentage(1.6)}}>{"Статистика"}</Text>
+                                    <IconBase name="checkmark-circle" color={"#33ccff"} style={{
+                                        position: 'absolute',
+                                        top: -12,
+                                        right: -8,
+                                        fontSize: 22,
+                                        color: "#33ccff"
+                                    }}/>
                                 </Button>
                                 <Button style={{backgroundColor : "#f0f0f0", color : "#fff", width : 80, height : 80, margin : 5}}
-                                        disabled={false}
+                                        disabled={true}
                                         badge vertical
                                         active={true}
                                         onPress={()=>{}}>
@@ -141,7 +175,7 @@ class ETCBlock extends Component {
                                     <Text style={{fontSize: RFPercentage(1.6)}}>{"Метки чата"}</Text>
                                 </Button>
                                 <Button style={{backgroundColor : "#f0f0f0", color : "#fff", width : 80, height : 80, margin : 5}}
-                                        disabled={false}
+                                        disabled={true}
                                         badge vertical
                                         active={true}
                                         onPress={()=>{}}>
@@ -149,7 +183,7 @@ class ETCBlock extends Component {
                                     <Text style={{fontSize: RFPercentage(1.6)}}>{"Музыка"}</Text>
                                 </Button>
                                 <Button style={{backgroundColor : "#f0f0f0", color : "#fff", width : 80, height : 80, margin : 5}}
-                                        disabled={false}
+                                        disabled={true}
                                         badge vertical
                                         active={true}
                                         onPress={()=>{}}>

@@ -5,7 +5,7 @@ import React, { Component } from 'react'
 import { connect } from 'react-redux'
 import { store } from '../../store/configureStore'
 import { StyleSheet, Text, View, Image, Modal, TextInput, TouchableWithoutFeedback, AppState,
-         Animated, Dimensions, Keyboard } from 'react-native';
+         Animated, Dimensions, Keyboard, Platform } from 'react-native';
 import { Icon } from 'react-native-elements'
 import NetInfo from "@react-native-community/netinfo";
 import {    Container, Header, Left, Body, Right, Button,
@@ -18,7 +18,7 @@ import arrow_down from '../../img/ARROW_DOWN.png'
 import arrow_up from '../../img/ARROW_UP.png'
 import { API_URL, BASE_HOST, WEBSOCKETPORT, LOCALPUSHERPWD, HOMEWORK_ADD_URL,
         instanceLocator, testToken, chatUserName } from '../../config/config'
-import {dateFromYYYYMMDD, AddDay, arrOfWeekDays, dateDiff, toYYYYMMDD, instanceAxios, mapStateToProps, prepareMessageToFormat, echoClient} from '../../js/helpersLight'
+import {dateFromYYYYMMDD, addDay, arrOfWeekDays, dateDiff, toYYYYMMDD, instanceAxios, mapStateToProps, prepareMessageToFormat, echoClient, axios2} from '../../js/helpersLight'
 import Pusher from 'pusher-js/react-native'
 import Echo from 'laravel-echo'
 import styles from '../../css/styles'
@@ -41,7 +41,7 @@ class ChatMobile extends Component {
         super(props);
 
         this.state = {
-            curDate: AddDay(new Date(), 1),
+            curDate: addDay(new Date(), 1),
             currentUser: null,
             currentRoom: {users:[]},
             messages: [],
@@ -70,6 +70,7 @@ class ChatMobile extends Component {
             appStateChanged : false,
             shift: new Animated.Value(0),
             viewHeight : Dimensions.get('window').height,
+            keyboardHeight : 0,
         }
         this.Echo = null
         this.now = new Date()
@@ -296,7 +297,7 @@ class ChatMobile extends Component {
         instanceAxios().get(API_URL +`chat/get/${classID}`, [], null)
             .then(resp => {
                 this.setState({localChatMessages : resp.data})
-                console.log("getChatMessages : Загружено!", resp.data)
+                // console.log("getChatMessages : Загружено!", resp.data)
                 this.props.onReduxUpdate("UPDATE_HOMEWORK", resp.data.filter(item=>(item.homework_date!==null)))
                 this.props.onReduxUpdate("ADD_CHAT_MESSAGES", resp.data)
             })
@@ -323,14 +324,10 @@ class ChatMobile extends Component {
         // this.inputMessage.value = this.inputMessage.value + emoji.native
     }
     initLocalPusher=()=>{
-        // let {token} = store.getState().user
-        console.log("initLocalPusher: token")
-        // let {chatSSL} = this.props.userSetup
-
-        const {chatSSL} = this.props.userSetup
-
+        const {chatSSL, token} = this.props.userSetup
+        // console.log("initLocalPusher", this.props.userSetup.token)
         // const larasocket = pusherClient(store.getState().user.token, chatSSL)
-        const echo = echoClient(store.getState().user.token, chatSSL)
+        const echo = echoClient(token, chatSSL)
 
         echo.connector.pusher.logToConsole = true
         echo.connector.pusher.log = (msg) => {console.log(msg);};
@@ -381,7 +378,7 @@ class ChatMobile extends Component {
                         messagesNew: this.state.messagesNew.filter(item => !(item.uniqid === JSON.parse(msg).uniqid))
                     })
                     const todayMessages = arrChat.filter(item=>(new Date(item.msg_date).toLocaleDateString())===(new Date().toLocaleDateString()))
-                    const homeworks = arrChat.filter(item=>(item.homework_date!==null)).filter(item=>toYYYYMMDD(new Date(item.homework_date))===toYYYYMMDD(AddDay((new Date()), 1)))
+                    const homeworks = arrChat.filter(item=>(item.homework_date!==null)).filter(item=>toYYYYMMDD(new Date(item.homework_date))===toYYYYMMDD(addDay((new Date()), 1)))
 
                     this.props.forceupdate(todayMessages.length, homeworks.length)
                 })
@@ -414,7 +411,7 @@ class ChatMobile extends Component {
                         messagesNew: this.state.messagesNew.filter(item => !(item.uniqid === JSON.parse(msg).uniqid))
                     })
                     const todayMessages = arrChat.filter(item=>(new Date(item.msg_date).toLocaleDateString())===(new Date().toLocaleDateString()))
-                    const homeworks = arrChat.filter(item=>(item.homework_date!==null)).filter(item=>toYYYYMMDD(new Date(item.homework_date))===toYYYYMMDD(AddDay((new Date()), 1)))
+                    const homeworks = arrChat.filter(item=>(item.homework_date!==null)).filter(item=>toYYYYMMDD(new Date(item.homework_date))===toYYYYMMDD(addDay((new Date()), 1)))
 
                     this.props.forceupdate(todayMessages.length, homeworks.length)
                 })
@@ -446,7 +443,7 @@ class ChatMobile extends Component {
                         messagesNew: this.state.messagesNew.filter(item => !(item.uniqid === JSON.parse(msg).uniqid))
                     })
                     const todayMessages = arrChat.filter(item=>(new Date(item.msg_date).toLocaleDateString())===(new Date().toLocaleDateString()))
-                    const homeworks = arrChat.filter(item=>(item.homework_date!==null)).filter(item=>toYYYYMMDD(new Date(item.homework_date))===toYYYYMMDD(AddDay((new Date()), 1)))
+                    const homeworks = arrChat.filter(item=>(item.homework_date!==null)).filter(item=>toYYYYMMDD(new Date(item.homework_date))===toYYYYMMDD(addDay((new Date()), 1)))
 
                     this.props.forceupdate(todayMessages.length, homeworks.length)
                 })
@@ -808,11 +805,13 @@ class ChatMobile extends Component {
                    arrChat.push(JSON.parse(text))
                 }
                 // console.log("Send message to server.2", "arr.after: ", arr)
-                console.log('616', id, text, arrChat)
+                console.log('616', id, text, arrChat, API_URL + 'chat/add' + (id?`/${id}`:''))
                 // return
                 this.setState({messages: arrChat})
                 // this.props.onReduxUpdate("ADD_CHAT_MESSAGES", arrChat)
-                instanceAxios().post(API_URL + 'chat/add' + (id?`/${id}`:''), text)
+                console.log('816', `${API_URL}chat/add${id?'/'+id:''}`, text, this.props.userSetup.token)
+                // instanceAxios().post(API_URL + 'chat/add' + (id?`/${id}`:''), text)
+                axios2('post', `${API_URL}chat/add${id?'/'+id:''}`, text)
                     .then(response => {
                         console.log('ADD_MSG', response)
                         // this._textarea.setNativeProps({'editable':false});
@@ -918,7 +917,7 @@ class ChatMobile extends Component {
         console.log("keyboardHeight", keyboardHeight)
         // const currentlyFocusedField = TextInputState.currentlyFocusedField();
         const currentlyFocusedField = this._animatedView;
-        this.setState({viewHeight : (windowHeight - keyboardHeight)})
+        this.setState({viewHeight : (windowHeight - keyboardHeight), keyboardHeight})
         console.log("handleKeyboardDidShow")
         return;
         this._animatedView.measure((originX, originY, width, height, pageX, pageY) => {
@@ -942,7 +941,7 @@ class ChatMobile extends Component {
 
     handleKeyboardDidHide = () => {
         const { height: windowHeight } = Dimensions.get('window');
-        this.setState({viewHeight : (windowHeight)})
+        this.setState({viewHeight : (windowHeight), keyboardHeight : 0})
         console.log("handleKeyboardDidHide")
         return;
         Animated.timing(
@@ -963,7 +962,7 @@ class ChatMobile extends Component {
                 ref={component => this._animatedView = component}
                 collapsable={false}
                 onLayout={(event) => {this.measureView(event)}}
-                style={[this.props.hidden?styles.hidden:styles.chatContainerNew, {height:this.state.viewHeight}]}>
+                style={[this.props.hidden?styles.hidden:styles.chatContainerNew, {height: this.state.viewHeight}]}>
                 <View style={{flex : 7}}>
                      {showEmojiPicker ? (
                      <View className="picker-background">
@@ -1024,7 +1023,7 @@ class ChatMobile extends Component {
                             ` ... ${Array.from(this.state.typingUsers.keys()).length>2?(Array.from(this.state.typingUsers.keys()).length + " человека"):Array.from(this.state.typingUsers.keys()).join(', ')} ... `:null}</Text>
                     </View>
                 </View>
-                <View style={styles.addMsgContainer}>
+                <View style={[styles.addMsgContainer, {bottom : Platform.OS==="ios"?this.state.keyboardHeight:0}]}>
 
                             {/*<Button*/}
                                 {/*type="button"*/}

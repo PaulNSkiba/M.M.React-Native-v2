@@ -4,7 +4,7 @@
 import React, {Fragment, Component} from 'react';
 import { SafeAreaView,  StyleSheet,  ScrollView,  View,  Text,  StatusBar, Dimensions} from 'react-native';
 import { Badge, Icon } from 'react-native-elements'
-import { mapStateToProps, AddDay, toYYYYMMDD } from '../../js/helpersLight'
+import { mapStateToProps, addDay, toYYYYMMDD } from '../../js/helpersLight'
 import { Button } from 'native-base';
 import styles from '../../css/styles'
 import {connect} from 'react-redux';
@@ -24,7 +24,7 @@ class ButtonWithBadge extends Component {
         const hwarray = this.props.userSetup.localChatMessages.filter(item=>(item.homework_date!==null))
         const homework = hwarray.length?hwarray.filter(item=>{
                         if (item.hasOwnProperty('ondate')) item.homework_date = new Date(item.ondate)
-                            return toYYYYMMDD(new Date(item.homework_date)) === toYYYYMMDD(AddDay((new Date()), 1))
+                            return toYYYYMMDD(new Date(item.homework_date)) === toYYYYMMDD(addDay((new Date()), 1))
                         }
                     ).length:0
         // console.log("ButtonWithBadge", this.props.icontype, this.props.iconname, todayMessages, homework)
@@ -35,7 +35,6 @@ class ButtonWithBadge extends Component {
                 active={this.props.enabled&&(!this.props.disabled)}
                 onPress={()=> {
                     this.props.setstate({selectedFooter: this.props.stateid, showLogin: false})
-                    // console.log("onButtonPress")
                 }
                 }>
             {(this.props.kind==='chat'&&(todayMessages||this.props.value))?

@@ -29,7 +29,8 @@ const initialState = (check)=>{
             newMsgCount : 0, countryCode : "EN", langLibrary : {}, chatSSL : true,
             localChatMessages : [], isMobile : true, photoPath : [], markscount : 0,
             needRenew : false, chatTags : [], budget : [], budgetpays : [], renderBudget : 1, classNews : [],
-            statsBudget : null, statsBudgetPays : null,
+            statsBudget : null, statsBudgetPays : null, selectedFooter : 0, showLogin : false, logoutToken : '',
+            timetable : []
             }
     return obj
 }
@@ -41,12 +42,13 @@ export function userSetupReducer(state = initialState(true), action) {
         case 'INIT_STATE':
             return {...state, initialState}
         case 'USER_LOGGEDIN' : {
-            // console.log("JUST_LOGGEDIN", action.langLibrary)
+            console.log("JUST_LOGGEDIN", action.payload)
             let {   token, subj_count, subjects_list,
                     selected_subjects, selected_subj, students, marks,
                     mark_dates, best_lines, avg_lines, avg_marks, addUserToken,
                     lastmarkssent, emails, homework, stats2, stats3, mark_date,
-                    avgclassmarks, classObj, chatrows, markscount, classNews, tags, statsBudget, statsBudgetPays} = action.payload;
+                    avgclassmarks, classObj, chatrows, markscount, classNews, tags,
+                    statsBudget, statsBudgetPays, timetable} = action.payload;
             let {   name : userName, id : userID, isadmin } = action.payload.user;
             let {   class_number, pupil_count, year_name, perioddayscount,
                     markblank_id, markblank_alias, selected_marker, titlekind,
@@ -65,10 +67,8 @@ export function userSetupReducer(state = initialState(true), action) {
                 isadmin, studentName, studentId, marks, mark_dates, best_lines, avg_lines, avg_marks, addUserToken,
                 cnt_marks, stud_cnt, subj_cnt, lastmarkssent, emails, homework, stats2 : stats2[0], stats3 : stats3[0],
                 mark_date, avgclassmarks, langLibrary : action.langLibrary, localChatMessages : chatrows, markscount,
-                classNews, chatTags : tags, statsBudget, statsBudgetPays
+                classNews, chatTags : tags, statsBudget, statsBudgetPays, showLogin : false, timetable,
                 }
-            // saveToLocalStorageOnDate("userSetupDate", toYYYYMMDD(new Date()))
-            // saveToLocalStorageOnDate("userSetup", JSON.stringify(setup))
             return setup
             }
         case "USER_SETUP" :
@@ -197,11 +197,28 @@ export function userSetupReducer(state = initialState(true), action) {
             return{...state, classNews: action.payload}
         }
         case 'USER_LOGGEDOUT' :
-
             let initState = initialState(false)
             initState.langLibrary = action.langLibrary
             console.log("userSetupReducer", 'USER_LOGGEDOUT', initState, action.langLibrary)
             return {...initState};
+        case 'UPDATE_PAGE' :
+            /*
+            0 - Логин
+            0 - Чат
+            1 - Домашка
+            2 - Оценки
+            3 - Инфо
+            4 - Камера
+            5 - etc
+             */
+            return{...state, selectedFooter: action.payload}
+        case "SHOW_LOGIN" :
+            console.log("SHOW_LOGIN", action.payload)
+            return{...state, showLogin: action.payload}
+        case "UPDATE_TOKEN" :
+            return{...state, token: action.payload}
+        case "UPDATE_LOGOUTTOKEN" :
+            return{...state, logoutToken: action.payload}
         default :
             return state
     }

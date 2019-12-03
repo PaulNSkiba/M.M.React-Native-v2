@@ -45,7 +45,7 @@ import {
     dateFromYYYYMMDD,
     mapStateToProps,
     prepareMessageToFormat,
-    AddDay,
+    addDay,
     toYYYYMMDD,
     daysList,
     instanceAxios
@@ -61,6 +61,8 @@ import { API_URL } from '../../config/config'
 import AccordionCustom from '../AccordionCustom/accordioncustom'
 import {PermissionsAndroid} from 'react-native';
 import styles from '../../css/styles'
+import { RFPercentage, RFValue } from "react-native-responsive-fontsize";
+
 //
 // READ_CALENDAR: 'android.permission.READ_CALENDAR'
 // WRITE_CALENDAR: 'android.permission.WRITE_CALENDAR'
@@ -307,6 +309,7 @@ class HomeworkBlock extends Component {
     }
     getHomeWorksForAccordion=()=>{
         const homeworkorig = this.props.userSetup.localChatMessages.filter(item=>(item.homework_date!==null))
+        let {timetable} = this.props.userSetup
         const daysArr = daysList().map(item => {
             let newObj = {};
             newObj.label = item.name;
@@ -314,9 +317,12 @@ class HomeworkBlock extends Component {
             newObj.date = item.date;
             return newObj;
         })
+        timetable = timetable===undefined || timetable===null?[]:timetable
         // По умолчанию выбираем домашку на завтра...
         console.log("getHomeWorksForAccordion: daysArr", daysArr)
         return daysArr.map((itemDate, key)=>{
+            let curweekday = (new Date(itemDate.date).getDay())===0?6:((new Date(itemDate.date)).getDay()-1)
+            tt = timetable.filter(item=>item!==null).filter(item=>curweekday===item.weekday)
             const homework = homeworkorig.length ? homeworkorig.filter(
                 item => {
                     if (!(item.hasOwnProperty("homework_date"))) return false
@@ -330,14 +336,9 @@ class HomeworkBlock extends Component {
             // console.log("homework", homework, item, key)
             return   <View key={key} style={{flex: 1}}>
                         <View style={[styles.msgList, {flex: 7}, {marginBottom: 5}]}>
-                            {homework.length ? <ScrollView
-                                // ref="scrollViewHW"
-                                // onContentSizeChange={(contentWidth, contentHeight) => {
-                                //     console.log("onContentSizeChange", contentHeight)
-                                //     this.refs.scrollViewHW.scrollToEnd()
-                                // }}
-                            >
-                                {homework.length ? this.getHomeworkItems(homework) : null}
+                            {tt.length?<Text style={{color : "#4472C4", fontSize : RFPercentage(2)}}>{tt.map((item,key)=>(`${item.position}.${item.subj_name_ua}${key<tt.length?',':''}`))}</Text>:null}
+                            {homework.length ? <ScrollView>
+                            {homework.length ? this.getHomeworkItems(homework) : null}
                             </ScrollView> : null}
                         </View>
                     </View>
@@ -434,10 +435,10 @@ class HomeworkBlock extends Component {
                 if (!(item.hasOwnProperty("homework_date"))) return false
                 if (item.homework_date === null) return false
                 if (item.homework_date.length === 8) {
-                    return (toYYYYMMDD(dateFromYYYYMMDD(item.homework_date)) === toYYYYMMDD(AddDay((new Date()), this.state.selDate.value)))
+                    return (toYYYYMMDD(dateFromYYYYMMDD(item.homework_date)) === toYYYYMMDD(addDay((new Date()), this.state.selDate.value)))
                 }
                 else
-                    return (toYYYYMMDD(new Date(item.homework_date)) === toYYYYMMDD(AddDay((new Date()), this.state.selDate.value)))
+                    return (toYYYYMMDD(new Date(item.homework_date)) === toYYYYMMDD(addDay((new Date()), this.state.selDate.value)))
             }) : 0
         let img = ''
         // let imgPath = ''

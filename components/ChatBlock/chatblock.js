@@ -20,12 +20,13 @@ class ChatBlock extends React.Component {
     }
     render=()=>{
         // console.log("chatRender", this.props.user.logging, this.props.userSetup.loading)
+        const {userID, showLogin} = this.props.userSetup
         return (
         <View style={{flex : 1, position : "relative", flexDirection: 'column', height : "50%"}}>
             {this.props.user.logging?<View style={{position : "absolute", flex: 1, alignSelf : 'center', marginTop : 240, zIndex : 100 }}><Spinner color="#33ccff"/></View>:null}
             <View style={{flex : 1, position : "relative"}}>
-            {this.props.showLogin&&(!this.props.user.loggedin)?<LoginBlock updateState={this.props.updateState}/>:null}
-            {this.props.userSetup.userID > 0&&(!this.props.showLogin)?
+            {/*{!userID||showLogin?<LoginBlock updateState={this.props.updateState}/>:null}*/}
+            {userID&&(!showLogin)?
                         <ChatMobile
                             isnew={true}
                             updatemessage={this.props.updateMessages}
@@ -37,7 +38,7 @@ class ChatBlock extends React.Component {
                             btnclose={() => { this.setState({displayChat: !this.state.displayChat}) }}
                             display={this.state.displayChat} newmessage={this.newChatMessage}
                         />
-                :null}
+                :<LoginBlock updateState={this.props.updateState}/>}
             </View>
         </View>)
     }

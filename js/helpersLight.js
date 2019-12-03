@@ -9,19 +9,19 @@ import Pusher from 'pusher-js/react-native'
 window.Pusher = Pusher
 
 export let arrOfWeekDays = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб']
+export let arrOfWeekDaysLocal = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс']
 export const msgTimeOut = 4000
 
-// AddDay function (format MM-DD-YYY)
-export function AddDay(strDate,intNum)
-{
-    var sdate =  new Date(strDate);
+export const addDay=(strDate, intNum)=>{
+    let sdate =  new Date(strDate);
     sdate.setDate(sdate.getDate()+intNum);
     return new Date(sdate.getFullYear(), sdate.getMonth(), sdate.getDate());
 }
 
 export const instanceAxios=()=>{
-    let {token} = store.getState().user
-    // let token = null
+    let {token} = store.getState().userSetup
+    token = token===null?'':token
+    // console.log("instanceAxios", token.length, store.getState())
     return (axios.create({
         baseURL: AUTH_URL + '/api/',
         timeout: 0,
@@ -33,9 +33,23 @@ export const instanceAxios=()=>{
             'Access-Control-Allow-Methods' : 'GET, POST, PUT, DELETE, OPTIONS',
         }
     }));
-
 };
-
+export const axios2=(method, url, data)=>{
+    let {token} = store.getState().userSetup
+    token = token===null?'':token
+    return (axios({
+        method: `${method}`,
+        url: `${url}`,
+        data : `${data}`,
+        headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin' : '*',
+            'Access-Control-Allow-Methods' : 'GET, POST, PUT, DELETE, OPTIONS',
+        }
+    }))
+}
 export const mapStateToProps = store => {
     // console.log(store) // посмотрим, что же у нас в store?
     return {
@@ -466,6 +480,18 @@ export function dateFromTimestamp(timestamp) {
 
 // -> Wed Jun 09 2010 14:12:01 GMT+0100 (BST)
 }
+export const getGeo2 = () => {
+        axios.get(`${API_URL}getgeo`)
+            .then(response =>response.data)
+            .catch(response => {
+                let obj = {}
+                obj.city = "Kyiv"
+                obj.country = "Ukraine"
+                obj.iso_code = "UA"
+                return obj
+            })
+    }
+
 export function toLocalDate(d, countryCode, withTime, withOutYear) {
     const   yyyy = d.getFullYear().toString().slice(-2),
             mm = (d.getMonth() + 101).toString().slice(-2),
@@ -525,16 +551,14 @@ export const daysList=()=>{
     for (let i = -2; i < 8; i++) {
         let obj = {}
         obj.id = i
-        obj.name = dateString(AddDay(new Date(), i)) + ' (' + ('0'+ AddDay(new Date(), i).getDate()).slice(-2) +'.' + ('0' + (AddDay(new Date(), i).getMonth() + 1)).slice(-2) + ')'
-        obj.date = AddDay(new Date(), i)
-        // console.log("AddDay", AddDay(new Date(), i).getDay())
-        if (AddDay(new Date(), i).getDay()) {
+        obj.name = dateString(addDay(new Date(), i)) + ' (' + ('0'+ addDay(new Date(), i).getDate()).slice(-2) +'.' + ('0' + (addDay(new Date(), i).getMonth() + 1)).slice(-2) + ')'
+        obj.date = addDay(new Date(), i)
+        if (addDay(new Date(), i).getDay()) {
             daysArr.push(obj)
         }
     }
     return daysArr
     // console.log("daysArr", daysArr)
-    // return daysArr.map((item, i)=>(<div key={i} onClick={()=>{this.setState({curDate : AddDay(this.now, item.id), selDate : true, dayUp: !this.state.dayUp})}} className="add-msg-homework-day" id={item.id}>{item.name}</div>))
 }
 const dateString = curDate => {
     let datediff = dateDiff((new Date()), curDate)+2;

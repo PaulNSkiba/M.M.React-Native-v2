@@ -1,9 +1,7 @@
 /**
  * Created by Paul on 10.09.2019.
  */
-/**
- * Created by Paul on 10.09.2019.
- */
+
 import React, { Component } from 'react'
 import {    StyleSheet, Text, View, Image, ScrollView,
             TouchableHighlight, Modal, Radio, TouchableOpacity, Animated, Dimensions, Keyboard } from 'react-native';
@@ -11,7 +9,7 @@ import {    Container, Header, Left, Body, Right, Button, Card, CardItem,
             Title, Content,  Footer, FooterTab, TabHeading, Tabs, Tab, Badge,
             Form, Item, Input, Label, Textarea, CheckBox, Spinner } from 'native-base';
 import RadioForm from 'react-native-radio-form';
-import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, AddDay, toYYYYMMDD, daysList, instanceAxios, toLocalDate, dateFromTimestamp} from '../../js/helpersLight'
+import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, addDay, toYYYYMMDD, daysList, instanceAxios, toLocalDate, dateFromTimestamp} from '../../js/helpersLight'
 import { API_URL, BASE_HOST, WEBSOCKETPORT, LOCALPUSHERPWD, HOMEWORK_ADD_URL,
     instanceLocator, testToken, chatUserName } from '../../config/config'
 import { Icon } from 'react-native-elements'
@@ -43,6 +41,7 @@ class HelpBlock extends Component {
             viewHeight : Dimensions.get('window').height,
             activeTab : 0,
             keyboardShowed : false,
+            keyboardHeight : 0,
             newsArr : this.props.userSetup.classNews.filter(item=>item.is_news===2).map(item => {
                 let newObj = {};
                 newObj.label = `${item.msg_header}`;
@@ -222,13 +221,13 @@ class HelpBlock extends Component {
         console.log("keyboardHeight", keyboardHeight)
         // const currentlyFocusedField = TextInputState.currentlyFocusedField();
         const currentlyFocusedField = this._animatedView;
-        this.setState({viewHeight : (windowHeight - keyboardHeight), keyboardShowed : true})
+        this.setState({viewHeight : (windowHeight - keyboardHeight), keyboardShowed : true, keyboardHeight})
         console.log("handleKeyboardDidShow")
     }
 
     handleKeyboardDidHide = () => {
         const { height: windowHeight } = Dimensions.get('window');
-        this.setState({viewHeight : windowHeight, keyboardShowed : false})
+        this.setState({viewHeight : windowHeight, keyboardShowed : false, keyboardHeight : 0})
         console.log("handleKeyboardDidHide")
     }
 
@@ -341,7 +340,7 @@ class HelpBlock extends Component {
                                                 </ScrollView>
                                             </View>
                                     {/*, {flex: 4}*/}
-                                            <View style={[styles.addMsgContainer, {flex: this.state.keyboardShowed? 5: 3.5}]}>
+                                            <View style={[styles.addMsgContainer, {bottom : Platform.OS==="ios"?this.state.keyboardHeight:0},{flex: this.state.keyboardShowed? 5: 3.5}]}>
                                                 <View>
                                                     <Dialog
                                                         visible={this.state.showMsg}

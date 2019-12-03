@@ -81,7 +81,7 @@ export default styles = StyleSheet.create({
         // flex : 1,
         width : "100%",
         height : 70,
-        bottom : 0,
+        // bottom : 0,
         // paddingRight : 10,
      },
     msgAddTextarea : {
@@ -387,6 +387,7 @@ export default styles = StyleSheet.create({
         flex : 1,
         // marginTop: 22,
         height : "98%",
+        width : "100%",
         // borderWidth : 2,
         // borderColor : "#ecabb9",
         // borderRadius : 10,
@@ -538,8 +539,8 @@ export default styles = StyleSheet.create({
         height : "100%",
     },
     updateMsg : {
-        borderWidth : 2,
-        borderColor : "#E0E0E0",
+        // borderWidth : 2,
+        // borderColor : "#4472C4",
         borderRadius: 10,
         height : 40,
         // paddingLeft : "50%",

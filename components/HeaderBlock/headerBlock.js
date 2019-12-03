@@ -6,9 +6,10 @@ import {connect} from 'react-redux';
 import { StyleSheet, Text, View, Image, Modal, Dimensions, TouchableOpacity} from 'react-native';
 import { Header, Left, Body, Right, Button, Title } from 'native-base';
 import { Icon } from 'react-native-elements'
+import axios from 'axios';
 import {instanceAxios, mapStateToProps} from '../../js/helpersLight'
-import { version, AUTH_URL} from '../../config/config'
-import LogginByToken from '../../components/LoggingByToken/loggingbytoken'
+import { version, AUTH_URL, API_URL} from '../../config/config'
+import LoggingByToken from '../../components/LoggingByToken/loggingbytoken'
 import styles from '../../css/styles'
 import {RFPercentage, RFValue} from "react-native-responsive-fontsize";
 import Logo from '../../img/LogoMyMsmall.png'
@@ -30,11 +31,25 @@ class HeaderBlock extends React.Component {
             netOnline: false,
             netType: '',
             showQR : false,
+            geoObj : {city : "", country : "", iso_code : ""}
         }
     }
     componentDidMount() {
+        this.getGeo2()
+    }
+    getGeo2 = () => {
+        axios.get(`${API_URL}getgeo`)
+            .then(response =>this.setState({geoObj : response.data}))
+            .catch(response => {
+                let obj = {}
+                obj.city = "Kyiv"
+                obj.country = "Ukraine"
+                obj.iso_code = "UA"
+                this.setState({getObj : obj})
+            })
     }
     render = () => {
+        // console.log("headerBlock", this.props.token.length,'@', this.props.userSetup.token.length)
         return (
             <Header style={styles.header}>
                 <Modal
@@ -60,7 +75,8 @@ class HeaderBlock extends React.Component {
                         {/*/>*/}
                         {/*{console.log("QR", `${AUTH_URL}/student/add/${this.props.userSetup.addUserToken}`)}*/}
                         <QRCode innerEyeStyle='square' logo={LogoBlack} ecl={"H"} content={`${AUTH_URL}/student/add/${this.props.userSetup.addUserToken}`}/>
-
+                        <Text style={{marginTop : 40}}>Отсканируйте QR-код, чтобы присоединиться к</Text>
+                        <Text>{this.props.userSetup.classNumber}-й класс, {this.state.geoObj.city}, {this.state.geoObj.country}, {this.state.geoObj.iso_code}</Text>
                         <TouchableOpacity
                             style={{position: "absolute", top: 10, right: 10, zIndex: 10}}
                             onPress={() => this.setState({showQR: false})}>
@@ -82,7 +98,7 @@ class HeaderBlock extends React.Component {
 
                 </Modal>
                 {this.props.token.length ?
-                    <LogginByToken email={this.props.email} token={this.props.token} logout={false}/> :
+                    <LoggingByToken email={this.props.email} token={this.props.token} logout={false}/> :
                     null}
                 {this.props.userSetup.token.length?this.props.updateState("userToken", this.props.userSetup.token):null}
                 {this.props.updateState("marksInBaseCount", this.props.userSetup.markscount)}
@@ -107,17 +123,24 @@ class HeaderBlock extends React.Component {
                             color: "#4472C4"
                         }]}>{version}</Text>
                         <View >
-                            <Button transparent>
+                            <Button transparent disabled={this.props.userSetup.showLogin}>
                                 {this.props.userSetup.userID ? <Text style={{
                                     color: "#4472C4",
                                     fontWeight: "700"
                                 }}>{this.props.userSetup.userName}  </Text> : null}
-                                <Icon size={32} color={this.props.userSetup.userID ? "#4472C4" : "#A9A9A9"}
+                                <Icon size={36} color={this.props.userSetup.userID ? "#4472C4" : "#A9A9A9"}
                                       style={styles.menuIcon} name='person'
                                       onPress={ () => {
-                                                this.props.onReduxUpdate("USER_LOGGEDIN_DONE");
-                                                this.props.updateState('selectedFooter', 0);
-                                                this.props.updateState('showLogin')}}/>
+                                          if (!this.props.userSetup.showLogin) {
+                                              this.props.onReduxUpdate("USER_LOGGEDIN_DONE");
+                                              this.props.onReduxUpdate("SHOW_LOGIN", true);
+                                              this.props.updateState('selectedFooter', 0);
+                                              this.props.updateState('showLogin')
+                                          }
+                                          else {
+                                              this.props.onReduxUpdate("SHOW_LOGIN", false);
+                                          }
+                                      }}/>
                             </Button>
                         </View>
                     </View>

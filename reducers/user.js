@@ -18,17 +18,18 @@ const initialState = {
 
 export function userReducer(state = initialState, action) {
     switch (action.type) {
-        case 'USER_LOGGEDIN' :
-            let {username, id, token, email_verified_at, email} = action.payload
-            return {...state, name : username, id : id, token : token, logging : true, verified: email_verified_at, email,
-                        loginmsg : "", loggedin : true}
+        // case 'USER_LOGGEDIN' :
+        //     let {username, id, token, email_verified_at, email} = action.payload
+        //     return {...state, name : username, id : id, token : token, logging : true, verified: email_verified_at, email,
+        //                 loginmsg : "", loggedin : true}
         case 'USER_LOGGEDOUT' :
             return {...state, name: '',
                 surname: '',
                 age: 0,
                 id : 0,
                 token : "",
-                logging : false};
+                logging : false,
+                loggedin : false,};
         case 'USER_LOGGING' :
             return {...state, logging: true, loggedin : false};
         case 'LOG_BTN_CLICK' :
@@ -36,7 +37,7 @@ export function userReducer(state = initialState, action) {
         case 'LOG_BTN_UNCLICK' :
             return {...state, logBtnClicked : false};
         case 'USER_LOGGEDIN_DONE' : {
-            return {...state, logging: false, loggedin : false}
+            return {...state, logging: false, loggedin : true}
         };
         case 'USER_PWD_MISSEDMATCH':
             return {...state, loginmsg: action.payload};

@@ -9,7 +9,7 @@ import {
     dateFromYYYYMMDD,
     mapStateToProps,
     prepareMessageToFormat,
-    AddDay,
+    addDay,
     toYYYYMMDD,
     daysList
 } from '../../js/helpersLight'
