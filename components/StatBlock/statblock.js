@@ -34,8 +34,9 @@ class StatBlock extends Component {
         this.initData()
     }
     initData=()=>{
-        const {classID, studentId} = this.props.userSetup
-        axios2('get',`${API_URL}class/getstatex/${classID}`,null)
+        const {classID, studentId, token} = this.props.userSetup
+        console.log('initData', `${API_URL}class/getstatmob/${classID}/${studentId}`, token)
+        axios2('post',`${API_URL}class/getstatmob/${classID}/${studentId}`,null)
             .then(res=>this.setState({reportData:res.data}))
             .catch(res=>console.log("GETSTAT:ERROR", res))
     }
@@ -125,7 +126,7 @@ class StatBlock extends Component {
             dynamic.forEach((item, key)=>{
                 console.log(key, item)
                 if (key===0)
-                    best = best+`${item.student_nick} + ${item.val}`
+                    best = best+`${item.student_nick}: + ${item.val}`
                 if (item.stud_id===studentId)
                     best = `${best}  [${key + 1}/${dynamic.length}]`
             })
@@ -141,15 +142,77 @@ class StatBlock extends Component {
         let best = ''
         if (reportData&&dynamictop6) {
             dynamictop6.forEach((item, key)=>{
-                console.log(key, item)
+                // console.log(key, item)
                 if (key===0)
-                    best = best+`${item.student_nick} + ${item.val}`
+                    best = best+`${item.student_nick}: + ${item.val}`
                 if (item.stud_id===studentId)
                     best = `${best}  [${key + 1}/${dynamictop6.length}]`
             })
         }
         console.log("Best2", best)
         return best
+    }
+    getCommonDynamic=()=>{
+        const {reportData} = this.state
+        const {studentId, students} = this.props.userSetup
+        const {commondynamic} = reportData
+        console.log("Best", reportData, commondynamic)
+        let dynall = 0
+        let dynalltop = 0
+        if (reportData&&commondynamic) {
+            console.log("commondynamic", commondynamic)
+            if (commondynamic[0].baseall > 0)
+                dynall = Number(commondynamic[0].avgall/commondynamic[0].baseall * 100).toPrecision(2)
+            if (commondynamic[0].basetop > 0)
+                dynalltop = Number(commondynamic[0].avgalltop/commondynamic[0].basetop * 100).toPrecision(2)
+            // dynamictop6.forEach((item, key)=>{
+            //     console.log(key, item)
+            //     if (key===0)
+            //         best = best+`${item.student_nick} + ${item.val}`
+            //     if (item.stud_id===studentId)
+            //         best = `${best}  [${key + 1}/${commondynamic.length}]`
+            // })
+        }
+        return [dynall>=0?`+${dynall}%`:`-${dynall}%`, dynalltop>=0?`+${dynalltop}%`:`-${dynalltop}%`]
+    }
+    getPrivateStat=()=>{
+        const {reportData} = this.state
+        const {studentId, students} = this.props.userSetup
+        const {places} = reportData
+        let ret = null
+        if (reportData&&places) {
+            console.log("commondynamic", places)
+            ret = places.filter(item=>item!==null).map((item, key)=> {
+                console.log(places, item)
+                return   <Item key={key}>
+                        <Left>
+                            <Text style={{color: "#4472C4", fontSize: RFPercentage(1.9)}}>{item.subj_name}</Text>
+                        </Left>
+                        <Body>
+                        <Text style={{color: "#387541", fontSize: RFPercentage(2)}}>{`Место: ${item.myplace.rank}`}</Text>
+                        </Body>
+                        <Right>
+                            <Text style={{
+                                color: "#387541",
+                                fontSize: RFPercentage(2)
+                            }}>{`Ср.оценка: ${item.myplace.mark}`}</Text>
+                        </Right>
+                    </Item>
+                }
+            )
+            // if (commondynamic[0].baseall > 0)
+            //     dynall = Number(commondynamic[0].avgall/commondynamic[0].baseall * 100).toPrecision(2)
+            // if (commondynamic[0].basetop > 0)
+            //     dynalltop = Number(commondynamic[0].avgalltop/commondynamic[0].basetop * 100).toPrecision(2)
+            // // dynamictop6.forEach((item, key)=>{
+            // //     console.log(key, item)
+            // //     if (key===0)
+            // //         best = best+`${item.student_nick} + ${item.val}`
+            // //     if (item.stud_id===studentId)
+            // //         best = `${best}  [${key + 1}/${commondynamic.length}]`
+            // // })
+        }
+        return ret
     }
     render() {
         return (
@@ -158,13 +221,18 @@ class StatBlock extends Component {
                         <Tabs initialPage={0} page={0}>
                             <Tab key={"tab1"} heading={<TabHeading style={styles.tabHeaderWhen}>
                                 <Text style={{color: "#fff"}}>ОБЩАЯ</Text></TabHeading>}>
-                                <View>
+                                <View style={{marginLeft : 10, marginRight : 10}}>
+                                    <Item>
+                                        <Left><Text style={{color : "#4472C4", fontWeight : "800", fontSize : RFPercentage(2.2)}}>ОБЩАЯ УСПЕВАЕМОСТЬ:</Text></Left>
+                                        <Body><Text style={{color : "#387541", fontWeight : "800", fontSize : RFPercentage(2)}}>{this.getCommonDynamic()[0]}</Text></Body>
+                                        <Right><Text style={{color : "#387541", fontWeight : "800", fontSize : RFPercentage(2)}}>{`TOП-6: ${this.getCommonDynamic()[1]}`}</Text></Right>
+                                    </Item>
                                     <Item>
                                         <Body>
                                             <Text style={{color : "#4472C4", fontSize : RFPercentage(1.9)}}>Самый работоспособный ученик с максимальным количеством оценок > 6</Text>
                                         </Body>
                                         <Right>
-                                            <Text style={{color : "#387541", fontSize : RFPercentage(2), marginRight : 10}}>{this.getQtyMarks()}</Text>
+                                            <Text style={{color : "#387541", fontSize : RFPercentage(2)}}>{this.getQtyMarks()}</Text>
                                         </Right>
                                     </Item>
                                     <Item>
@@ -172,7 +240,7 @@ class StatBlock extends Component {
                                         <Text style={{color : "#4472C4", fontSize : RFPercentage(1.9)}}>Самый добросовестный (количество домашек)</Text>
                                         </Body>
                                         <Right>
-                                            <Text style={{color : "#387541", fontSize : RFPercentage(2), marginRight : 10}}>{this.getWorker()}</Text>
+                                            <Text style={{color : "#387541", fontSize : RFPercentage(2)}}>{this.getWorker()}</Text>
                                         </Right>
                                     </Item>
                                     <Item>
@@ -180,15 +248,15 @@ class StatBlock extends Component {
                                         <Text style={{color : "#4472C4", fontSize : RFPercentage(1.9)}}>Ученик с макимальным средним балом</Text>
                                         </Body>
                                         <Right>
-                                            <Text style={{color : "#387541", fontSize : RFPercentage(2), marginRight : 10}}>{this.getMaxAvg()}</Text>
+                                            <Text style={{color : "#387541", fontSize : RFPercentage(2)}}>{this.getMaxAvg()}</Text>
                                         </Right>
                                     </Item>
                                     <Item>
                                         <Body>
-                                        <Text style={{color : "#4472C4", fontSize : RFPercentage(1.9)}}>Ученик со средним максимальным балом TOП-6(Алгебра, Геметрия, Физика, Химия, Английский, Укрмова)</Text>
+                                        <Text style={{color : "#4472C4", fontSize : RFPercentage(1.9)}}>Ученик со средним максимальным балом TOП-6(Алгебра, Геометрия, Физика, Химия, Английский, Укрмова)</Text>
                                         </Body>
                                         <Right>
-                                            <Text style={{color : "#387541", fontSize : RFPercentage(2), marginRight : 10}}>{this.getMaxAvgTop6()}</Text>
+                                            <Text style={{color : "#387541", fontSize : RFPercentage(2)}}>{this.getMaxAvgTop6()}</Text>
                                         </Right>
                                     </Item>
                                     <Item>
@@ -196,7 +264,7 @@ class StatBlock extends Component {
                                         <Text style={{color : "#4472C4", fontSize : RFPercentage(1.9)}}>Лучший по динамике (рост среднего бала за месяц)</Text>
                                         </Body>
                                         <Right>
-                                            <Text style={{color : "#387541", fontSize : RFPercentage(2), marginRight : 10}}>{this.getDynamic()}</Text>
+                                            <Text style={{color : "#387541", fontSize : RFPercentage(2)}}>{this.getDynamic()}</Text>
                                         </Right>
                                     </Item>
                                     <Item>
@@ -204,14 +272,17 @@ class StatBlock extends Component {
                                         <Text style={{color : "#4472C4", fontSize : RFPercentage(1.9)}}>Лучший по динамике (ТОП-6) рост среднего бала за месяц</Text>
                                         </Body>
                                         <Right>
-                                            <Text style={{color : "#387541", fontSize : RFPercentage(2), marginRight : 10}}>{this.getDynamicTop6()}</Text>
+                                            <Text style={{color : "#387541", fontSize : RFPercentage(2)}}>{this.getDynamicTop6()}</Text>
                                         </Right>
                                     </Item>
                                 </View>
 
                             </Tab>
                             <Tab key={"tab2"} heading={<TabHeading style={styles.tabHeaderWhen}>
-                                <Text style={{color: "#fff"}}>ЛИЧНАЯ</Text></TabHeading>}>
+                                <Text style={{color: "#fff"}}>ЛИЧНАЯ[30дней]</Text></TabHeading>}>
+                                <View  style={{marginLeft : 10, marginRight : 10}}>
+                                    {this.getPrivateStat()}
+                                </View>
                             </Tab>
                         </Tabs>
                 </View>

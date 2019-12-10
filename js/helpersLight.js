@@ -7,6 +7,7 @@ import {AUTH_URL, API_URL, BASE_HOST, WEBSOCKETPORT, LOCALPUSHERPWD} from '../co
 import Echo from 'laravel-echo'
 import Pusher from 'pusher-js/react-native'
 window.Pusher = Pusher
+import AsyncStorage from '@react-native-community/async-storage';
 
 export let arrOfWeekDays = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб']
 export let arrOfWeekDaysLocal = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс']
@@ -18,6 +19,27 @@ export const addDay=(strDate, intNum)=>{
     return new Date(sdate.getFullYear(), sdate.getMonth(), sdate.getDate());
 }
 
+export const setStorageData = async (key, value) => {
+    try {
+        await AsyncStorage.setItem(key, value)
+    } catch (e) {
+        console.log("StorageSet:Error", e)
+        // saving error
+    }
+}
+export const getStorageData = async (key) => {
+    try {
+        const value = await AsyncStorage.getItem(key)
+        if(value !== null) {
+            // console.log("getStorageData", value)
+            return value
+            // value previously stored
+        }
+    } catch(e) {
+        console.log("StorageGet:Error", e)
+        // error reading value
+    }
+}
 export const instanceAxios=()=>{
     let {token} = store.getState().userSetup
     token = token===null?'':token

@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import {StyleSheet, Text, View, TextInput, Dimensions, Modal, TouchableOpacity} from 'react-native';
-import {AsyncStorage} from 'react-native';
+// import {AsyncStorage} from 'react-native';
 import {connect} from 'react-redux';
 import {
     Container, Header, Left, Body, Right, Button,
@@ -11,7 +11,7 @@ import {
     Form, Item, Input, Label, Spinner, CheckBox
 } from 'native-base';
 import {bindActionCreators} from 'redux';
-import {instanceAxios, mapStateToProps, msgTimeOut /*, langLibrary as langLibraryF*/} from '../../js/helpersLight'
+import {instanceAxios, mapStateToProps, msgTimeOut, setStorageData, getStorageData} from '../../js/helpersLight'
 import {userLoggedIn, userLoggedInByToken, userLoggedOut} from '../../actions/userAuthActions'
 import Dialog, {DialogFooter, DialogButton, DialogContent} from 'react-native-popup-dialog';
 import styles from '../../css/styles'
@@ -50,12 +50,24 @@ class LoginBlock extends React.Component {
     componentDidMount(){
         this.getSavedCreds()
     }
-    getSavedCreds=()=>{
+    getSavedCreds=async()=>{
+        const credents = await getStorageData("credent#")
+        if (credents.length){
+            if (credents.slice(0,1)==="1"){
+                // console.log(login, pwd)
+                const username = credents.split("#")[1]
+                const password = credents.split("#")[2]
+                this.setState({checkSave : true, username, password})
+            }
+        }
+    }
+    /*
+    getSavedCredsOld=()=>{
         let credents = ''
         AsyncStorage.getItem("credent#")
             .then(res => {
                 credents = res
-                console.log("credents", credents, credents.slice(0,1), credents.slice(0,1)==="1")
+                // console.log("credents", credents, credents.slice(0,1), credents.slice(0,1)==="1")
                 if (credents.length){
                     if (credents.slice(0,1)==="1"){
                         // console.log(login, pwd)
@@ -68,6 +80,7 @@ class LoginBlock extends React.Component {
             })
             .catch(err => console.log("getSavedCreds", err));
     }
+    */
     shouldComponentUpdate(nextProps, nextState) {
         const {logging, loginmsg, logBtnClicked} = this.props.user
         // console.log("shouldComponentUpdate", this.props.user,
@@ -155,6 +168,16 @@ class LoginBlock extends React.Component {
     }
     saveCredentials=(save)=>{
         if (save)
+            setStorageData('credent#', `1#${this.state.username}#${this.state.password}`)
+        else {
+            setStorageData('credent#', `0##`)
+        }
+        this.setState({checkSave : save})
+        console.log( save)
+    }
+    /*
+    saveCredentials=(save)=>{
+        if (save)
             AsyncStorage.setItem('credent#', `1#${this.state.username}#${this.state.password}`)
         else {
             AsyncStorage.setItem('credent#', `0##`)
@@ -162,6 +185,7 @@ class LoginBlock extends React.Component {
         this.setState({checkSave : save})
         console.log( save)
     }
+    */
     render() {
         const {logging, loginmsg, logBtnClicked} = this.props.user
         // console.log("LOGIN_RENDER", this.props.user)

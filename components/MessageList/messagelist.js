@@ -7,9 +7,10 @@ import { StyleSheet, Text, View, Image, ScrollView,
 import {    Container, Header, Left, Body, Right, Button,
     Icon, Title, Content,  Footer, FooterTab, TabHeading, Tabs, Tab, Badge,
     Form, Item, Input, Label, Textarea, CheckBox, ListItem, Thumbnail, Spinner } from 'native-base';
-import {AsyncStorage} from 'react-native';
+// import {AsyncStorage} from 'react-native';
 import RadioForm from 'react-native-radio-form';
-import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, addDay, toYYYYMMDD, daysList, toLocalDate, instanceAxios, axios2, arrOfWeekDaysLocal} from '../../js/helpersLight'
+import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, addDay, toYYYYMMDD,
+        daysList, toLocalDate, instanceAxios, axios2, arrOfWeekDaysLocal, getStorageData, setStorageData} from '../../js/helpersLight'
 import {SingleImage,wrapperZoomImages,ImageInWraper} from 'react-native-zoom-lightbox';
 import LinkPreviewEx from '../LinkPreviewEx/linkpreviewex'
 import { connect } from 'react-redux'
@@ -62,6 +63,20 @@ class MessageList extends Component {
     componentDidMount(){
         this.getSavedCreds()
         }
+    getSavedCreds=async ()=>{
+        const credents = await getStorageData("checkTimetable")
+        if (credents.length){
+            if (credents.slice(0,1)==="1"){
+                this.setState({checkTimetable : true})
+            }
+        }
+    }
+    saveCredentials=(save)=>{
+        setStorageData('checkTimetable', `${save?"1":"0"}`)
+        this.setState({checkTimetable : save})
+        // console.log('checkTimetable', save)
+    }
+        /*
     getSavedCreds=()=>{
         let credents = ''
         AsyncStorage.getItem("checkTimetable")
@@ -77,11 +92,14 @@ class MessageList extends Component {
             })
             .catch(err => console.log("getSavedCreds:error", err));
     }
+    */
+    /*
     saveCredentials=(save)=>{
         AsyncStorage.setItem('checkTimetable', `${save?1:0}`)
         this.setState({checkTimetable : save})
         console.log('checkTimetable', save)
     }
+    */
     getImage=async (id)=>{
         console.log("getImage", id)
         // this.setState({isSpinner : true})

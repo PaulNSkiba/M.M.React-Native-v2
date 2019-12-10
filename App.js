@@ -8,10 +8,11 @@
 import React, {Component} from 'react';
 import {SafeAreaView, StyleSheet, ScrollView, View, Text, StatusBar} from 'react-native';
 import { Dimensions, AppState, Platform} from 'react-native';
+import {setStorageData, getStorageData} from './js/helpersLight'
 import axios from 'axios';
 import {API_URL}        from './config/config'
 import { Container, Footer, FooterTab, Spinner, } from 'native-base';
-import {AsyncStorage} from 'react-native';
+// import {AsyncStorage} from 'react-native';
 // import {AsyncStorage} from '@react-native-community/async-storage';
 import HeaderBlock from './components/HeaderBlock/headerBlock'
 import ChatBlock from './components/ChatBlock/chatblock'
@@ -55,7 +56,7 @@ class App extends Component {
         this.updateState = this.updateState.bind(this)
         this.setstate = this.setstate.bind(this)
     }
-    componentDidMount() {
+    async componentDidMount() {
         // console.log("COMPONENT_DID_MOUNT", Platform.OS, Platform.Version)
         if ((Platform.OS === 'ios') || ((Platform.OS === 'android')&&(Platform.Version > 22))) // > 5.1
         {
@@ -65,13 +66,17 @@ class App extends Component {
             Foundation.loadFont()
             AppState.addEventListener('change', this._handleAppStateChange);
             this.getSessionID();
-            // console.log("myMarks.data.1")
+
+            const dataSaved = JSON.parse(await getStorageData("myMarks.data"))
+            const {email, token} = dataSaved
+            this.props.onReduxUpdate("UPDATE_TOKEN", token===null?'':token)
+            this.setState({userEmail: email, userToken: token===null?'':token})
+
+            /*
             AsyncStorage.getItem("myMarks.data")
                 .then(res => {
-                        // console.log("myMarks.data.2", res, JSON.parse(res))
                         const dataSaved = JSON.parse(res)
                         if (!(res === null)) {
-                            // console.log("componentDidMount.1", dataSaved)
                             const langLibrary = {}
                             const {email, token} = dataSaved
                             this.props.onReduxUpdate("UPDATE_TOKEN", token===null?'':token)
@@ -80,6 +85,7 @@ class App extends Component {
                     }
                 )
                 .catch(res=>console.log("localStorage:Error", res))
+            */
         }
     }
 
@@ -118,12 +124,13 @@ class App extends Component {
                 'Access-Control-Allow-Methods': 'GET',
             }
         }
-        axios.get(API_URL + 'session', [], header)
+        axios.get(`${API_URL}session`, [], header)
             .then(response => {
                 // console.log("session", response.data.session_id);
                 session_id = response.data.session_id
                 this.session_id = session_id;
-                AsyncStorage.setItem('chatSessionID', session_id)
+                setStorageData('chatSessionID', session_id)
+                // AsyncStorage.setItem('chatSessionID', session_id)
             })
             .catch(response => {
                 console.log("session_error", response);
@@ -157,11 +164,13 @@ class App extends Component {
         // console.log("RENDER_APP", marks.length, this.props.userSetup, Dimensions.get('window').width, Dimensions.get('window').height)
         // console.log("RENDER_APP", this.props.userSetup)
 
+        /*
         AsyncStorage.getItem("myMarks.marksReadCount")
             .then(res => {
                 marksReadCount = res
             })
             .catch(err => marksReadCount = 0);
+        */
 
         // return (<View></View>)
         return (

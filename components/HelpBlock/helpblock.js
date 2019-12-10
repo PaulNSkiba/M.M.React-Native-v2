@@ -9,13 +9,15 @@ import {    Container, Header, Left, Body, Right, Button, Card, CardItem,
             Title, Content,  Footer, FooterTab, TabHeading, Tabs, Tab, Badge,
             Form, Item, Input, Label, Textarea, CheckBox, Spinner } from 'native-base';
 import RadioForm from 'react-native-radio-form';
-import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, addDay, toYYYYMMDD, daysList, instanceAxios, toLocalDate, dateFromTimestamp} from '../../js/helpersLight'
+import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat,
+        addDay, toYYYYMMDD, daysList, instanceAxios, toLocalDate,
+        dateFromTimestamp, setStorageData, getStorageData} from '../../js/helpersLight'
 import { API_URL, BASE_HOST, WEBSOCKETPORT, LOCALPUSHERPWD, HOMEWORK_ADD_URL,
     instanceLocator, testToken, chatUserName } from '../../config/config'
 import { Icon } from 'react-native-elements'
 import { RFPercentage, RFValue } from "react-native-responsive-fontsize";
 import { connect } from 'react-redux'
-import { AsyncStorage } from 'react-native';
+// import { AsyncStorage } from 'react-native';
 import AccordionCustom from '../AccordionCustom/accordioncustom'
 import Dialog, {DialogFooter, DialogButton, DialogContent} from 'react-native-popup-dialog';
 
@@ -57,11 +59,13 @@ class HelpBlock extends Component {
                 return newObj;
             })
         };
-        this.session_id =  AsyncStorage.getItem('chatSessionID')
+        this.session_id = ''//getStorageData('chatSessionID')//AsyncStorage.getItem('chatSessionID')
     }
-    componentDidMount(){
+    async componentDidMount(){
         this.keyboardDidShowSub = Keyboard.addListener('keyboardDidShow', this.handleKeyboardDidShow);
         this.keyboardDidHideSub = Keyboard.addListener('keyboardDidHide', this.handleKeyboardDidHide);
+        this.session_id = await getStorageData('chatSessionID')
+        // console.log("session_id", this.session_id)
     }
     componentWillUnmount() {
         this.keyboardDidShowSub.remove();
@@ -135,9 +139,8 @@ class HelpBlock extends Component {
         console.log("sendMessage", text, API_URL + 'chat/addserv')
     }
     sendMail=(mail, text)=>{
-        console.log("sentMail", this.props.userSetup)
+        console.log("mailSent")
         const {chatSessionID, userName, classID, userID} = this.props.userSetup
-        // const session_id = AsyncStorage.getItem('chatSessionID')
         // let author = !this.inputName===undefined?this.inputName.value:"",
         //     mailAuthor = !this.inputEmail===undefined?this.inputEmail.value:""
         let json = `{   "session_id":"${this.props.session_id}",
