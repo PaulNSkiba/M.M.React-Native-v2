@@ -154,7 +154,6 @@ class StatBlock extends Component {
     }
     getCommonDynamic=()=>{
         const {reportData} = this.state
-        const {studentId, students} = this.props.userSetup
         const {commondynamic} = reportData
         console.log("Best", reportData, commondynamic)
         let dynall = 0
@@ -215,12 +214,12 @@ class StatBlock extends Component {
         return ret
     }
     render() {
+        const {theme} = this.props.userSetup
         return (
             <View style={styles.modalView}>
                 <View style={{height: (Dimensions.get('window').height - 100)}}>
                         <Tabs initialPage={0} page={0}>
-                            <Tab key={"tab1"} heading={<TabHeading style={styles.tabHeaderWhen}>
-                                <Text style={{color: "#fff"}}>ОБЩАЯ</Text></TabHeading>}>
+                            <Tab key={"tab1"} heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>ОБЩАЯ</Text></TabHeading>}>
                                 <View style={{marginLeft : 10, marginRight : 10}}>
                                     <Item>
                                         <Left><Text style={{color : "#4472C4", fontWeight : "800", fontSize : RFPercentage(2.2)}}>ОБЩАЯ УСПЕВАЕМОСТЬ:</Text></Left>
@@ -278,8 +277,7 @@ class StatBlock extends Component {
                                 </View>
 
                             </Tab>
-                            <Tab key={"tab2"} heading={<TabHeading style={styles.tabHeaderWhen}>
-                                <Text style={{color: "#fff"}}>ЛИЧНАЯ[30дней]</Text></TabHeading>}>
+                            <Tab key={"tab2"} heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>ЛИЧНАЯ[30дней]</Text></TabHeading>}>
                                 <View  style={{marginLeft : 10, marginRight : 10}}>
                                     {this.getPrivateStat()}
                                 </View>
@@ -289,9 +287,7 @@ class StatBlock extends Component {
                 <View style={{flex: 1}}>
                     <Footer style={styles.header}>
                         <FooterTab style={styles.header}>
-                            <Button style={styles.btnClose} vertical /*active={this.state.selectedFooter===2}*/
-                                    onPress={() => this.onExit()}>
-                                {/*<Icon active name="ios-bookmarks" />*/}
+                            <Button style={styles.btnClose} vertical onPress={() => this.onExit()}>
                                 <Text style={styles.btnCloseText}>ВЫХОД</Text>
                             </Button>
                         </FooterTab>

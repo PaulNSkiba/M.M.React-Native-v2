@@ -7,7 +7,6 @@ import { StyleSheet, Text, View, Image, ScrollView,
 import {    Container, Header, Left, Body, Right, Button,
     Icon, Title, Content,  Footer, FooterTab, TabHeading, Tabs, Tab, Badge,
     Form, Item, Input, Label, Textarea, CheckBox, ListItem, Thumbnail, Spinner } from 'native-base';
-// import {AsyncStorage} from 'react-native';
 import RadioForm from 'react-native-radio-form';
 import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, addDay, toYYYYMMDD,
         daysList, toLocalDate, instanceAxios, axios2, arrOfWeekDaysLocal, getStorageData, setStorageData} from '../../js/helpersLight'
@@ -16,7 +15,7 @@ import LinkPreviewEx from '../LinkPreviewEx/linkpreviewex'
 import { connect } from 'react-redux'
 import ImageZoom from 'react-native-image-pan-zoom';
 import { API_URL } from '../../config/config'
-
+// import {AsyncStorage} from 'react-native';
 // import ScrollToBottom from 'react-scroll-to-bottom';
 // import MicrolinkCard from '@microlink/react';
 // import InvertibleScrollView from 'react-native-invertible-scroll-view';
@@ -245,13 +244,13 @@ class MessageList extends Component {
         for (let i = 0; i < daysArr.length; i++){
             if (daysArr[i].value&&nextDate===null) {
                 let tt = checkDays.filter(item=>item.diff===daysArr[i].value&&item.subj)
-                console.log("nextDate", tt)
+                // console.log("nextDate", tt)
                 if (tt.length) {
                     nextDate=daysArr[i];
                 }
             }
         }
-        console.log("getNextSubjDayInTimetable", checkDays, subjID, nextDate, daysArr)
+        // console.log("getNextSubjDayInTimetable", checkDays, subjID, nextDate, daysArr)
         return nextDate;
     }
     onSelectSubject=item=>{
@@ -427,45 +426,34 @@ class MessageList extends Component {
         //         </div>:null}
         // ):null}
 
-
+        const {userID, theme, chatTags, selectedSubjects} = this.props.userSetup
 
         let questionText = "Здравствуйте. Оставьте, пожалуйста, своё сообщение в этом чате. " +
             "Оно автоматически будет доставлено в нашу службу поддержки и мы как можно скорее отправим Вам ответ на "
-
         questionText = questionText.concat(this.props.classID?"Вашу электронную почту.":"указанную Вами электронной почте.")
-        // console.log("RENDERMESSAGES", this.props.isnew, this.state.messages, this.props.userSetup)
+
         let messages = []
         if (this.props.isnew)
             messages = this.props.localmessages
         else
             messages = this.props.messages
 
-        // console.log('MESSAGES', this.props.localmessages, messages)
-        const subjects = this.props.userSetup.selectedSubjects.filter(item=>item.subj_key!=="#xxxxxx").map(item=>{
+        const subjects = selectedSubjects.filter(item=>item.subj_key!=="#xxxxxx").map(item=>{
             return {
                     label : item.subj_name_ua.toUpperCase(),
                     value : item.id
             }
         })
-        // console.log("RENDER", this.state, messages)
+
         const daysArr = daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;})
-
         let initialDay = this.getNextStudyDay(daysArr)[0];
-
-        // console.log("initilDay.1", this.state.curDateKey, initialDay, this.getCurStudyDay(daysArr, new Date(this.state.curDateKey))[0])
-
         if (!(this.state.curDateKey===null))
             initialDay = this.getCurStudyDay(daysArr, new Date(this.state.curDateKey))[0];
 
-        // initialDay = 1
-
-        // console.log("initilDay.2", this.state.selDate, this.getNextStudyDay(daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;}))[1])
-
-            const {userID} = this.props.userSetup
         let isImage = false
 
         let tagsArr = []
-        tagsArr = this.props.userSetup.chatTags.map(item=> {
+        tagsArr = chatTags.map(item=> {
             return {value: item.id, label: `${item.name}[${item.short}]` }
         })
         tagsArr.unshift({value: 0, label: "нет"})
@@ -487,6 +475,8 @@ class MessageList extends Component {
         //         label : "Инфа от школы"
         //     },
         // ]
+        // console.log("RENDER", this.state, messages)
+
         let img = ''
         if (this.state.previewID) {
             console.log("write file", JSON.parse(this.state.previewImage).base64, JSON.parse(this.state.previewImage))
@@ -501,20 +491,16 @@ class MessageList extends Component {
             //     .catch(res => console.log("FileWrite: Error", res))
         }
         return (
-
-            <View style={styles.msgList}>
-                {/*{console.log("273: RENDER_MESSAGELIST", messages.length, this.state.previewID)}*/}
+            <View>
                 <Modal
                     animationType="slide"
                     transparent={false}
                     visible={this.state.showPreview}
-                    onRequestClose={() => {
-                        // Alert.alert('Modal has been closed.');
-                    }}>
+                    onRequestClose={() => {}}>
                     <View>
                         {this.state.isSpinner ? <View
                             style={{position: "absolute", flex: 1, alignSelf: 'center', marginTop: 240, zIndex: 100}}>
-                            <Spinner color="#33ccff"/>
+                            <Spinner color={theme.secondaryColor}/>
                         </View> : null}
                         {/*{messages.length&&this.state.previewID?*/}
                         {/*<SingleImage*/}
@@ -522,48 +508,39 @@ class MessageList extends Component {
                             {/*style={{position : "relative", height : "100%"}}*/}
                             {/*onClose={()=>this.setState({showPreview : false, previewID : 0})}*/}
                         {/*/>:null}*/}
-
                         {messages.length && this.state.previewID ?
                             <ImageZoom cropWidth={Dimensions.get('window').width}
                                        cropHeight={Dimensions.get('window').height}
                                        imageWidth={Dimensions.get('window').width}
-                                       imageHeight={Dimensions.get('window').height}
-                            >
-                                <Image style={{
-                                    width: Dimensions.get('window').width,
-                                    height: Dimensions.get('window').height,
-                                }} source={{uri: img}}/>
+                                       imageHeight={Dimensions.get('window').height}>
+                                    <Image style={{
+                                        width: Dimensions.get('window').width,
+                                        height: Dimensions.get('window').height,
+                                    }} source={{uri: img}}/>
                             </ImageZoom> : null}
-
-                        <TouchableOpacity
-                            style={{position : "absolute", top : 10, right : 10, zIndex:10}}
-                            onPress={()=>this.setState({showPreview : false, previewID : 0})}>
-                            <View style={{
-
-                                paddingTop : 5, paddingBottom : 5,
-                                paddingLeft : 15, paddingRight : 15, borderRadius : 5,
-                                borderWidth : 2, borderColor : "#33ccff", zIndex:10,
-                            }}>
-                                <Text style={{  fontSize : 20,
-                                    color: "#33ccff",
-                                    zIndex:10,
-                                }}
-                                >X</Text>
-                            </View>
-                        </TouchableOpacity>
+                            <TouchableOpacity
+                                style={{position : "absolute", top : 10, right : 10, zIndex:10}}
+                                onPress={()=>this.setState({showPreview : false, previewID : 0})}>
+                                <View style={{
+                                    paddingTop : 5, paddingBottom : 5,
+                                    paddingLeft : 15, paddingRight : 15, borderRadius : 5,
+                                    borderWidth : 2, borderColor : theme.photoButtonColor, zIndex:10}}>
+                                    <Text style={{  fontSize : 20,
+                                        color: theme.photoButtonColor,
+                                        zIndex:10,
+                                    }}>X</Text>
+                                </View>
+                            </TouchableOpacity>
                     </View>
-
                 </Modal>
                 <Modal
                     animationType="slide"
                     transparent={false}
                     visible={this.state.modalVisible}
-                    onRequestClose={() => {
-                        // Alert.alert('Modal has been closed.');
-                    }}>
+                    onRequestClose={() => {}}>
                     <View style={styles.modalView}>
                         <Tabs>
-                            <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text style={{color : "#fff"}}>ПРЕДМЕТ</Text></TabHeading>}>
+                            <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color : theme.primaryTextColor}}>ПРЕДМЕТ</Text></TabHeading>}>
                                 <View style={styles.homeworkSubjectList}>
                                     <RadioForm
                                         // style={{ paddingBottom : 20 }}
@@ -578,7 +555,7 @@ class MessageList extends Component {
                                     />
                                 </View>
                             </Tab>
-                            <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text style={{color : "#fff"}}>НА КОГДА</Text></TabHeading>}>
+                            <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color : theme.primaryTextColor}}>НА КОГДА</Text></TabHeading>}>
                                 <View style={styles.homeworkSubjectList}>
                                     <RadioForm
                                         // style={{ paddingBottom : 20 }}
@@ -593,7 +570,7 @@ class MessageList extends Component {
                                     />
                                 </View>
                             </Tab>
-                            <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text style={{color: "#fff"}}>ИЗМЕНИТЬ</Text></TabHeading>}>
+                            <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>ИЗМЕНИТЬ</Text></TabHeading>}>
                                 <View>
                                         <Textarea style={styles.msgUpdateTextarea}
                                             // onKeyPress={this._handleKeyDown}
@@ -612,15 +589,13 @@ class MessageList extends Component {
                                     </TouchableOpacity>
                                 </View>
                             </Tab>
-                            <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text style={{color: "#fff"}}>ЗАМЕТКИ</Text></TabHeading>}>
+                            <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>ЗАМЕТКИ</Text></TabHeading>}>
                                 <View style={styles.homeworkSubjectList}>
                                     <RadioForm
-                                        // style={{ paddingBottom : 20 }}
                                         dataSource={tagsArr}
                                         itemShowKey="label"
                                         itemRealKey="value"
                                         circleSize={16}
-                                        // initial={initialDay}
                                         formHorizontal={false}
                                         labelHorizontal={true}
                                         onPress={(item) => this.onSelectTag(item)}
@@ -635,21 +610,19 @@ class MessageList extends Component {
                             </Text>
                         </ListItem>
                         <ListItem className={styles.editHomeworkCheckbox}>
-                            <CheckBox checked={this.state.checkTimetable} onPress={()=>{this.saveCredentials(!this.state.checkTimetable)}} color="#b40530"/>
+                            <CheckBox checked={this.state.checkTimetable} onPress={()=>{this.saveCredentials(!this.state.checkTimetable)}} color={theme.primaryDarkColor}/>
                             <Body>
                                 <Text>  Учитывать расписание при выборе даты</Text>
                             </Body>
                         </ListItem>
                         <Footer style={styles.header}>
                             <FooterTab style={styles.header}>
-                                <Button style={this.state.selSubject.value&&this.state.selDate.value>-3?styles.btnHomework:styles.btnHomeworkDisabled} vertical
+                                <Button style={this.state.selSubject.value&&this.state.selDate.value>-3?{backgroundColor : theme.primaryColor}:styles.btnHomeworkDisabled} vertical
                                         onPress={this.state.selSubject.value&&this.state.selDate.value>-3?()=>this.setModalVisible(!this.state.modalVisible, true):null}>
-                                    {/*<Icon active name="ios-bookmarks" />*/}
-                                    <Text style={styles.btnHomeworkText}>ДОБАВИТЬ</Text>
+                                    <Text style={{color : theme.primaryTextColor}}>ДОБАВИТЬ</Text>
                                 </Button>
-                                <Button style={styles.btnClose} vertical /*active={this.state.selectedFooter===2}*/ onPress={()=>this.setModalVisible(!this.state.modalVisible, false)}>
-                                    {/*<Icon active name="ios-bookmarks" />*/}
-                                    <Text style={styles.btnCloseText}>ВЫХОД</Text>
+                                <Button style={styles.btnClose} vertical onPress={()=>this.setModalVisible(!this.state.modalVisible, false)}>
+                                    <Text style={{color : theme.primaryTextColor}}>ВЫХОД</Text>
                                 </Button>
                             </FooterTab>
                         </Footer>
@@ -657,15 +630,13 @@ class MessageList extends Component {
                 </Modal>
                 <ScrollView
                     ref="scrollView"
-                    decelerationRate={0.5}
+                    decelerationRate={0.6}
                     onContentSizeChange={( contentWidth, contentHeight ) => {
                         this.refs.scrollView.scrollToEnd()
                     }}>
-
                     {messages.length?
                         messages.map((message, i) =>{
                                 let msg = this.props.isnew?prepareMessageToFormat(message, true):JSON.parse(message)
-                                // console.log("449: MESSAGE", message, msg,msg.hwdate)
                                 const urlMatches = msg.text.match(/\b(http|https)?:\/\/\S+/gi) || [];
                                 let { text } = msg;
                                 isImage = false
@@ -692,34 +663,17 @@ class MessageList extends Component {
                                 // console.log("RENDER MESSAGE_LIST")
                                 const {user_id, msg_date, homework_subj_id, homework_date} = message
                                 return (this.props.hwdate===null||(!(this.props.hwdate===null)&&((new Date(this.props.hwdate)).toLocaleDateString()===(new Date(msg.hwdate)).toLocaleDateString())))?
-
                                         <View key={i} id={"msg-"+msg.id} className={"message-block"}>
-                                            {/*{console.log("MESSAGE_ONPRESS9", message.user_id, userID, message, msg.id)}*/}
                                             {this.getDateSeparator(msg_date.length===8?dateFromYYYYMMDD(msg_date):new Date(msg_date))}
-
                                             <TouchableWithoutFeedback   key={i} id={"msgarea-"+msg.id}
-                                                                        delayLongPress={500}
+                                                                        delayLongPress={330}
                                                                         onLongPress={user_id===userID?()=>this.onLongPressMessage(msg.id, homework_subj_id, (homework_date===undefined)?null:homework_date, msg.text):null}
                                                                         >
                                             <View key={msg.id}
                                                 style={ownMsg?
-                                                (hw.length?[styles.msgRightSide, styles.homeworkBorder]:[styles.msgRightSide, styles.homeworkNoBorder]):
-                                                (hw.length?[styles.msgLeftSide, styles.homeworkBorder]:[styles.msgLeftSide, styles.homeworkNoBorder])}>
-                                                {/*{this.state.editKey===i?<Textarea className={ownMsg?"message-block-edit-right":"message-block-edit-left"} ref={input=>{this.textareaValue=input}} defaultValue={msg.text}*/}
-                                                {/*onKeyPress={this.OnKeyPressTextArea} onChange={this.OnChangeTextArea}>*/}
-                                                {/*</Textarea>:null}*/}
-                                                {/*{this.state.editKey === i ?*/}
-                                                {/*<View className="mym-msg-block-buttons">*/}
-                                                {/*<View id={"btn-hw-"+msg.id} onClick={this.onAddHomwworkMsgClick} className="mym-msg-block-hw">Домашка</View>*/}
-                                                {/*<View id={"btn-save-"+msg.id} onClick={this.onSaveMsgClick} className="mym-msg-block-save">Сохранить</View>*/}
-                                                {/*<View id={"btn-cancel-"+msg.id} onClick={this.onCancelMsgClick} className="mym-msg-block-cancel">Отмена </View >*/}
-                                                {/*<View id={"btn-del-"+msg.id} onClick={this.onDelMsgClick} className="mym-msg-block-delete">Удалить</View>*/}
-                                                {/*</View>*/}
-                                                {/*:null}*/}
-
-                                                {/*style={this.state.editKey===i?{visibility:"hidden"}:null}*/}
-                                                <View key={'id'+i} style={[ownMsg?styles.msgRightAuthor:styles.msgLeftAuthor, msg.tagid?styles.authorBorder:'']} ><Text style={styles.msgAuthorText}>{username}</Text></View>
-
+                                                (hw.length?[styles.msgRightSide, {borderWidth : 2, borderColor : theme.primaryMsgColor}]:[styles.msgRightSide, styles.homeworkNoBorder]):
+                                                (hw.length?[styles.msgLeftSide, {borderWidth : 2, borderColor : theme.primaryMsgColor}]:[styles.msgLeftSide, styles.homeworkNoBorder])}>
+                                                <View key={'id'+i} style={[ownMsg?{}:[styles.msgLeftAuthor, {borderColor : theme.primaryColor, backgroundColor : theme.primaryColor}], msg.tagid?styles.authorBorder:'']} >{ownMsg?null:<Text style={{color : theme.primaryTextColor}}>{username}</Text>}</View>
                                                 {urlMatches.length > 0?(
                                                     <View key={'msgpreview'+i} id={"msg-text-"+i} style={this.state.editKey===i?{visibility:"hidden"}:null} className="msg-text">
                                                         {/*<span*/}
@@ -729,9 +683,6 @@ class MessageList extends Component {
                                                         {LinkPreviews}
                                                     </View>)
                                                     :null}
-
-                                                {/* style={this.state.editKey===i?{visibility:"hidden"}:null} */}
-                                                {/*{console.log('460', message, isImage, message.attachment3)}*/}
                                                 {isImage?
                                                     <View style={{display : "flex", flex : 1, flexDirection: "row"}}>
                                                         <TouchableOpacity onPress={()=>{ this.getImage(msg.id)}}>
@@ -746,36 +697,30 @@ class MessageList extends Component {
                                                         <View key={'msg'+i} id={"msg-text-"+i}
                                                                 style={[styles.msgText,
                                                                         {flex: 3, marginLeft : 20, marginTop : 5}]}>
-                                                                <Text>{msg.text}</Text>
+                                                                <Text style={{color : "#565656"}}>{msg.text}</Text>
                                                         </View>
                                                     </View>
                                                     :<View key={'msg'+i} id={"msg-text-"+i} style={styles.msgText}>
-                                                        <Text>{msg.text}</Text>
+                                                        <Text style={{color : "#565656"}}>{msg.text}</Text>
                                                      </View>}
 
-                                                {/*style={this.state.editKey===i?{visibility:"hidden"}:null}*/}
-                                                <View style={msg.id?styles.btnAddTimeDone:styles.btnAddTime}>
-                                                    <Text style={msg.id?styles.btnAddTimeDone:styles.btnAddTime}>{msg.time}</Text>
+                                                <View style={msg.id?[styles.btnAddTimeDone, {color : theme.primaryDarkColor}]:styles.btnAddTime}>
+                                                    <Text style={msg.id?[styles.btnAddTimeDone, {color : theme.primaryDarkColor}]:styles.btnAddTime}>{msg.time}</Text>
                                                 </View>
 
-                                                {/*style={this.state.editKey===i?{visibility:"hidden"}:null}*/}
-                                                {hw.length?<View key={'idhw'+i} style={ownMsg?[styles.msgRightIshw, {color : 'white'}]:[styles.msgLeftIshw, {color : 'white'}]}>
-                                                    <Text style={{color : 'white'}}>{hw}</Text>
+                                                {hw.length?<View key={'idhw'+i} style={ownMsg?[styles.msgRightIshw, {color : theme.primaryTextColor, backgroundColor : theme.primaryMsgColor}]:[styles.msgLeftIshw, {color : theme.primaryTextColor, backgroundColor : theme.primaryMsgColor}]}>
+                                                    <Text style={{color : theme.primaryTextColor}}>{hw}</Text>
                                                 </View>:null}
                                                 {msg.tagid?<View style={{ position : "absolute", right : 3, top : -7, display : "flex", alignItems : "center"}}>
-                                                    <View><Icon style={{fontSize: 15, color: '#b40530'}} name="medical"/></View>
+                                                    <View><Icon style={{fontSize: 15, color: theme.primaryMsgColor}} name="medical"/></View>
                                                 </View>:null}
                                             </View>
                                             </TouchableWithoutFeedback>
                                         </View>
                                     :null
-
-
                             }
                         ):null}
                 </ScrollView>
-
-                {/*</InvertibleScrollView>*/}
             </View>
         )
     }

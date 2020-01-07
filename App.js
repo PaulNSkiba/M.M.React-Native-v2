@@ -6,14 +6,12 @@
  * @flow
  */
 import React, {Component} from 'react';
-import {SafeAreaView, StyleSheet, ScrollView, View, Text, StatusBar} from 'react-native';
+import {SafeAreaView, StyleSheet, ScrollView, View, Text, StatusBar, TouchableOpacity, Image } from 'react-native';
 import { Dimensions, AppState, Platform} from 'react-native';
-import {setStorageData, getStorageData} from './js/helpersLight'
+import {setStorageData, getStorageData, getNextStudyDay, daysList, toYYYYMMDD, themeOptions} from './js/helpersLight'
 import axios from 'axios';
 import {API_URL}        from './config/config'
-import { Container, Footer, FooterTab, Spinner, } from 'native-base';
-// import {AsyncStorage} from 'react-native';
-// import {AsyncStorage} from '@react-native-community/async-storage';
+import { Container, Content, Footer, FooterTab, Spinner, } from 'native-base';
 import HeaderBlock from './components/HeaderBlock/headerBlock'
 import ChatBlock from './components/ChatBlock/chatblock'
 import HomeworkBlock from './components/HomeworkBlock/homeworkblock'
@@ -24,11 +22,16 @@ import ETCBlock from './components/ETCBlock/etcblock'
 import ButtonWithBadge from './components/ButtonWithBadge/buttonwithbadge'
 import styles from './css/styles'
 import {instanceAxios} from './js/helpersLight'
-
+import Drawer from 'react-native-drawer'
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
 import AntDesign from 'react-native-vector-icons/AntDesign'
 import Ionicons from 'react-native-vector-icons/Ionicons'
 import Foundation from 'react-native-vector-icons/Foundation'
+import FlagUK from './img/united-kingdom-flag-square-icon-32.png'
+import FlagRU from './img/russia-flag-square-icon-32.png'
+import FlagUA from './img/ukraine-flag-square-icon-32.png'
+// import {AsyncStorage} from 'react-native';
+// import {AsyncStorage} from '@react-native-community/async-storage';
 
 class App extends Component {
     constructor(props) {
@@ -51,10 +54,14 @@ class App extends Component {
             appState : AppState.currentState,
             appStateChanged : false,
             appNetWorkChanget : false,
+            initialDay : 0,
+            showDrawer : false,
+            daysArr : daysList().map(item => { let o = {}; o.label = item.name; o.value = item.id; o.date = item.date; return o; }),
         }
         this.session_id = '';
         this.updateState = this.updateState.bind(this)
         this.setstate = this.setstate.bind(this)
+        this.showDrawer = this.showDrawer.bind(this)
     }
     async componentDidMount() {
         // console.log("COMPONENT_DID_MOUNT", Platform.OS, Platform.Version)
@@ -157,36 +164,129 @@ class App extends Component {
         console.log("forceUpdate", homeworks)
         this.setState({msgs, homeworks})
     }
-
+    measureView(event : Object) {
+        // console.log("*** event:Footer:", event.nativeEvent);
+        this.props.onReduxUpdate("FOOTER_HEIGHT", event.nativeEvent.layout.height)
+    }
+    showDrawer(){
+        this.setState({showDrawer : !this.state.showDrawer})
+    }
+    renderPalette = (color) => {
+        return <View>
+                    <TouchableOpacity key={color} onPress={() => this.props.onReduxUpdate('CHANGE_THEME', color)}>
+                        <View style={{height: 40, width: 40, borderRadius: 20, backgroundColor: color, margin: 5}}>
+                        </View>
+                    </TouchableOpacity>
+            </View>
+    };
+    renderDrawer(){
+        const {theme} = this.props.userSetup
+        const colorOptions = Object.keys(themeOptions);
+        return <View style={{
+            backgroundColor : theme.primaryColor,
+            height : Dimensions.get('window').height,
+            width : Dimensions.get('window').width,
+            flex: 1,
+            flexDirection : 'column',
+            }}>
+            <View style={{height: 100, width: 300, margin : 5}}>
+                <View><Text style={{color : theme.primaryTextColor, fontWeight : '800', marginLeft : 10}}>Язык:</Text></View>
+                <View style={{  flex : 1, margin : 10, backgroundColor : "#fff", borderRadius: 10, height : 100, width : Dimensions.get('window').width - 30,
+                    flexDirection : 'row', justifyContent : "space-around", alignItems : "center"}}>
+                    <TouchableOpacity key={0} onPress={() =>{console.log("pressed"); this.props.onReduxUpdate('CHANGE_LNG', 'GB')}}>
+                        <View style={{position : 'relative', borderWidth : 1, borderColor : "#dcdcdc"}}>
+                            <Image source={FlagUK}/>
+                        </View>
+                    </TouchableOpacity>
+                    <TouchableOpacity key={1} onPress={() =>{console.log("pressed"); this.props.onReduxUpdate('CHANGE_LNG', 'RU')}}>
+                        <View style={{position : 'relative', textAligh: "center", borderWidth : 1, borderColor : "#dcdcdc"}}>
+                            <Image source={FlagRU}/>
+                        </View>
+                    </TouchableOpacity>
+                    <TouchableOpacity key={2} onPress={() =>{console.log("pressed"); this.props.onReduxUpdate('CHANGE_LNG', 'UA')}}>
+                        <View style={{position : 'relative', borderWidth : 1, borderColor : "#dcdcdc"}}>
+                            <Image source={FlagUA}/>
+                        </View>
+                    </TouchableOpacity>
+                </View>
+            </View>
+            <View style={{height: 100, width: 300, margin : 5}}>
+                <View><Text style={{color : theme.primaryTextColor, fontWeight : '800', marginLeft : 10}}>Цветовая гамма:</Text></View>
+                <View style={{  flex : 1, margin : 10, backgroundColor : "#fff", borderRadius: 10, height : 100, width : Dimensions.get('window').width - 30,
+                                flexDirection : 'row', justifyContent : "space-around", alignItems : "center"}}>
+                    {
+                        colorOptions.map(color=>
+                            <TouchableOpacity key={color} onPress={() =>{console.log("pressed"); this.props.onReduxUpdate('CHANGE_THEME', themeOptions[color])}}>
+                                <View style={{position : 'relative', borderWidth : 1, borderColor : "#dcdcdc"}}>
+                                    <View
+                                        style={{
+                                            width: 40,
+                                            height: 40,
+                                            borderWidth: 20,
+                                            position: 'relative',
+                                            borderLeftColor: themeOptions[color].primaryColor,
+                                            borderTopColor: themeOptions[color].primaryColor,
+                                            borderBottomColor: themeOptions[color].secondaryColor,
+                                            borderRightColor: themeOptions[color].secondaryColor
+                                    }}>
+                                    </View>
+                                </View>
+                            </TouchableOpacity>
+                        )
+                    }
+                    {/*<View style={{height: 40, width: 40, borderRadius: 20, backgroundColor: "#fff", margin: 5}}></View>*/}
+                    {/*<View style={{height: 40, width: 40, borderRadius: 20, backgroundColor: "#fff", margin: 5}}></View>*/}
+                </View>
+            </View>
+        </View>
+    }
     render() {
         let marksReadCount = 0
-        const {marks, localChatMessages, userID, token} = this.props.userSetup
-        // console.log("RENDER_APP", marks.length, this.props.userSetup, Dimensions.get('window').width, Dimensions.get('window').height)
-        // console.log("RENDER_APP", this.props.userSetup)
+        const {marks, localChatMessages, userID, token, theme} = this.props.userSetup
+        const hwarray = localChatMessages.filter(item=>(item.homework_date!==null))
+        let {daysArr, initialDay} = this.state
 
-        /*
-        AsyncStorage.getItem("myMarks.marksReadCount")
-            .then(res => {
-                marksReadCount = res
-            })
-            .catch(err => marksReadCount = 0);
-        */
+        initialDay = initialDay?initialDay: getNextStudyDay(daysArr)[0]
+        console.log("App:render", this.props.userSetup)
 
-        // return (<View></View>)
+        const homework =
+            (hwarray.length&&daysArr.length&&initialDay?hwarray.filter(item=>{
+                    if (item.hasOwnProperty('ondate')) item.homework_date = new Date(item.ondate)
+                    return toYYYYMMDD(new Date(item.homework_date)) === toYYYYMMDD(new Date((daysArr[initialDay]).date))
+                }
+            ).length:0)
+
         return (
-                <Container style={this.state.showFooter ? {flex: 1} : {flex: 1 }}>
-                    <StatusBar barStyle="dark-content" hidden={false}/>
-                    <HeaderBlock updateState={this.updateState} email={this.state.userEmail}
+                <Container>
+                    <StatusBar backgroundColor={theme.primaryDarkColor} hidden={false}/>
+                    <HeaderBlock updateState={this.updateState}
+                                 email={this.state.userEmail}
+                                 showdrawer={this.showDrawer}
                                  token={(!this.props.user.logging)&&(!this.props.user.loggedin)?token:''} footer={this.state.selectedFooter}/>
-                    {this.state.isSpinner ? <Spinner color="#7DA8E6"/> : null}
-                    <Container >
+                    {this.state.isSpinner ? <Spinner color={theme.secondaryColor}/> : null}
+                    <Drawer
+                        open={this.state.showDrawer}
+                        type="overlay"
+                        content={this.renderDrawer()}
+                        tapToClose={true}
+                        openDrawerOffset={0} // 20% gap on the right side of drawer
+                        panCloseMask={0}
+                        closedDrawerOffset={-3}
+                        styles={{
+                            drawer: { shadowColor: '#000000', shadowOpacity: 0.8, shadowRadius: 3},
+                            main: {paddingLeft: 3},
+                        }}
+                        tweenHandler={(ratio) => ({
+                            main: { opacity:(2-ratio)/2 }
+                        })}
+                    >
+                    <Container>
                         <ChatBlock hidden={this.state.selectedFooter !== 0}
                                    showLogin={this.props.userSetup.showLogin || (!token.length)}
                                    updateState={this.updateState}
                                    forceupdate={this.fireRender}
                                    setstate={this.setstate}
                         />
-
                         {this.state.selectedFooter === 1 ?
                             <View style={styles.absoluteView}>
                                 <HomeworkBlock hidden={this.state.selectedFooter !== 1}
@@ -194,15 +294,14 @@ class App extends Component {
                                                forceupdate={this.fireRender}
                                                setstate={this.setstate}/>
                             </View> : null}
-
                         {this.state.selectedFooter === 2 ?
                             <View style={styles.absoluteView}>
-                                <MarksBlock hidden={this.state.selectedFooter !== 2}
-                                            showLogin={this.state.showLogin}
-                                            forceupdate={this.fireRender}
-                                            setstate={this.setstate}/>
-                            </View> : null}
-
+                                     <MarksBlock hidden={this.state.selectedFooter !== 2}
+                                                showLogin={this.state.showLogin}
+                                                forceupdate={this.fireRender}
+                                                setstate={this.setstate}/>
+                            </View>
+                            : null}
                         {this.state.selectedFooter === 3 ?
                             <View style={styles.absoluteView}>
                                 <HelpBlock hidden={this.state.selectedFooter !== 3}
@@ -227,7 +326,10 @@ class App extends Component {
                                           setstate={this.setstate}/>
                             </View> : null}
                     </Container>
+                    </Drawer>
                     {this.state.showFooter ?
+                        <View
+                            onLayout={(event) =>this.measureView(event)}>
                         <Footer style={styles.header}>
                             <FooterTab style={styles.header}>
                                 <ButtonWithBadge
@@ -252,7 +354,7 @@ class App extends Component {
                                     iconname={'notifications'}
                                     badgestatus={'error'}
                                     kind={'homework'}
-                                    value={this.state.homeworks}
+                                    value={homework}
                                     setstate={this.setstate}
                                     stateid={1}/>
 
@@ -309,7 +411,7 @@ class App extends Component {
                                     stateid={5}/>
 
                             </FooterTab>
-                        </Footer> : null}
+                        </Footer></View> : null}
 
                 </Container>
         )

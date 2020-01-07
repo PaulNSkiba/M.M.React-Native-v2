@@ -19,14 +19,11 @@ export default styles = StyleSheet.create({
         opacity : 1,
         // borderWidth : 1,
         // borderColor : "darkgrey",
-        backgroundColor: "white",
+        // backgroundColor: "white",
         height : "100%",
     },
     messageListContainer : {
         flex : 5,
-        // borderWidth : 1,
-        // borderColor : "#f2b436",
-        // height : "100%",
     },
     servicePlus : {
         position : "absolute",
@@ -152,7 +149,6 @@ export default styles = StyleSheet.create({
         zIndex : 20,
     },
 
-    msgList : {},
     msgText : {},
     addMsgHomeworkDay : {
 
@@ -227,7 +223,7 @@ export default styles = StyleSheet.create({
         color : "#555a6e",
     },
     header : {
-        backgroundColor : "#f0f0f0",
+        // backgroundColor : "#f0f0f0",
         color : "black",
         borderBottomColor: '#c7c7c7',
         borderBottomWidth: 1,
@@ -236,7 +232,7 @@ export default styles = StyleSheet.create({
         // textDecoration: "underline",
         // fontFamily: "'Poiret One' cursive",
         fontWeight: "900",
-        color : "#4472C4",
+        // color : "#4472C4",
         // minWidth: "140px",
         // zIndex: "20",
         // textShadow: "1px 1px 0px #eee, 1px 1px 2px #707070",
@@ -316,46 +312,46 @@ export default styles = StyleSheet.create({
         marginLeft :0,
     },
     homeworkBorder : {
-        borderColor : "#ecabb9",
-        borderWidth : 2,
+        // borderColor : "#ecabb9",
+        // borderWidth : 2,
     },
     homeworkNoBorder : {
         borderColor : "#ffffff",
         borderWidth : 2,
     },
     msgAuthorText : {
-        color : "#ffffff"
+        // color : "#ffffff"
     },
     msgRightAuthor : {
-        color : "#ffffff",
+        // color : "#ffffff",
         display: "flex",
         position: "absolute",
         borderRadius: 8,
         paddingRight : 7,
         paddingBottom : 2,
         paddingLeft : 7,
-        // fontSize: 0.75em;
         marginTop : -10,
         borderWidth: 0.5,
-        borderColor : "#33ccff",
-        backgroundColor: "#33ccff",
+        fontSize : 12,
+        // borderColor : "#33ccff",
+        // backgroundColor: "#33ccff",
         fontWeight: "600",
         right : 10,
         // zIndex : 10,
     },
     msgLeftAuthor : {
-        color : "#ffffff",
+        // color : "#ffffff",
         display: "flex",
         position: "absolute",
         borderRadius: 8,
         paddingRight : 7,
         paddingBottom : 2,
         paddingLeft : 7,
-        // fontSize: 0.75em;
         marginTop : -10,
         borderWidth: 0.5,
-        borderColor : "#33ccff",
-        backgroundColor: "#33ccff",
+        fontSize : 12,
+        // borderColor : "#33ccff",
+        // backgroundColor: "#33ccff",
         fontWeight: "600",
         // zIndex : 10,
     },
@@ -377,7 +373,7 @@ export default styles = StyleSheet.create({
         right : 5,
         bottom : 2,
         alignSelf: 'flex-end',
-        color : "#526ef3",
+        // color : "#526ef3",
         fontSize : 10,
     // font-size : 0.7em;
     },
@@ -385,19 +381,20 @@ export default styles = StyleSheet.create({
         display : "flex",
         flexDirection : "column",
         flex : 1,
-        // marginTop: 22,
         height : "98%",
         width : "100%",
-        // borderWidth : 2,
-        // borderColor : "#ecabb9",
-        // borderRadius : 10,
     },
-    // modalHeader : {
-    //     flex : 1,
-    //     color : "#b40530",
-    //     // width : "100%",
-    //     fontSize : 30,
-    //     // paddingLeft : 40,
+    // modalViewTop : {
+    //     position : "relative",
+    //     top : 0,
+        // borderWidth : 3,
+        // borderColor :  "#526ef3",
+        // display : "flex",
+        // flexDirection : "column",
+        // justifyContent : "flex-start",
+        // flex : 1,
+        // height : "100%",
+        // width : "100%",
     // },
     modalHeaderText : {
         color : "#b40530",
@@ -415,14 +412,14 @@ export default styles = StyleSheet.create({
 
     },
     btnHomeworkText : {
-        color : "#fff",
+        // color : "#fff",
     },
     btnClose : {
         height : "100%",
         backgroundColor : "#7DA8E6",
     },
     btnCloseText : {
-      color : "#fff",
+      // color : "#fff",
     },
     doneButtons : {
         display : "flex",
@@ -433,7 +430,7 @@ export default styles = StyleSheet.create({
         flex: 12,
     },
     msgLeftIshw : {
-        color : "#fff",
+        // color : "#fff",
         display: "flex",
         position: "absolute",
         borderRadius: 8,
@@ -443,9 +440,10 @@ export default styles = StyleSheet.create({
         // font-size: 0.75em;
         marginTop : -10,
         borderWidth: 0.5,
-        borderColor : "#b40530",
-        backgroundColor: "#b40530",
+        // borderColor : "#b40530",
+        // backgroundColor: "#b40530",
         // fontWeight: "600",
+        fontSize : 12,
         right : 10,
     },
     homeworkContainer : {
@@ -461,8 +459,8 @@ export default styles = StyleSheet.create({
         borderWidth : 1,
     },
     tabHeaderWhen : {
-        color : "#ffffff",
-        backgroundColor : '#b40530',
+        // color : "#ffffff",
+        // backgroundColor : '#b40530',
     },
     homeworkSubjectList : {
         position : 'relative',
@@ -476,7 +474,7 @@ export default styles = StyleSheet.create({
         backgroundColor : 'rgba(64, 155, 230, 0.16)',
     },
     msgRightIshw: {
-        color : "#fff",
+        // color : "#fff",
         display: "flex",
         position: "absolute",
         borderRadius: 8,
@@ -486,8 +484,9 @@ export default styles = StyleSheet.create({
         // font-size: 0.75em;
         marginTop : -10,
         borderWidth: 0.5,
-        borderColor : "#b40530",
-        backgroundColor: "#b40530",
+        fontSize : 12,
+        // borderColor : "#b40530",
+        // backgroundColor: "#b40530",
         // fontWeight: "600"
     },
     radioButtonText : {
@@ -502,9 +501,9 @@ export default styles = StyleSheet.create({
         // position: 'absolute',
         // bottom : 0,
         // left : -500,
-        borderWidth : 1,
-        borderColor : "darkgrey",
-        backgroundColor: "white",
+        // borderWidth : 1,
+        // borderColor : "darkgrey",
+        // backgroundColor: "white",
         height : "100%",
     },
     normal : {
@@ -519,23 +518,28 @@ export default styles = StyleSheet.create({
         // borderType : "solid",
     },
     mymMsgDateSeparator : {
-        backgroundColor : "rgba(64, 155, 230, 0.16)",
+        // backgroundColor : "rgba(64, 155, 230, 0.16)",
         padding : 5,
         marginLeft : "30%",
         marginRight : "30%",
-        borderWidth : 1,
-        borderColor : "rgba(64, 155, 230, 0.16)",
+        // borderWidth : 1,
+        // borderColor : "rgba(64, 155, 230, 0.16)",
         borderRadius: 10,
+        fontWeight : "800",
+        color : '#707070',
     },
     mymMsgDateSeparatorText : {
-        color: "#7DA8E6",
+        // color: "#7DA8E6",
         textAlign: "center",
-        fontWeight: "600",
+        // fontWeight: "600",
+        fontWeight : "900",
+        fontSize : 16,
+        color : '#707070',
     },
     cameraBlock : {
-        borderWidth : 2,
-        borderColor : "#7DA8E6",
-        borderRadius: 10,
+        // borderWidth : 2,
+        // borderColor : "#7DA8E6",
+        // borderRadius: 10,
         height : "100%",
     },
     updateMsg : {

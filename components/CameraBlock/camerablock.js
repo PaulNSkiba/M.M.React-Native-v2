@@ -152,16 +152,17 @@ class CameraBlock extends Component {
         // const daysArr = daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;})
         // const initialDay = this.getNextStudyDay(daysArr)[0];
         // console.log("PhotoPath", this.state.photoPath, this.state.prevuri)
+        const {theme} = this.props.userSetup
         console.log("uriAdded", this.state.uriAdded)
         return (
             <Container>
                 <View style={styles.modalView}>
                     <Tabs>
-                        <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text style={{color: "#fff"}}>КАМЕРА</Text></TabHeading>}>
+                        <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>КАМЕРА</Text></TabHeading>}>
                             <View style={styles.cameraBlock}>
                                 {this.state.isSpinner ? <View
                                     style={{position: "absolute", flex: 1, alignSelf: 'center', marginTop: 240, zIndex: 100}}>
-                                    <Spinner color="#33ccff"/>
+                                    <Spinner color={theme.secondaryColor}/>
                                 </View> : null}
                                 <RNCamera
                                     ref={ref => {this.camera = ref;}}
@@ -172,17 +173,15 @@ class CameraBlock extends Component {
                                                 marginLeft : "30%", marginRight : "30%", flexDirection: 'row', justifyContent: 'center', borderRadius : 10 }}>
                                     <TouchableOpacity onPress={this.takePicture.bind(this)} style={styles.capture}>
                                         <View style={{  width : "100%", textAligh : "center", borderWidth : 2,
-                                                        borderColor : "#33ccff", borderRadius : 20, paddingLeft : 40, paddingRight : 40}}>
+                                                        borderColor : theme.photoButtonColor, borderRadius : 20, paddingLeft : 40, paddingRight : 40}}>
                                             <Icon color="#33ccff" fontSize="35" type='foundation' name="camera" />
-                                            <Text style={{ fontSize: 14, color : "#33ccff" }}> ФОТО </Text>
-                                            {/*<Text style={{ fontSize: 14, color : "#33ccff" }}>{this.state.photoPath}</Text>*/}
+                                            <Text style={{ fontSize: 14, color : theme.photoButtonColor}}> ФОТО </Text>
                                         </View>
                                     </TouchableOpacity>
                                 </View>
                             </View>
                         </Tab>
-                        <Tab heading={<TabHeading style={styles.tabHeaderWhen}>
-                            <Text badge vertical style={{color: "#fff"}}>ИЗОБРАЖЕНИЯ</Text>
+                        <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text badge vertical style={{color: theme.primaryTextColor}}>ИЗОБРАЖЕНИЯ</Text>
                             {this.state.photoPath.length?
                                 <Badge value={this.state.photoPath.length}
                                        status={"warning"}

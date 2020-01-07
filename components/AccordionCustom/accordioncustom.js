@@ -24,7 +24,6 @@ import styles from '../../css/styles'
 class AccordionCustom extends Component {
     constructor(props) {
         super(props);
-        // "Lorem ipsum dolor sit amet"
         // this.props.data2.filter((item2, key2)=>key2===key)[0]
         this.state = {
             dataArray: this.props.data.map((item, key) => {
@@ -35,43 +34,51 @@ class AccordionCustom extends Component {
                 return item;
             })
         }
+        this._renderHeader = this._renderHeader.bind(this)
+        this._renderContent = this._renderContent.bind(this)
     }
 
     componentDidMount() {
-        // console.log("componentDidMount:data", this.props.data)
-        // const dataArray = this.props.data.map(item=>{
-        //     item.content = "Lorem ipsum dolor sit amet"
-        //     return item
-        //
-        // })
+
     }
 
     _renderHeader(item, expanded) {
+        const {theme} = this.props.userSetup
         return (
             <View style={{
                 flexDirection: "row",
-                padding: 8,
+                paddingTop: 4,
+                paddingBottom : 4,
+                paddingRight : 8,
                 justifyContent: "space-between",
                 alignItems: "center",
                 // backgroundColor: "#ffdde2",
-                backgroundColor : "#edf0f2",
-                borderColor: "#ecabb9",
-                borderWidth: 1
+                backgroundColor : theme.primaryTextColor,
+                // borderColor: "#ecabb9",
+                borderLeftWidth: 4,
+                marginTop : 8,
+                borderLeftColor : theme.secondaryColor
             }}>
-                <Left style={{width: "80%"}}>
-                    <Text style={{
-                        fontWeight: "400",
+                    {item.hasOwnProperty("labelEx")?<Left style={{width: 120}}><Text style={{
+                        fontWeight: "800",
+                        fontSize: RFPercentage(2.2),
+                        color: "#565656", paddingLeft : 10
+                    }}>{`${item.labelEx}`}</Text><Text style={{
+                        fontWeight: "800",
+                        fontSize: RFPercentage(2.2),
+                        color: theme.primaryColor, paddingLeft : 10
+                    }}>{item.dateEx}</Text></Left>:<Left style={{width: 120}}><Text style={{
+                        fontWeight: "800",
                         fontSize: RFPercentage(1.8),
-                        color: "#4472C4"
-                    }}>{item.label}</Text>
-                </Left>
+                        color: "#565656", paddingLeft : 10
+                    }}>{item.label}</Text></Left>}
+
                 <Body>
-                {item.count?<Text style={{fontWeight: "600", color: "#b40530"}}>{item.count}{"  "}</Text>:null}
-                {/*{item.date?<Text style={{fontWeight: "400", color: "#4472C4", fontSize : RFPercentage(1.5)}}>{item.date}{"  "}</Text>:null}*/}
-                </Body>
+                {item.count?<Text style={{fontWeight: "600", color: theme.primaryDarkColor}}>{item.count}{"  "}</Text>:null}
+               </Body>
                 {expanded
-                    ? <Icon style={{fontSize: 18}} name="arrow-up"/>
-                    : <Icon style={{fontSize: 18}} name="arrow-down"/>}
+                    ? <Icon style={{fontSize: 18, color : theme.secondaryColor}} name="arrow-up"/>
+                    : <Icon style={{fontSize: 18, color : theme.secondaryColor}} name="arrow-down"/>}
             </View>
         );
     }
@@ -85,18 +92,18 @@ class AccordionCustom extends Component {
     }
 
     render() {
-
+        const {theme} = this.props.userSetup
         // console.log("Accordion: dataArray", this.state.dataArray)
         return (
             <Container>
-                <Content padder style={{backgroundColor: "white"}}>
+                <Content padder style={{backgroundColor: theme.primaryLightColor}}>
                     <Accordion
                         dataArray={this.state.dataArray}
                         animation={true}
                         expanded={this.props.index}
                         renderHeader={this._renderHeader}
                         renderContent={this._renderContent}
-                        expandedIconStyle={{ color: "#b40530" }}
+                        expandedIconStyle={{ color: theme.primaryDarkColor }}
                     />
                 </Content>
             </Container>

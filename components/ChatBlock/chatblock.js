@@ -20,10 +20,10 @@ class ChatBlock extends React.Component {
     }
     render=()=>{
         // console.log("chatRender", this.props.user.logging, this.props.userSetup.loading)
-        const {userID, showLogin} = this.props.userSetup
+        const {userID, showLogin, theme} = this.props.userSetup
         return (
         <View style={{flex : 1, position : "relative", flexDirection: 'column', height : "50%"}}>
-            {this.props.user.logging?<View style={{position : "absolute", flex: 1, alignSelf : 'center', marginTop : 240, zIndex : 100 }}><Spinner color="#33ccff"/></View>:null}
+            {this.props.user.logging?<View style={{position : "absolute", flex: 1, alignSelf : 'center', marginTop : 240, zIndex : 100 }}><Spinner color={theme.secondaryColor}/></View>:null}
             <View style={{flex : 1, position : "relative"}}>
             {/*{!userID||showLogin?<LoginBlock updateState={this.props.updateState}/>:null}*/}
             {userID&&(!showLogin)?

@@ -2,14 +2,14 @@
  * Created by Paul on 27.08.2019.
  */
 import React from 'react';
-import {StyleSheet, Text, View, TextInput, Dimensions, Modal, TouchableOpacity} from 'react-native';
-// import {AsyncStorage} from 'react-native';
+import {StyleSheet, Text, View, TextInput, Dimensions, Modal, TouchableOpacity, Image} from 'react-native';
 import {connect} from 'react-redux';
 import {
     Container, Header, Left, Body, Right, Button,
     Icon, Title, Content, Footer, FooterTab, Badge,
     Form, Item, Input, Label, Spinner, CheckBox
 } from 'native-base';
+import { Avatar } from 'react-native-elements';
 import {bindActionCreators} from 'redux';
 import {instanceAxios, mapStateToProps, msgTimeOut, setStorageData, getStorageData} from '../../js/helpersLight'
 import {userLoggedIn, userLoggedInByToken, userLoggedOut} from '../../actions/userAuthActions'
@@ -20,7 +20,13 @@ import FacebookLogin from '../FacebookLogin/facebooklogin'
 import {LoginButton, AccessToken, LoginManager} from 'react-native-fbsdk';
 import Video from 'react-native-video';
 import VideoFile from '../../download/1.Android-Studying.mp4'
+import Logo150 from '../../img/logo150.png'
+import {RFPercentage, RFValue} from "react-native-responsive-fontsize";
+
+// import AntIcon from "react-native-vector-icons/AntDesign";
+
 // import AsyncStorage from '@react-native-community/async-storage';
+// import {AsyncStorage} from 'react-native';
 
 class LoginBlock extends React.Component {
     constructor(props) {
@@ -41,7 +47,6 @@ class LoginBlock extends React.Component {
             // loading : false,
             // buttonClicked : false,
         }
-        // this.buttonClicked = false
         this.showLogin = true
         this.onLogin = this.onLogin.bind(this)
         this.clearError = this.clearError.bind(this)
@@ -50,46 +55,9 @@ class LoginBlock extends React.Component {
     componentDidMount(){
         this.getSavedCreds()
     }
-    getSavedCreds=async()=>{
-        const credents = await getStorageData("credent#")
-        if (credents.length){
-            if (credents.slice(0,1)==="1"){
-                // console.log(login, pwd)
-                const username = credents.split("#")[1]
-                const password = credents.split("#")[2]
-                this.setState({checkSave : true, username, password})
-            }
-        }
-    }
-    /*
-    getSavedCredsOld=()=>{
-        let credents = ''
-        AsyncStorage.getItem("credent#")
-            .then(res => {
-                credents = res
-                // console.log("credents", credents, credents.slice(0,1), credents.slice(0,1)==="1")
-                if (credents.length){
-                    if (credents.slice(0,1)==="1"){
-                        // console.log(login, pwd)
-                        const username = credents.split("#")[1]
-                        const password = credents.split("#")[2]
-                        this.setState({checkSave : true, username, password})
-                    }
-                }
-
-            })
-            .catch(err => console.log("getSavedCreds", err));
-    }
-    */
     shouldComponentUpdate(nextProps, nextState) {
         const {logging, loginmsg, logBtnClicked} = this.props.user
-        // console.log("shouldComponentUpdate", this.props.user,
-        //     logging, loginmsg,
-        //     this.state.buttonClicked,
-        //     this.buttonClicked,
-        //     logBtnClicked,
-        //     "test")
-
+        // console.log("shouldComponentUpdate", loginmsg)
         if (logging) {
             return true
         }
@@ -100,13 +68,50 @@ class LoginBlock extends React.Component {
         }
         return true
     }
-
+    // getSavedCreds=async()=>{
+    //     const credents = await getStorageData("credent#")
+    //     if (credents.length){
+    //         if (credents.slice(0,1)==="1"){
+    //             // console.log(login, pwd)
+    //             const username = credents.split("#")[1]
+    //             const password = credents.split("#")[2]
+    //             this.setState({checkSave : true, username, password})
+    //         }
+    //     }
+    // }
+    // saveCredentials=(save)=>{
+    //     if (save)
+    //         setStorageData('credent#', `1#${this.state.username}#${this.state.password}`)
+    //     else {
+    //         setStorageData('credent#', `0##`)
+    //     }
+    //     this.setState({checkSave : save})
+    //     console.log( save)
+    // }
+    getSavedCreds=async()=>{
+        console.log("creds")
+        const store = await getStorageData("creds")
+        const creds = JSON.parse(store)
+        console.log("getCreds", creds)
+        if (creds){
+            if (creds.isSet){
+                this.setState({checkSave : true, username : creds.userName, password : creds.userPwd})
+            }
+        }
+    }
+    saveCredentials=(save)=>{
+        const obj = {
+            isSet : !!save,
+            userName : save?this.state.username:null,
+            userPwd : save?this.state.password:null,
+        }
+        setStorageData('creds', JSON.stringify(obj))
+        this.setState({checkSave : save})
+        console.log( save)
+    }
     onChangeText = (key, val) => {
         // console.log("onChangeText", key, val, this.refs)
         this.setState({[key]: val})
-
-        // alert(key, val)
-        // this.props.updateState()
     }
     onLogin = () => {
         // alert(this.state.username + ' ' + this.state.password + ' ' + this.refs)
@@ -119,11 +124,10 @@ class LoginBlock extends React.Component {
             provider = null,
             provider_id = null
 
+        if (Platform.OS !== 'ios')
         this.saveCredentials(this.state.checkSave);
 
-        // console.log("START_LOGIN", "!!!")
         this.props.onReduxUpdate("SHOW_LOGIN", false)
-
         this.props.onReduxUpdate("USER_LOGGING")
         this.props.onReduxUpdate("LOG_BTN_CLICK")
         this.props.onUserLogging(name, pwd, provider, provider_id);
@@ -166,32 +170,13 @@ class LoginBlock extends React.Component {
             }
         )
     }
-    saveCredentials=(save)=>{
-        if (save)
-            setStorageData('credent#', `1#${this.state.username}#${this.state.password}`)
-        else {
-            setStorageData('credent#', `0##`)
-        }
-        this.setState({checkSave : save})
-        console.log( save)
-    }
-    /*
-    saveCredentials=(save)=>{
-        if (save)
-            AsyncStorage.setItem('credent#', `1#${this.state.username}#${this.state.password}`)
-        else {
-            AsyncStorage.setItem('credent#', `0##`)
-        }
-        this.setState({checkSave : save})
-        console.log( save)
-    }
-    */
     render() {
         const {logging, loginmsg, logBtnClicked} = this.props.user
+        const {theme, userID, token, footerHeight} = this.props.userSetup
         // console.log("LOGIN_RENDER", this.props.user)
         // const showModal = this.showLogin&&logBtnClicked&&(!loginmsg.length)
         return (
-            <View style={{backgroundColor: "#fff"}}>
+            <View style={{backgroundColor: theme.primaryColor, height : Dimensions.get('window').height}}>
                 <Modal
                     animationType="slide"
                     transparent={false}
@@ -221,14 +206,13 @@ class LoginBlock extends React.Component {
                             style={{position: "absolute", top: 10, right: 10, zIndex: 10}}
                             onPress={() => this.setState({showVideo: false})}>
                             <View style={{
-
                                 paddingTop: 5, paddingBottom: 5,
                                 paddingLeft: 15, paddingRight: 15, borderRadius: 5,
-                                borderWidth: 2, borderColor: "#33ccff", zIndex: 10,
+                                borderWidth: 2, borderColor: theme.photoButtonColor, zIndex: 10,
                             }}>
                                 <Text style={{
                                     fontSize: 20,
-                                    color: "#33ccff",
+                                    color: theme.photoButtonColor,
                                     zIndex: 10,
                                 }}
                                 >X</Text>
@@ -239,16 +223,17 @@ class LoginBlock extends React.Component {
                 </Modal>
                 {this.props.user.logging ? <View
                     style={{position: "absolute", flex: 1, alignSelf: 'center', marginTop: 240, zIndex: 100}}>
-                    <Spinner color="#33ccff"/>
+                    <Spinner color={theme.secondaryColor}/>
                 </View> : null}
                 <Form>
                     <View>
                         <Dialog
                             visible={loginmsg.length ? true : false}
-                            dialogStyle={{backgroundColor: "#1890e6", color: "#fff"}}
+                            dialogStyle={{backgroundColor: theme.primaryColor, color: theme.primaryDarkColor}}
                             footer={
                                 <DialogFooter>
                                     <DialogButton
+                                        textStyle={{color: theme.primaryDarkColor}}
                                         text="OK"
                                         onPress={this.clearError}
                                     />
@@ -256,40 +241,161 @@ class LoginBlock extends React.Component {
                             }
                         >
                             <DialogContent style={{paddingTop: 20, paddingBottom: 20}}>
-                                <Text style={{color: "#fff"}}>{this.props.user.loginmsg}</Text>
+                                <Text style={{color: theme.primaryDarkColor}}>{this.props.user.loginmsg}</Text>
                             </DialogContent>
                         </Dialog>
                     </View>
 
-                    <Item floatingLabel>
-                            <Label>Email</Label>
-                            <Input ref={component => this._nameLogin = component}
-                                // autoFocus={true}
-                                   value={this.state.username}
-                                   onChangeText={text => this.onChangeText('username', text)}
-                            />
+                    {/*<View style={{position: "relative", marginLeft : 0}}>*/}
+                       {/*<Image source={Logo150}/>*/}
+                    {/*</View>*/}
+                    {/*<Item floatingLabel>*/}
+                            {/*<Label>Email</Label>*/}
+                            {/*<Input ref={component => this._nameLogin = component}*/}
+                                {/*// autoFocus={true}*/}
+                                   {/*value={this.state.username}*/}
+                                   {/*onChangeText={text => this.onChangeText('username', text)}*/}
+                            {/*/>*/}
+                    {/*</Item>*/}
+                    <Item style={{marginTop : 20, borderColor: 'transparent'}}>
+                        <View style={{flex : 1, alignItems : "center", justifyContent : "center", height : 120, width : Dimensions.get('window').width}}>
+                            <View
+                                style={{
+                                    position : "relative",
+                                    height: 120,
+                                    width: 120,
+                                    borderRadius: 120,
+                                    backgroundColor : theme.primaryTextColor,
+                                    alignItems : "center", justifyContent : "center"}}>
+                                <View style={{ flex : 1, justifyContent: "center", alignItems: "center" }}>
+                                    <Icon
+                                        color={theme.primaryLightColor}
+                                        style={{marginLeft : 10, color : theme.primaryLightColor, fontSize : 80}}
+                                        name='person'/>
+                                </View>
+                            </View>
+                            {/*<Avatar*/}
+                                {/*size={"xlarge"}*/}
+                                {/*rounded*/}
+                                {/*icon={{name: 'user-graduate', type: 'font-awesome'}}*/}
+                                {/*onPress={() => console.log("Works!")}*/}
+                                {/*activeOpacity={0.7}*/}
+                                {/*containerStyle={{flex: 2, marginLeft: 10, marginTop: 10}}*/}
+                            {/*/>*/}
+                            {/*<AntIcon name="minuscircleo" color="green" size={50} />*/}
+                            {/*<Avatar*/}
+                                {/*size={150}*/}
+                                {/*rounded*/}
+                                {/*icon={{name: 'user', type: 'font-awesome'}}*/}
+                                {/*onPress={() => console.log("Works!")}*/}
+                                {/*activeOpacity={0.7}*/}
+                                {/*containerStyle={{flex: 2, marginLeft: 20, marginTop: 115}}*/}
+                            {/*/>*/}
+                        </View>
                     </Item>
-                    <Item floatingLabel>
-                            <Label>Пароль</Label>
-                            <Input secureTextEntry={true}
-                                   value={this.state.password}
-                                   ref={component => this._pwdLogin = component}
-                                   onChangeText={val => this.onChangeText('password', val)}/>
+                    <Item rounded style={{marginLeft : 60, marginRight : 60, marginTop : 20, borderColor: 'transparent'}}>
+                        <Input
+                               style={{fontSize : RFPercentage(3), paddingLeft : 10, paddingRight : 0, color : theme.primaryDarkColor, fontWeight : "600", borderWidth: 3, borderColor : theme.primaryBorderColor, borderRadius : 30}}
+                               value={this.state.username.length?this.state.username:"Email"}
+                               onChangeText={text => this.onChangeText('username', text)}
+                        />
                     </Item>
+
+                    {/*<Item floatingLabel>*/}
+                            {/*<Label>Пароль</Label>*/}
+                            {/*<Input secureTextEntry={true}*/}
+                                   {/*value={this.state.password}*/}
+                                   {/*ref={component => this._pwdLogin = component}*/}
+                                   {/*onChangeText={val => this.onChangeText('password', val)}/>*/}
+                    {/*</Item>*/}
+
+                    <Item rounded style={{marginLeft : 60, marginTop : 10, marginRight : 60, borderColor: 'transparent'}}>
+                        <Input
+                            style={{fontSize : RFPercentage(3), paddingLeft : 10, paddingRight : 0, color : theme.primaryDarkColor, fontWeight : "600", borderWidth: 3, borderColor : theme.primaryBorderColor, borderRadius : 30}}
+                            secureTextEntry={true}
+                            value={this.state.password.length?this.state.password:"Пароль"}
+                            onChangeText={text => this.onChangeText('password', text)}
+                        />
+                    </Item>
+
                     {/*<TouchableOpacity onPress={()=>{this.setState({checkSave:!this.state.checkSave})}}>*/}
-                    <Item style={{ marginTop : 10, marginBottom : 5, borderColor : "#fff"}}>
-                            {/*<View style={{display : "flex", flex : 1, width : "100%"}}>*/}
-                           <View>
-                                <CheckBox checked={this.state.checkSave} onPress={()=>{this.saveCredentials(!this.state.checkSave)}} color="#62b1f6"/>
-                            </View>
-                            <View style={{ marginLeft : 20}}>
-                                <Text>{"Сохранить логин и пароль"}</Text>
-                            </View>
+                    <Item style={{ marginLeft : 60, marginTop : 10, marginBottom : 5, borderColor : 'transparent'}}>
+                       <View>
+                            <CheckBox checked={this.state.checkSave} onPress={()=>{this.saveCredentials(!this.state.checkSave)}} color={theme.primaryDarkColor}/>
+                        </View>
+                        <View style={{ marginLeft : 20}}>
+                            <Text style={{color : theme.primaryDarkColor}}>{"Сохранить логин и пароль"}</Text>
+                        </View>
                     </Item>
-                    {/*</TouchableOpacity>*/}
-                    <Button block info style={styles.inputButton} onPress={this.onLogin}>
-                        <Text style={styles.loginButton}>Логин</Text>
-                    </Button>
+
+                    {userID ?   <Button style={{  marginLeft : 60, marginTop : 5, marginRight : 60, borderRadius : 30,
+                                                justifyContent: "center",
+                                                alignItems: "center",
+                                                color : theme.primaryDarkColor, backgroundColor : theme.secondaryLightColor}} onPress={()=>this.props.onUserLoggingOut(token)}>
+                                    <View style={{ justifyContent: "center", alignItems: "center" }}>
+                                        <Text style={{fontSize : RFPercentage(3), color : theme.primaryDarkColor, width : "100%", fontWeight : "800"}}>ВЫЙТИ</Text>
+                                    </View>
+                                </Button> :
+                                <Button style={{marginLeft : 60, marginTop : 5, marginRight : 60, borderRadius : 30,
+                                                justifyContent: "center",
+                                                alignItems: "center",
+                                                color : theme.primaryDarkColor, backgroundColor : theme.primaryTextColor}} onPress={this.onLogin}>
+                                    <View style={{ justifyContent: "center", alignItems: "center" }}>
+                                        <Text style={{fontSize : RFPercentage(3), color : theme.primaryDarkColor, width : "100%", fontWeight : "800"}}>ВОЙТИ</Text>
+                                    </View>
+                                </Button>}
+
+                    {/*<Button block light style={styles.inputButtonDark} onPress={this.forgotPwd}>*/}
+                                <View style={{marginTop : 20,
+                                    width : "100%",
+                                    justifyContent: "center",
+                                    alignItems: "center"}}>
+                                    <Text style={{  color : theme.primaryDarkColor,
+                                                    textDecorationLine: 'underline'}} onPress={this.forgotPwd}
+                                          disabled={this.state.sendMailButtonDisabled}>
+                                        {/*{!this.state.sendMailButtonDisabled ? `Забыли пароль? Отправить на${this.state.username && this.state.username.length ? (': ' + this.state.username) : ' почту'}` : "Отправлено"}</Text>*/}
+                                        {!this.state.sendMailButtonDisabled ? `Забыли пароль - отправить на почту?`: `Забыли пароль - отправить на почту?`}</Text>
+                                        </View>
+
+                                <View style={{marginTop : 50,
+                                    width : Dimensions.get('window').width - 240,
+                                    flex : 1,
+                                    justifyContent: "space-around",
+                                    alignItems: "center",
+                                    flexDirection : 'row',
+                                    marginLeft : 120, marginRight : 120
+                                    }}>
+                                   <View
+                                        style={{
+                                            position : "relative",
+                                            height: 40,
+                                            width: 40,
+                                            borderRadius: 40,
+                                            backgroundColor : theme.facebookColor,
+                                            alignItems : "center", justifyContent : "center"}}>
+                                       <Text style={{fontWeight : "800", color : "#000"}}>f</Text>
+                                   </View>
+
+                                    <View
+                                        style={{
+                                            position : "relative",
+                                            height: 40,
+                                            width: 40,
+                                            borderRadius: 40,
+                                            backgroundColor : theme.googleColor,
+                                            alignItems : "center", justifyContent : "center"}}>
+                                        <Text style={{fontWeight : "800", color : "#000"}}>g+</Text>
+                                    </View>
+
+                                </View>
+
+
+                        {/*</Button>*/}
+
+                    {/*<Button block info style={styles.inputButton} onPress={this.onLogin}>*/}
+                        {/*<Text style={styles.loginButton}>Логин</Text>*/}
+                    {/*</Button>*/}
+
 
                     {/*<LoginButton*/}
                     {/*style={{ width: "100%", height: 48, marginTop : 10, padding : 10 }}*/}
@@ -312,29 +418,42 @@ class LoginBlock extends React.Component {
 
                     {/*<FacebookLogin/>*/}
 
-                    <Button block primary disabled style={styles.inputButton} onPress={() => alert("Facebook")}>
-                        <Text style={styles.loginButton}>Facebook</Text>
-                    </Button>
-                    <Button block danger disabled style={styles.inputButton} onPress={() => alert("Google")}>
-                        <Text style={styles.loginButton}>Google</Text>
-                    </Button>
-                    <Button block light style={styles.inputButtonDark} onPress={this.forgotPwd}>
-                        <Text style={styles.loginButton}
-                              disabled={this.state.sendMailButtonDisabled}>
-                            {!this.state.sendMailButtonDisabled ? `Забыли пароль - отправить на${this.state.username && this.state.username.length ? (': ' + this.state.username) : ' почту'}?` : "Отправлено"}</Text>
-                    </Button>
-                    {this.props.userSetup.userID ? <Button block warning style={[styles.inputButton, {marginTop: 15}]}
-                                                           onPress={()=>this.props.onUserLoggingOut(this.props.userSetup.token)}>
-                        <Text style={styles.loginButton}>ВЫХОД</Text>
-                    </Button> : null}
+                    {/* Живой код*/}
+                    {/*<Button block primary disabled style={styles.inputButton} onPress={() => alert("Facebook")}>*/}
+                        {/*<Text style={styles.loginButton}>Facebook</Text>*/}
+                    {/*</Button>*/}
+                    {/*<Button block danger disabled style={styles.inputButton} onPress={() => alert("Google")}>*/}
+                        {/*<Text style={styles.loginButton}>Google</Text>*/}
+                    {/*</Button>*/}
+
+
+                    {/*<Button block light style={styles.inputButtonDark} onPress={this.forgotPwd}>*/}
+                        {/*<Text style={styles.loginButton}*/}
+                              {/*disabled={this.state.sendMailButtonDisabled}>*/}
+                            {/*{!this.state.sendMailButtonDisabled ? `Забыли пароль - отправить на${this.state.username && this.state.username.length ? (': ' + this.state.username) : ' почту'}?` : "Отправлено"}</Text>*/}
+                    {/*</Button>*/}
+
+                    {/*{userID ? <Button block warning style={[styles.inputButton, {marginTop: 15}]}*/}
+                                                           {/*onPress={()=>this.props.onUserLoggingOut(this.props.userSetup.token)}>*/}
+                        {/*<Text style={styles.loginButton}>ВЫХОД</Text>*/}
+                    {/*</Button> : null}*/}
+                    {/* Живой код*/}
+
                 </Form>
-                <View style={{marginTop: 5}}>
-                    <Button block info style={[styles.inputButton, {marginTop: 10}]}
-                            onPress={() => this.setState({showVideo: true})}>
-                        <Icon name='videocam'/>
-                        <Text style={[styles.loginButton, {"color": "#fff"}]}>ОБУЧАЮЩЕЕ ВИДЕО</Text>
-                    </Button>
+                <View style={{marginTop: 30, marginLeft : Dimensions.get('window').width - 70}}>
+                    {/*/!*<Button block info style={[styles.inputButton, {marginTop: 10}]}*!/*/}
+                    {/*/!*onPress={() => this.setState({showVideo: true})}>*!/*/}
+                    <Icon onPress={() => this.setState({showVideo: true})} style={{fontSize : 54, color : theme.primaryLightColor}} name='videocam'/>
+                    {/*/!*<Text style={[styles.loginButton, {"color": "#fff"}]}>ОБУЧАЮЩЕЕ ВИДЕО</Text>*!/*/}
+                    {/*/!*</Button>*!/*/}
                 </View>
+                {/*<View style={{marginTop: 5}}>*/}
+                    {/*<Button block info style={[styles.inputButton, {marginTop: 10}]}*/}
+                            {/*onPress={() => this.setState({showVideo: true})}>*/}
+                        {/*<Icon name='videocam'/>*/}
+                        {/*<Text style={[styles.loginButton, {"color": "#fff"}]}>ОБУЧАЮЩЕЕ ВИДЕО</Text>*/}
+                    {/*</Button>*/}
+                {/*</View>*/}
             </View>
         )
 

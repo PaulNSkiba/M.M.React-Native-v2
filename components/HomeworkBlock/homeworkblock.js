@@ -144,6 +144,8 @@ class HomeworkBlock extends Component {
         let daysArr =  daysList().map(item => {
             let newObj = {};
             newObj.label = item.name;
+            newObj.labelEx = item.nameEx;
+            newObj.dateEx = item.dateEx;
             newObj.value = item.id;
             newObj.date = item.date;
             return newObj;
@@ -155,7 +157,7 @@ class HomeworkBlock extends Component {
             })
             daysArr[i].count = arr.length
         }
-        console.log("HomeWorkblock: daysArr", daysArr, this.props.userSetup.localChatMessages, this.props.userSetup.localChatMessages.filter(item=>(item.homework_date!==null)), this.props.userSetup.homework)
+        console.log("HomeWorkblock: daysArr")
         return daysArr
     }
     onSelectDay = item => {
@@ -308,8 +310,8 @@ class HomeworkBlock extends Component {
 
     }
     getHomeWorksForAccordion=()=>{
-        const homeworkorig = this.props.userSetup.localChatMessages.filter(item=>(item.homework_date!==null))
-        let {timetable} = this.props.userSetup
+        let {timetable, theme, localChatMessages} = this.props.userSetup
+        const homeworkorig = localChatMessages.filter(item=>(item.homework_date!==null))
         const daysArr = daysList().map(item => {
             let newObj = {};
             newObj.label = item.name;
@@ -335,8 +337,8 @@ class HomeworkBlock extends Component {
                 }) : []
             // console.log("homework", homework, item, key)
             return   <View key={key} style={{flex: 1}}>
-                        <View style={[styles.msgList, {flex: 7}, {marginBottom: 5}]}>
-                            {tt.length?<Text style={{color : "#4472C4", fontSize : RFPercentage(2)}}>{tt.map((item,key)=>(`${item.position}.${item.subj_name_ua}${key<tt.length?',':''}`))}</Text>:null}
+                        <View style={{flex: 7, marginBottom: 5}}>
+                            {tt.length?<View style={{marginLeft : 10, marginRight : 10}}><Text style={{color :theme.primaryDarkColor, fontSize : RFPercentage(2)}}>{tt.map((item,key)=>(`${item.position}.${item.subj_name_ua}${key<tt.length?',':''}`))}</Text></View>:null}
                             {homework.length ? <ScrollView>
                             {homework.length ? this.getHomeworkItems(homework) : null}
                             </ScrollView> : null}
@@ -359,7 +361,7 @@ class HomeworkBlock extends Component {
             const tags = origChat.length?origChat.filter(item=>itemTag.value===item.tagid):[]
             // console.log("HOMEWORK", itemTag, homework)
             return   <View key={key} style={{flex: 1}}>
-                        <View style={[styles.msgList, {flex: 7}, {marginBottom: 5}]}>
+                        <View style={{flex: 7, marginBottom: 5}}>
                             {tags.length ? <ScrollView
                                 // ref="scrollViewHW"
                                 // onContentSizeChange={(contentWidth, contentHeight) => {
@@ -391,44 +393,11 @@ class HomeworkBlock extends Component {
         return chatTags
     }
     render() {
-        // let messages = []
-        // const {userName, classID} = this.props.userSetup
+        const {theme} = this.props.userSetup
         const {daysArr, initialDay, chatTags, homeworkItems, tagItems} = this.state
         const homeworkorig = this.props.userSetup.localChatMessages.filter(item=>(item.homework_date!==null))
 
-        // const daysArr = daysList().map(item => {
-        //     let newObj = {};
-        //     newObj.label = item.name;
-        //     newObj.value = item.id;
-        //     newObj.date = item.date;
-        //     return newObj;
-        // })
-        // const initialDay = this.getNextStudyDay(daysArr)[0];
-
         console.log("getHomeworkItems", daysArr, homeworkorig)
-
-        // По умолчанию выбираем домашку на завтра...
-        // for (i = 0; i < daysArr.length; i++) {
-        //     let arr = homeworkorig.filter(item => {
-        //         // console.log("HomeWork", item.date, daysArr[i].date, toYYYYMMDD(new Date(item.date)), toYYYYMMDD(new Date(daysArr[i].date)))
-        //         return (item.homework_date.length===8?item.homework_date:toYYYYMMDD(new Date(item.homework_date))) === toYYYYMMDD(new Date(daysArr[i].date))
-        //     })
-        //     daysArr[i].count = arr.length
-        // }
-        // const chatTags = this.props.userSetup.chatTags.map(item => {
-        //     let newObj = {};
-        //     newObj.label = `${item.name}[${item.short}]`;
-        //     newObj.value = item.id;
-        //     return newObj;
-        // })
-        // for (i = 0; i < chatTags.length; i++) {
-        //     let arr = tags.filter(item => {
-        //         // console.log("HomeWork", item.date, daysArr[i].date, toYYYYMMDD(new Date(item.date)), toYYYYMMDD(new Date(daysArr[i].date)))
-        //         return item.tagid === chatTags[i].value
-        //     })
-        //     chatTags[i].count = arr.length
-        // }
-
         const homework = homeworkorig.length ? homeworkorig.filter(
             item => {
                 // console.log("HOMEWORK", item)
@@ -447,15 +416,6 @@ class HomeworkBlock extends Component {
             console.log("write file", JSON.parse(this.state.previewImage).base64, JSON.parse(this.state.previewImage))
             // img = `data:image/png;base64,${JSON.parse(homework.filter(item => item.id === this.state.previewID)[0].attachment3).base64}`
             img = `data:image/png;base64,${JSON.parse(this.state.previewImage).base64}`
-            // console.log("write.2", img)
-            // const Base64Code = JSON.parse(this.state.previewImage).base64 //base64Image is my image base64 string
-            // const dirs = RNFetchBlob.fs.dirs;
-            // imgPath = dirs.DCIMDir + "/image64.png";
-
-
-            // RNFetchBlob.fs.writeFile(imgPath, Base64Code, 'base64')
-            //     .then(res => {console.log("File : ", res)})
-            //     .catch(res => console.log("FileWrite: Error", res))
         }
         // console.log("IMG_PATH", imgPath)
 
@@ -469,15 +429,13 @@ class HomeworkBlock extends Component {
         }
         return (
             <View>
-
-                <View style={this.props.hidden ? styles.hidden : styles.chatContainerNewHW}>
-                    <View style={styles.msgList}>
+                <View style={this.props.hidden ? [styles.hidden, {backgroundColor : theme.primaryLightColor}] : [styles.chatContainerNewHW, {backgroundColor : theme.primaryLightColor}]}>
+                    <View>
                         <Modal
                             animationType="slide"
                             transparent={false}
                             visible={this.state.showPreview}
                             onRequestClose={() => {
-                                // Alert.alert('Modal has been closed.');
                             }}>
                             <View>
                                 {this.state.previewID ?
@@ -485,43 +443,24 @@ class HomeworkBlock extends Component {
                                                cropHeight={Dimensions.get('window').height}
                                                imageWidth={Dimensions.get('window').width}
                                                imageHeight={Dimensions.get('window').height}
-                                               // enableCenterFocus={false}
-                                               // panToMove={true}
                                         >
                                         <Image style={{
                                             width: Dimensions.get('window').width,
                                             height: Dimensions.get('window').height,
-                                            // resizeMode: Image.resizeMode.contain,
-                                            // borderWidth: 1,
-                                            // borderColor: 'red'
                                         }} source={{uri: img}}/>
-
-                                        {/*<SingleImage*/}
-                                        {/*uri={`data:image/png;base64,${JSON.parse(homework.filter(item => item.id === this.state.previewID)[0].attachment3).base64}`}*/}
-                                        {/*style={{position: "relative", height: "100%"}}*/}
-                                        {/*onClose={() => this.setState({showPreview: false, previewID: 0})}*/}
-                                        {/*/>*/}
                                     </ImageZoom> : null}
-
-                                {/*{homework.length && this.state.previewID?*/}
-                                {/*<SingleImageZoomViewer source={img} width={200} height={200}/>*/}
-                                {/*:null}*/}
-                                {/*{homework.length && this.state.previewID ?*/}
-                                {/*<ImageViewer imageUrls={images}/>*/}
-                                {/*: null}*/}
 
                                 <TouchableOpacity
                                     style={{position: "absolute", top: 10, right: 10, zIndex: 10}}
                                     onPress={() => this.setState({showPreview: false, previewID: 0})}>
                                     <View style={{
-
                                         paddingTop: 5, paddingBottom: 5,
                                         paddingLeft: 15, paddingRight: 15, borderRadius: 5,
-                                        borderWidth: 2, borderColor: "#33ccff", zIndex: 10,
+                                        borderWidth: 2, borderColor: theme.photoButtonColor, zIndex: 10,
                                     }}>
                                         <Text style={{
                                             fontSize: 20,
-                                            color: "#33ccff",
+                                            color: theme.photoButtonColor,
                                             zIndex: 10,
                                         }}
                                         >X</Text>
@@ -533,13 +472,11 @@ class HomeworkBlock extends Component {
                         </Modal>
                         <Container>
                             <Tabs>
-                                <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text
-                                    style={{color: "#fff"}}>{`ЗАДАНИЯ`}</Text></TabHeading>}>
-                                    <AccordionCustom data={daysArr}  data2={homeworkItems} ishomework={true} index={index}/>
+                                <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{`ЗАДАНИЯ`}</Text></TabHeading>}>
+                                    <AccordionCustom data={daysArr}  data2={homeworkItems} usersetup={this.props.userSetup} ishomework={true} index={index}/>
                                 </Tab>
-                                <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text
-                                    style={{color: "#fff"}}>{`ЗАМЕТКИ `}<Icon style={{fontSize: 15, color: '#fff'}} name="medical"/></Text></TabHeading>}>
-                                    <AccordionCustom data={chatTags} data2={tagItems} ishomework={true}/>
+                                <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{`ЗАМЕТКИ `}<Icon style={{fontSize: 15, color: theme.primaryTextColor}} name="medical"/></Text></TabHeading>}>
+                                    <AccordionCustom data={chatTags} data2={tagItems} usersetup={this.props.userSetup} ishomework={true}/>
                                 </Tab>
                             </Tabs>
                         </Container>

@@ -12,10 +12,12 @@ import { version, AUTH_URL, API_URL} from '../../config/config'
 import LoggingByToken from '../../components/LoggingByToken/loggingbytoken'
 import styles from '../../css/styles'
 import {RFPercentage, RFValue} from "react-native-responsive-fontsize";
-import Logo from '../../img/LogoMyMsmall.png'
+import Logo150 from '../../img/logo150.png'
+import Hamburger from 'react-native-hamburger';
 import LogoBlack from '../../img/LogoMyMsmallBlack.png'
 import OfflineNotice from '../OfflineNotice/offlinenotice'
 import { QRCode } from 'react-native-custom-qr-codes';
+// import Logo from '../../img/logo45.png'
 
 class HeaderBlock extends React.Component {
     constructor(props) {
@@ -31,7 +33,8 @@ class HeaderBlock extends React.Component {
             netOnline: false,
             netType: '',
             showQR : false,
-            geoObj : {city : "", country : "", iso_code : ""}
+            geoObj : {city : "", country : "", iso_code : ""},
+            showDrawer : false,
         }
     }
     componentDidMount() {
@@ -48,10 +51,19 @@ class HeaderBlock extends React.Component {
                 this.setState({getObj : obj})
             })
     }
-    render = () => {
-        // console.log("headerBlock", this.props.token.length,'@', this.props.userSetup.token.length)
+    measureView(event : Object) {
+        // console.log(`*** event: ${JSON.stringify(event.nativeEvent)}`);
+        this.props.onReduxUpdate("HEADER_HEIGHT", event.nativeEvent.layout.height)
+        // return JSON.stringify(event.nativeEvent)
+        // you'll get something like this here:
+        // {"target":1105,"layout":{"y":0,"width":256,"x":32,"height":54.5}}
+    }
+    render(){
+        const {token, theme, userID, markscount, userName} = this.props.userSetup
         return (
-            <Header style={styles.header}>
+            <View
+                onLayout={(event) =>this.measureView(event)}>
+            <Header style={[styles.header, {backgroundColor : theme.primaryDarkColor}]}>
                 <Modal
                     animationType="slide"
                     transparent={false}
@@ -63,16 +75,10 @@ class HeaderBlock extends React.Component {
                         width: Dimensions.get('window').width * 0.99,
                         height: Dimensions.get('window').height * 0.99,
                         display : "flex",
+                        flext : 1,
                         justifyContent : "center",
                         alignItems : "center",
                     }}>
-                        {/*<QRCode className='qrcode'*/}
-                                {/*value={'https://mymarks.info/student/add/OUnU0wbadrnUcKIX4qyVoY0sotQQ7Zumqcbb7nUG'}*/}
-                                {/*size={300}*/}
-                                {/*fgColor='black'*/}
-                                {/*bgColor='white'*/}
-                                {/*logo={Logo}*/}
-                        {/*/>*/}
                         {/*{console.log("QR", `${AUTH_URL}/student/add/${this.props.userSetup.addUserToken}`)}*/}
                         <QRCode innerEyeStyle='square' logo={LogoBlack} ecl={"H"} content={`${AUTH_URL}/student/add/${this.props.userSetup.addUserToken}`}/>
                         <Text style={{marginTop : 40}}>Отсканируйте QR-код, чтобы присоединиться к</Text>
@@ -81,7 +87,6 @@ class HeaderBlock extends React.Component {
                             style={{position: "absolute", top: 10, right: 10, zIndex: 10}}
                             onPress={() => this.setState({showQR: false})}>
                             <View style={{
-
                                 paddingTop: 5, paddingBottom: 5,
                                 paddingLeft: 15, paddingRight: 15, borderRadius: 5,
                                 borderWidth: 2, borderColor: "#33ccff", zIndex: 10,
@@ -97,38 +102,49 @@ class HeaderBlock extends React.Component {
                     </View>
 
                 </Modal>
+
                 {this.props.token.length ?
                     <LoggingByToken email={this.props.email} token={this.props.token} logout={false}/> :
                     null}
-                {this.props.userSetup.token.length?this.props.updateState("userToken", this.props.userSetup.token):null}
-                {this.props.updateState("marksInBaseCount", this.props.userSetup.markscount)}
-                <Left>
-                    <TouchableOpacity onPress={()=>this.setState({showQR:true})}>
-                        <Image source={Logo}/>
-                    </TouchableOpacity>
-                </Left>
-                <Body style={{position: "relative", flex: 1, flexDirection: "row"}}>
-                <View>
-                    <Title style={styles.myTitle}>My.Marks</Title>
+                {this.props.userSetup.token.length?this.props.updateState("userToken", token):null}
+                {this.props.updateState("marksInBaseCount", markscount)}
+                <View style={{flex : 1, justifyContent : "flex-start", paddingRight : 0, flexDirection : "row", alignItems : "center"}}>
+                    <View style={{marginRight : 0}}>
+                        <Hamburger
+                            active={this.state.showDrawer}
+                            type={"arrow"}
+                            color={theme.primaryTextColor}
+                            onPress={()=>{this.setState({showDrawer:!this.state.showDrawer});this.props.showdrawer()}}
+                        />
+                    </View>
+                    <View style={{position: "relative", marginLeft : 0}}>
+                        <TouchableOpacity onPress={()=>this.setState({showQR:true})}>
+                            <Image style={{width: 45, height: 45}} source={Logo150}/>
+                        </TouchableOpacity>
+                    </View>
+                    <View style={{position: "relative", flexDirection: "row", marginLeft : 10}}>
+                        <View>
+                            <Title style={[styles.myTitle, {color : theme.primaryTextColor}]}>My.Marks</Title>
+                        </View>
+                        <OfflineNotice/>
+                    </View>
+
                 </View>
-                <OfflineNotice/>
-                </Body>
-                <Right>
-                    <View style={{positon: "relative"}}>
+
+
+                <View>
+                    <View style={{positon: "relative", flex : 1, justifyContent: "center", alignItems : "center"}}>
                         <Text style={[{
                             fontSize: RFPercentage(1),
                             position: "absolute",
                             right: 0,
-                            top: -5,
-                            color: "#4472C4"
+                            top: 0,
+                            color: theme.primaryTextColor
                         }]}>{version}</Text>
                         <View >
                             <Button transparent disabled={this.props.userSetup.showLogin}>
-                                {this.props.userSetup.userID ? <Text style={{
-                                    color: "#4472C4",
-                                    fontWeight: "700"
-                                }}>{this.props.userSetup.userName}  </Text> : null}
-                                <Icon size={36} color={this.props.userSetup.userID ? "#4472C4" : "#A9A9A9"}
+                                {userID?<Text style={{color: theme.primaryTextColor, fontWeight: "700"}}>{userName}</Text>:null}
+                                <Icon size={36} color={userID ? theme.primaryTextColor : theme.primaryLightColor}
                                       style={styles.menuIcon} name='person'
                                       onPress={ () => {
                                           if (!this.props.userSetup.showLogin) {
@@ -144,8 +160,9 @@ class HeaderBlock extends React.Component {
                             </Button>
                         </View>
                     </View>
-                </Right>
+                </View>
             </Header>
+            </View>
         )
     }
 }

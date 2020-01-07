@@ -80,7 +80,18 @@ export const mapStateToProps = store => {
         chat :      store.chat,
     }
 }
-
+export const getNextStudyDay = arr => {
+    let i = 0;
+    obj = {index : 0};
+    arr.forEach((item, index) => {
+        if (item.value > 0 && i === 0) {
+            i = index;
+            obj = item;
+            obj.index = i
+        }
+    })
+    return [i, obj]
+}
 export function langLibrary(lang){
     let langObj = {
         siteName : "Мои оценки",
@@ -574,6 +585,8 @@ export const daysList=()=>{
         let obj = {}
         obj.id = i
         obj.name = dateString(addDay(new Date(), i)) + ' (' + ('0'+ addDay(new Date(), i).getDate()).slice(-2) +'.' + ('0' + (addDay(new Date(), i).getMonth() + 1)).slice(-2) + ')'
+        obj.nameEx = dateString(addDay(new Date(), i))
+        obj.dateEx = ('0'+ addDay(new Date(), i).getDate()).slice(-2) +'.' + ('0' + (addDay(new Date(), i).getMonth() + 1)).slice(-2)
         obj.date = addDay(new Date(), i)
         if (addDay(new Date(), i).getDay()) {
             daysArr.push(obj)
@@ -621,7 +634,7 @@ const getWeek = (curDate) => {
     return Math.ceil((((now - firstJan) / 86400000) + firstJan.getDay())/7)
 }
 export const addMonths= (dateObject, numberMonths) => {
-    var day = dateObject.getDate(); // returns day of the month number
+    let day = dateObject.getDate(); // returns day of the month number
 
     // avoid date calculation errors
     dateObject.setHours(20);
@@ -634,3 +647,126 @@ export const addMonths= (dateObject, numberMonths) => {
 
     return dateObject;
 };
+export const getNearestSeptFirst=()=>{
+    let now = new Date()
+    for (let i = 0; i < 367; i++){
+        now = addDay(now, -1)
+        if (now.getMonth() === 8 && now.getDate() === 1) {
+            return now;
+            }
+        }
+}
+export const themeOptions = {
+    '#01579b' : {
+        primaryColor : '#01579b',
+        primaryLightColor : '#4f83cc',
+        primaryDarkColor : '#002f6c',
+        primaryBorderColor : '#609EF7',
+        secondaryColor : '#ffeb3b',
+        secondaryLightColor : '#ffff72',
+        secondaryDarkColor : '#c8b900',
+        primaryTextColor : '#ffffff',
+        secondaryTextColor : '#000000',
+        primaryMsgColor : '#0084ff',
+        borderColor : "#A9A9A9",
+        navbarColor : "#f0f0f0",
+        facebookColor : '#1d75ce',
+        googleColor : '#70dffb',
+        photoButtonColor : '#33ccff',
+    },
+    '#4f83cc' : {
+        primaryColor : '#01579b',
+        primaryLightColor : '#4f83cc',
+        primaryDarkColor : '#002f6c',
+        primaryBorderColor : '#609EF7',
+        secondaryColor : '#ffffff',
+        secondaryLightColor : '#ffffff',
+        secondaryDarkColor : '#cccccc',
+        primaryTextColor : '#ffffff',
+        secondaryTextColor : '#000000',
+        primaryMsgColor : '#0084ff',
+        borderColor : "#A9A9A9",
+        navbarColor : "#f0f0f0",
+        facebookColor : '#1d75ce',
+        googleColor : '#70dffb',
+        photoButtonColor : '#33ccff',
+    },
+    '#7DA8E6' : {
+        primaryColor : '#7DA8E6',
+        primaryLightColor : '#DEEAF2',
+        primaryDarkColor : '#4472C4',
+        primaryBorderColor : '#BEEBF2',
+        secondaryColor : '#33ccff',
+        secondaryLightColor : '#C1F3F7',
+        secondaryDarkColor : '#1890e6',
+        primaryTextColor : '#ffffff',
+        secondaryTextColor : '#000000',
+        primaryMsgColor : '#0084ff',
+        borderColor : "#A9A9A9",
+        navbarColor : "#f0f0f0",
+        facebookColor : '#1d75ce',
+        googleColor : '#70dffb',
+        photoButtonColor : '#33ccff',
+    },
+    '#46b5be' : {
+        primaryColor : '#46b5be',
+        primaryLightColor : '#9dd7db',
+        primaryDarkColor : '#006699',
+        primaryBorderColor : '#6ddce5',
+        secondaryColor : '#ffcd57',
+        secondaryLightColor : '#fff674',
+        secondaryDarkColor : '#e3c177',
+        primaryTextColor : '#ffffff',
+        secondaryTextColor : '#000000',
+        primaryMsgColor : '#0084ff',
+        borderColor : "#A9A9A9",
+        navbarColor : "#f0f0f0",
+        facebookColor : '#1d75ce',
+        googleColor : '#70dffb',
+        photoButtonColor : '#33ccff',
+    }
+};
+export const themeOptionsEx = {
+    'marks' : {
+        excelMarkTextColor : '#387541',
+            excelMarkColor : '#87DD97',
+            goodMarkColor : '#C6EFCE',
+            normMarkTextColor : '#d87b38',
+            normMarkColor : '#FFEB9C',
+            badMarkTextColor : '#C00000',
+            badMarkColor : '#FF8594',
+            eraseMarkColor : '#d4d4d4',
+    },
+    '#2fbe74': {
+        pri50: '#e4f6eb',
+            pri500: '#00b25c',
+            pri700: '#009145',
+            pri800: '#007f39',
+            sec700: '#be2f79',
+            sec900: '#802764',
+    },
+    '#8b50da': {
+        pri50: '#f0e7fa',
+            pri500: '#752dd3',
+            pri700: '#5d1ec4',
+            pri800: '#4f17bd',
+            sec700: '#679f00',
+            sec900: '#256b00',
+    },
+    '#f69400': {
+        pri50: '#fef2e0',
+            pri500: '#f28800',
+            pri700: '#e66900',
+            pri800: '#dd4f00',
+            sec700: '#0062f6',
+            sec900: '#203ed7',
+    },
+    '#000000': {
+        pri50: '#f5f5f5',
+            pri500: '#555555',
+            pri700: '#262626',
+            pri800: '#000000',
+            sec700: '#434343',
+            sec900: '#000000',
+    },
+}

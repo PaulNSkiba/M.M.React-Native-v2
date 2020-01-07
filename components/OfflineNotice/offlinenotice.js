@@ -28,8 +28,9 @@ class OfflineNotice extends Component {
         this.setState({ netType : type });
     };
     render() {
-            return             <View>
-                <Text style={[styles.hintText, this.state.isConnected? {color: "#080"} : {color: "#800"}]}>
+        const {theme} = this.props.userSetup
+            return  <View style={{paddingRight : 2}}>
+                <Text style={[styles.hintText, this.state.isConnected? {color: theme.secondaryLightColor} : {color: theme.primaryLightColor}]}>
                     {this.state.isConnected && this.state.netType ? this.state.netType : "offline"}
                 </Text>
             </View>

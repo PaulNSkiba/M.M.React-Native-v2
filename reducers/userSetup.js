@@ -1,18 +1,17 @@
 /**
  * Created by Paul on 20.01.2019.
  */
-// import {saveToLocalStorageOnDate, toYYYYMMDD} from '../js/helpers'
-// import {toYYYYMMDD} from '../js/helpers'
+import {themeOptions} from '../js/helpersLight'
 
-const initialState = (check)=>{
-        // console.log("initialState", window.localStorage.getItem("userSetup"), window.localStorage.getItem("userSetupDate")===toYYYYMMDD(new Date()))
-        let obj = {}
+const initialState = {
+        // console.log("initialState", themeOptions)
+        // let obj = {}
         // if (window.localStorage.getItem("userSetup")&&window.localStorage.getItem("userSetupDate")===toYYYYMMDD(new Date())&&check) {
         //     obj = JSON.parse(window.localStorage.getItem("userSetup"))
         //     obj.loading = false }
         // else
-            obj =
-            {
+        //     obj =
+        //     {
             curClass: 0, classNumber : 0, classID : 0,
             pupilCount: 0, students : [], currentYear: "", curYearDone: 0, subjCount: "0/0", userID: 0,
             selectedSubjsArray: [], selectedSubjects:[], selectedSubj : {id:0, subj_key:"#null"},
@@ -30,25 +29,43 @@ const initialState = (check)=>{
             localChatMessages : [], isMobile : true, photoPath : [], markscount : 0,
             needRenew : false, chatTags : [], budget : [], budgetpays : [], renderBudget : 1, classNews : [],
             statsBudget : null, statsBudgetPays : null, selectedFooter : 0, showLogin : false, logoutToken : '',
-            timetable : []
+            timetable : [], subjects : [], headerHeight : 0, footerHeight : 0,
+            theme : {
+                primaryColor : '#46b5be',
+                primaryLightColor : '#9dd7db',
+                primaryDarkColor : '#007ba4',
+                primaryBorderColor : '#6ddce5',
+                secondaryColor : '#ffcd57',
+                secondaryLightColor : '#fff674',
+                secondaryDarkColor : '#e3c177',
+                primaryTextColor : '#ffffff',
+                secondaryTextColor : '#000000',
+                primaryMsgColor : '#0084ff',
+                borderColor : "#A9A9A9",
+                navbarColor : "#f0f0f0",
+                facebookColor : '#1d75ce',
+                googleColor : '#70dffb',
+                photoButtonColor : '#33ccff',
             }
-    return obj
+    //         }
+    // return obj
 }
 
-export function userSetupReducer(state = initialState(true), action) {
+export function userSetupReducer(state = initialState, action) {
     let setup = []
     // ToDO: При отсутствтии настроек проверить на undefined
     switch (action.type) {
         case 'INIT_STATE':
+            console.log("JUST_LOGGEDIN", action.payload, themeOptions)
             return {...state, initialState}
         case 'USER_LOGGEDIN' : {
-            console.log("JUST_LOGGEDIN", action.payload)
+            console.log("JUST_LOGGEDIN", action.payload, themeOptions)
             let {   token, subj_count, subjects_list,
                     selected_subjects, selected_subj, students, marks,
                     mark_dates, best_lines, avg_lines, avg_marks, addUserToken,
                     lastmarkssent, emails, homework, stats2, stats3, mark_date,
                     avgclassmarks, classObj, chatrows, markscount, classNews, tags,
-                    statsBudget, statsBudgetPays, timetable} = action.payload;
+                    statsBudget, statsBudgetPays, timetable, subjects} = action.payload;
             let {   name : userName, id : userID, isadmin } = action.payload.user;
             let {   class_number, pupil_count, year_name, perioddayscount,
                     markblank_id, markblank_alias, selected_marker, titlekind,
@@ -67,8 +84,8 @@ export function userSetupReducer(state = initialState(true), action) {
                 isadmin, studentName, studentId, marks, mark_dates, best_lines, avg_lines, avg_marks, addUserToken,
                 cnt_marks, stud_cnt, subj_cnt, lastmarkssent, emails, homework, stats2 : stats2[0], stats3 : stats3[0],
                 mark_date, avgclassmarks, langLibrary : action.langLibrary, localChatMessages : chatrows, markscount,
-                classNews, chatTags : tags, statsBudget, statsBudgetPays, showLogin : false, timetable,
-                }
+                classNews, chatTags : tags, statsBudget, statsBudgetPays, showLogin : false, timetable, subjects,
+                theme : themeOptions['#46b5be']}
             return setup
             }
         case "USER_SETUP" :
@@ -197,7 +214,7 @@ export function userSetupReducer(state = initialState(true), action) {
             return{...state, classNews: action.payload}
         }
         case 'USER_LOGGEDOUT' :
-            let initState = initialState(false)
+            let initState = initialState
             initState.langLibrary = action.langLibrary
             console.log("userSetupReducer", 'USER_LOGGEDOUT', initState, action.langLibrary)
             return {...initState};
@@ -219,6 +236,12 @@ export function userSetupReducer(state = initialState(true), action) {
             return{...state, token: action.payload}
         case "UPDATE_LOGOUTTOKEN" :
             return{...state, logoutToken: action.payload}
+        case "HEADER_HEIGHT" :
+            return{...state, headerHeight: action.payload}
+        case "FOOTER_HEIGHT" :
+            return{...state, footerHeight: action.payload}
+        case 'CHANGE_THEME' :
+            return{...state, theme : action.payload}
         default :
             return state
     }

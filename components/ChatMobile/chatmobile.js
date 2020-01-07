@@ -23,10 +23,9 @@ import Pusher from 'pusher-js/react-native'
 import Echo from 'laravel-echo'
 import styles from '../../css/styles'
 import Socketio from 'socket.io-client'
+import { Smile } from 'react-feather';
 
 // import addMsg from '../../img/addMsg.svg'
-
-import { Smile } from 'react-feather';
 // import { Picker, emojiIndex } from 'emoji-mart';
 
 window.Pusher = Pusher
@@ -341,12 +340,12 @@ class ChatMobile extends Component {
             console.log('websocket-listening', echo)
             echo.join(channelName)
                 .listen('ChatMessageSSL', (e) => {
-                    console.log("FILTER-SSL", e.message)
+                    console.log("FILTER-SSL")
 
                     let msg = prepareMessageToFormat(e.message), msgorig = e.message, isSideMsg = true
                     let localChat = this.state.localChatMessages,
                         arrChat = []
-                    console.log("FILTER-SSL", e.message, msg)
+                    console.log("FILTER-SSL")
                     arrChat = localChat.map(
                         item => {
                             // console.log("181", item)
@@ -410,6 +409,7 @@ class ChatMobile extends Component {
                         messages: [...arrChat, msg],
                         messagesNew: this.state.messagesNew.filter(item => !(item.uniqid === JSON.parse(msg).uniqid))
                     })
+                    this.props.onReduxUpdate("ADD_CHAT_MESSAGES", arrChat)
                     const todayMessages = arrChat.filter(item=>(new Date(item.msg_date).toLocaleDateString())===(new Date().toLocaleDateString()))
                     const homeworks = arrChat.filter(item=>(item.homework_date!==null)).filter(item=>toYYYYMMDD(new Date(item.homework_date))===toYYYYMMDD(addDay((new Date()), 1)))
 
@@ -759,7 +759,7 @@ class ChatMobile extends Component {
     * ToDo: Вывести сообщение (сделать умный input) в случае незаполнения полей имени и электронки
     * */
     sendMessage(text, id, fromChat) {
-        console.log("sendMessage.1", text, id, this.props.isnew)
+        console.log("sendMessage.1", id, this.props.isnew)
         let arr = this.state.addMsgs
         if (this.state.isServiceChat||!this.state.servicePlus) {
             console.log('Отправим электронку', this.state.addMsgs)
@@ -784,7 +784,7 @@ class ChatMobile extends Component {
         // Передаём сообщение с определёнными параметрами (ID-сессии + ClassID)
         // console.log("sendMessage.2", text, id, this.props.isnew)
 
-        console.log('595', id, text, JSON.parse(text))
+        console.log('595', id)
 
         switch (this.props.isnew) {
             case true :
@@ -804,9 +804,7 @@ class ChatMobile extends Component {
                 else {
                    arrChat.push(JSON.parse(text))
                 }
-                // console.log("Send message to server.2", "arr.after: ", arr)
-                console.log('616', id, text, arrChat, API_URL + 'chat/add' + (id?`/${id}`:''))
-                // return
+                console.log('616', id, arrChat, API_URL + 'chat/add' + (id?`/${id}`:''))
                 this.setState({messages: arrChat})
                 // this.props.onReduxUpdate("ADD_CHAT_MESSAGES", arrChat)
                 console.log('816', `${API_URL}chat/add${id?'/'+id:''}`, text, this.props.userSetup.token)

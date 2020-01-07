@@ -17,9 +17,10 @@ import { API_URL, BASE_HOST, WEBSOCKETPORT, LOCALPUSHERPWD, HOMEWORK_ADD_URL,
 import { Icon } from 'react-native-elements'
 import { RFPercentage, RFValue } from "react-native-responsive-fontsize";
 import { connect } from 'react-redux'
-// import { AsyncStorage } from 'react-native';
 import AccordionCustom from '../AccordionCustom/accordioncustom'
 import Dialog, {DialogFooter, DialogButton, DialogContent} from 'react-native-popup-dialog';
+// import { AsyncStorage } from 'react-native';
+
 
 const insertTextAtIndices = (text, obj) => {
     return text.replace(/./g, function(character, index) {
@@ -239,27 +240,28 @@ class HelpBlock extends Component {
     render () {
         // const daysArr = daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;})
         const {newsArr, updatesArr, updates, news} = this.state
+        const {theme} = this.props.userSetup
         console.log("HelpBlock", this.state.viewHeight)
         return (
             <View >
                  <Tabs onChangeTab={({ i, ref, from }) => this.setActiveTab(i)} style={this.state.activeTab===2?{height:this.state.viewHeight}:null}>
-                         <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text style={{color: "#fff"}}>НОВОСТИ</Text></TabHeading>}
+                         <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>НОВОСТИ</Text></TabHeading>}
                                 onPress={()=>console.log("Tab1_Clicked")}
                               >
                              <View style={styles.homeworkSubjectList}>
                                  <Container style={{flex: 1, width : "100%", flexDirection: 'column', position: "relative"}}>
                                      {/*<View style={{flex: 3, borderWidth : 1, borderColor : "#4472C4"}}>*/}
                                          {/*<ScrollView>*/}
-                                             <AccordionCustom data={newsArr}  data2={news} ishomework={true} index={0}/>
+                                             <AccordionCustom data={newsArr}  data2={news} usersetup={this.props.userSetup} ishomework={true} index={0}/>
                                          {/*</ScrollView>*/}
                                      {/*</View>*/}
                                  </Container>
                              </View>
                         </Tab>
-                        <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text style={{color: "#fff"}}>ОБНОВЛЕНИЯ</Text></TabHeading>}>
+                        <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>ОБНОВЛЕНИЯ</Text></TabHeading>}>
                             <View style={styles.homeworkSubjectList}>
                                 <Container style={{flex: 1, width : "100%", flexDirection: 'column', position: "relative"}}>
-                                    <AccordionCustom data={updatesArr}  data2={updates} ishomework={true} index={0}/>
+                                    <AccordionCustom data={updatesArr}  data2={updates} usersetup={this.props.userSetup} ishomework={true} index={0}/>
 
                                     {/*<View style={{flex: 3, borderWidth : 1, borderColor : "#4472C4"}}>*/}
                                         {/*<ScrollView>*/}
@@ -298,7 +300,7 @@ class HelpBlock extends Component {
                                 </Container>
                             </View>
                         </Tab>
-                        <Tab style={{height:this.state.viewHeight}} heading={<TabHeading style={styles.tabHeaderWhen}><Text style={{color: "#fff"}}>ВОПРОС-ОТВЕТ</Text></TabHeading>}>
+                        <Tab style={{height:this.state.viewHeight}} heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>ВОПРОС-ОТВЕТ</Text></TabHeading>}>
                             {/*<Container style={{width : "100%", flexDirection: 'column', position: "relative"}}>*/}
                                 {/*<View style={[styles.chatContainerNew, {flex: 1}]}>*/}
                                 <View
@@ -308,7 +310,7 @@ class HelpBlock extends Component {
                                     style={[styles.chatContainerNew, {flex: 1}, {height:this.state.viewHeight}]}>
                                     {this.state.isSpinner ? <View
                                         style={{position: "absolute", flex: 1, alignSelf: 'center', marginTop: 240, zIndex: 100}}>
-                                        <Spinner color="#33ccff"/>
+                                        <Spinner color={theme.secondaryColor}/>
                                     </View> : null}
                                     {/*this.state.showFooter?{flex: 7}:{flex: 1.5}*/}
                                             <View style={{flex : 7}}>

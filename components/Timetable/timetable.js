@@ -24,7 +24,6 @@ import AccordionCustom from '../AccordionCustom/accordioncustom'
 class Timetable extends Component {
     constructor(props) {
         super(props);
-
         this.state = {
             daysArr : this.getDaysArr(),
             dayItems : this.getDayItems(),
@@ -38,16 +37,13 @@ class Timetable extends Component {
 
     }
     onExit = () => {
-        // console.log("exitBudget")
+        console.log("exitTimetable")
         this.props.onexit()
     }
     getDaysArr=()=>{
         // console.log("getChatTagsObj", this.props.userSetup.localChatMessages.filter(item=>(item.tagid!==null)))
         const   {timetable} = this.props.userSetup
         let     daysArr = []
-
-        // console.log("TIMETABLE2", timetable)
-
         for (let i = 0; i < arrOfWeekDaysLocal.length; i++){
                 let newObj = {};
                 newObj.label = `${arrOfWeekDaysLocal[i]}`;
@@ -56,25 +52,12 @@ class Timetable extends Component {
                 let cnt = 0
                 tt.forEach(item=>cnt=cnt+(item===null?0:(item!==null&&item.position.length===1?1:2)))
                 newObj.count = cnt
-                // newObj.count = timetable.filter(item=>item!==null).filter(item=>item.weekday===i).reduce(function(sum, current) {
-                //     //return sum + current;
-                //     return sum + current===null?0:(current!==null&&current.position.length===1?1:2)
-                // }, 0);
-                // console.log("newObj", newObj)
                 daysArr.push(newObj);
         }
         return daysArr
     }
     getDayItems=()=>{
-        // const origChat = this.props.userSetup.localChatMessages.filter(item=>item.tagid!==null)
-        // const chatTags = this.props.userSetup.chatTags.map(item => {
-        //     let newObj = {};
-        //     newObj.label = `${item.name}[${item.short}]`;
-        //     newObj.value = item.id;
-        //     return newObj;
-        // })
-
-        const   {timetable} = this.props.userSetup
+        const   {timetable, theme} = this.props.userSetup
         let     daysArr = []
         for (let i = 0; i < arrOfWeekDaysLocal.length; i++){
             let newObj = {};
@@ -89,14 +72,14 @@ class Timetable extends Component {
 
         return daysArr.map((itemDay, key)=>{
             const subjs = timetable.length?(timetable.filter(item=>item!==null).filter(item=>itemDay.value===item.weekday)):[]
-            console.log("getDayItems", subjs, timetable, itemDay.weekday)
+            // console.log("getDayItems", subjs, timetable, itemDay.weekday)
             return   <View key={key} style={{flex: 1}}>
-                <View style={[styles.msgList, {flex: 7}, {marginBottom: 5}]}>
+                <View style={{flex: 7, marginBottom: 5, leftMargin : 10, rightMargin : 10}}>
                     {subjs.length ? <ScrollView>
-                        {subjs.length?subjs.map(itemSubj=>
-                            <Item>
-                                <Left><Text style={{color : "#4472C4"}}>{itemSubj.position}</Text></Left>
-                                <Body><Text style={{color : "#4472C4"}}>{itemSubj.subj_name_ua}</Text></Body>
+                        {subjs.length?subjs.map((itemSubj, key)=>
+                            <Item key={key}>
+                                <Left><Text style={{color : "#565656", paddingLeft : 10}}>{itemSubj.position}</Text></Left>
+                                <Body><Text style={{color : theme.primaryDarkColor}}>{itemSubj.subj_name_ua}</Text></Body>
                             </Item>
                         ):null}
                     </ScrollView> : null}
@@ -106,21 +89,20 @@ class Timetable extends Component {
     }
     render() {
         const {daysArr, dayItems} = this.state
+        const {theme, headerHeight} = this.props.userSetup
         console.log("TIMETABLE", this.props.userSetup)
         return (
-
             <View style={styles.modalView}>
-                <View style={{height: (Dimensions.get('window').height - 100), width : Dimensions.get('window').width}}>
-                    {/*<Text style={{color: "#fff"}}>Расписание</Text>*/}
+                <View style={{height : headerHeight, backgroundColor : theme.primaryLightColor}}>
+                </View>
+                <View style={{height: (Dimensions.get('window').height - 100 - headerHeight), width : Dimensions.get('window').width}}>
                     <AccordionCustom data={daysArr} data2={dayItems} ishomework={true}/>
                 </View>
                 <View style={{flex: 1}}>
                     <Footer style={styles.header}>
                         <FooterTab style={styles.header}>
-                            <Button style={[styles.btnClose, {width : "100%"}]} vertical /*active={this.state.selectedFooter===2}*/
-                                    onPress={() => this.onExit()}>
-                                {/*<Icon active name="ios-bookmarks" />*/}
-                                <Text style={styles.btnCloseText}>ВЫХОД</Text>
+                            <Button style={[styles.btnClose, {width : "100%"}]} vertical onPress={()=>this.onExit()}>
+                                <Text style={{color : theme.primaryTextColor}}>ВЫХОД</Text>
                             </Button>
                         </FooterTab>
                     </Footer>

@@ -60,6 +60,7 @@ class ETCBlock extends Component {
     render () {
         const daysArr = daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;})
         const initialDay = this.getNextStudyDay(daysArr)[0];
+        const {theme} = this.props.userSetup
         return (
             <Container>
                 <Modal
@@ -100,7 +101,7 @@ class ETCBlock extends Component {
                 </Modal>
                 <View style={styles.modalView}>
                     <Tabs>
-                        <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text style={{color: "#fff"}}>ПРИЛОЖЕНИЯ</Text></TabHeading>}>
+                        <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>ПРИЛОЖЕНИЯ</Text></TabHeading>}>
                            <View style={{flex : 1, flexDirection : "column", justifyContent : "flex-start"}}>
                             <View style={{flex: 1, flexDirection : "row", padding : 10, justifyContent : "space-around", flexWrap : "wrap"}}>
                                 <Button style={{backgroundColor : "#f0f0f0", color : "#fff", width : 80, height : 80, margin : 5}}
@@ -195,7 +196,7 @@ class ETCBlock extends Component {
                             </View>
                            </View>
                         </Tab>
-                        <Tab heading={<TabHeading style={styles.tabHeaderWhen}><Text style={{color: "#fff"}}>ВЫБРАННЫЕ</Text></TabHeading>}>
+                        <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>ВЫБРАННЫЕ</Text></TabHeading>}>
                             <View style={styles.homeworkSubjectList}>
                                 {/*<RadioForm*/}
                                     {/*// style={{ paddingBottom : 20 }}*/}

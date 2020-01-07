@@ -229,7 +229,7 @@ class Budget extends React.Component {
 
         console.log("Budget")
         const {years} = this.state
-        const {statsBudgetPays, statsBudget} = this.props.userSetup
+        const {statsBudgetPays, statsBudget, theme} = this.props.userSetup
         let index = 0
         years.forEach((item, key)=>item===(new Date()).getFullYear()?index=key:null)
         return (
@@ -237,19 +237,6 @@ class Budget extends React.Component {
                 <View style={{height: (Dimensions.get('window').height - 100)}}>
                     {years.length?
                     <Tabs initialPage={0} page={0}>
-                        {/*<Tab heading={<TabHeading style={styles.tabHeaderWhen}>*/}
-                                             {/*<Text style={{color: "#fff"}}>{"ttt"}</Text>*/}
-                            {/*</TabHeading>}>*/}
-                        {/*</Tab>*/}
-                        {/*<Tab heading={<TabHeading style={styles.tabHeaderWhen}>*/}
-                                {/*<Text style={{color: "#fff"}}>{"ttt2"}</Text>*/}
-                            {/*</TabHeading>}>*/}
-                        {/*</Tab>*/}
-
-                        {/*<Tab disabled={true} heading={<TabHeading style={styles.tabHeaderWhen}>*/}
-                                {/*<Text style={{color: "#fff"}}>{"ПЕРИОД:"}</Text>*/}
-                            {/*</TabHeading>}>*/}
-                        {/*</Tab>*/}
                         {this.state.years.map((item, key)=>{
                             const curYear = item
                             console.log("YEAR", curYear)
@@ -257,8 +244,7 @@ class Budget extends React.Component {
                             const factInsHeader = this.prepPaymentsHeaderAndRowArray(this.state.planIns, curYear)
                             console.log("FACTINSHEADER", factInsHeader)
                             // style={styles.tabHeaderWhen}
-                          return <Tab key={"year"+key} heading={<TabHeading style={styles.tabHeaderWhen}>
-                                      <Text style={{color: "#fff"}}>{item}</Text></TabHeading>}>
+                          return <Tab key={"year"+key} heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{item}</Text></TabHeading>}>
 
 
                                 <Tabs>
@@ -413,7 +399,6 @@ class Budget extends React.Component {
                          }
 
                     </Tabs>:null}
-                    {/*{this.state.isSpinner?<Spinner color="#7DA8E6"/>:null}*/}
                 </View>
                 <View style={{flex: 1}}>
                     <Footer style={styles.header}>
