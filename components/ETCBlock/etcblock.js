@@ -3,7 +3,7 @@
  */
 import React, { Component } from 'react'
 import { StyleSheet, Text, View, Image, ScrollView,
-         TouchableHighlight, Modal, Radio, TouchableOpacity } from 'react-native';
+         TouchableHighlight, Modal, Radio, TouchableOpacity, Dimensions } from 'react-native';
 import {    Container, Header, Left, Body, Right, Button,
             Title, Content,  Footer, FooterTab, TabHeading, Tabs, Tab,
             Form, Item, Input, Label, Textarea, CheckBox, ListItem, Badge, Icon as IconBase } from 'native-base';
@@ -60,9 +60,9 @@ class ETCBlock extends Component {
     render () {
         const daysArr = daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;})
         const initialDay = this.getNextStudyDay(daysArr)[0];
-        const {theme} = this.props.userSetup
+        const {theme, langLibrary} = this.props.userSetup
         return (
-            <Container>
+            <Container style={{backgroundColor : theme.primaryLightColor, height : Dimensions.get('window').height}}>
                 <Modal
                     animationType="slide"
                     transparent={false}
@@ -99,24 +99,24 @@ class ETCBlock extends Component {
                         </Body>
                     </View>
                 </Modal>
-                <View style={styles.modalView}>
+                <View style={[styles.modalView, {height : Dimensions.get('window').height}]}>
                     <Tabs>
-                        <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>ПРИЛОЖЕНИЯ</Text></TabHeading>}>
-                           <View style={{flex : 1, flexDirection : "column", justifyContent : "flex-start"}}>
-                            <View style={{flex: 1, flexDirection : "row", padding : 10, justifyContent : "space-around", flexWrap : "wrap"}}>
+                        <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{langLibrary.mobApps.toUpperCase()}</Text></TabHeading>}>
+                           <View style={{flex : 1, flexDirection : "column", justifyContent : "flex-start", height : Dimensions.get('window').height}}>
+                            <View style={{flex: 1, flexDirection : "row", padding : 10, justifyContent : "space-around", flexWrap : "wrap", backgroundColor : theme.primaryLightColor, height : Dimensions.get('window').height}}>
                                 <Button style={{backgroundColor : "#f0f0f0", color : "#fff", width : 80, height : 80, margin : 5}}
                                         disabled={false}
                                         badge vertical
                                         active={true}
                                         onPress={()=>{this.setState({showTimetable: true})}}>
-                                    <Icon size={52} color={"#4472C4"} active type={'material'} name={'assignment'} inverse />
-                                    <Text style={{fontSize: RFPercentage(1.6)}}>{"Расписание"}</Text>
-                                    <IconBase name="checkmark-circle" color={"#33ccff"} style={{
+                                    <Icon size={52} color={theme.primaryDarkColor} active type={'material'} name={'assignment'} inverse />
+                                    <Text style={{fontSize: RFPercentage(1.6)}}>{langLibrary.mobTimetable}</Text>
+                                    <IconBase name="checkmark-circle" style={{
                                         position: 'absolute',
-                                        top: -12,
-                                        right: -8,
-                                        fontSize: 22,
-                                        color: "#33ccff"
+                                        top: -6,
+                                        right: -14,
+                                        fontSize: 20,
+                                        color: theme.secondaryColor,
                                     }}/>
                                 </Button>
                                 <Button style={{backgroundColor : "#f0f0f0", color : "#fff", width : 80, height : 80, margin : 5}}
@@ -124,16 +124,16 @@ class ETCBlock extends Component {
                                         badge vertical
                                         active={true}
                                         onPress={()=>{this.props.userSetup.isadmin===4 ? null : this.setState({showBudget: true})}}>
-                                    <Icon size={52} color={"#4472C4"} active type={'material'} name={'payment'} inverse />
-                                    <Text style={{fontSize: RFPercentage(1.6)}}>{"Бюджет"}</Text>
+                                    <Icon size={52} color={theme.primaryDarkColor} active type={'material'} name={'payment'} inverse />
+                                    <Text style={{fontSize: RFPercentage(1.6)}}>{langLibrary.mobBudget}</Text>
                                     {this.props.userSetup.isadmin === 4 ? null :
-                                        <IconBase name="checkmark-circle" color={"#33ccff"} style={{
+                                        <IconBase name="checkmark-circle" style={{
                                             position: 'absolute',
-                                            top: -12,
-                                            right: -8,
-                                            fontSize: 22,
-                                            color: "#33ccff"
-                                        }}/>
+                                            top: -6,
+                                            right: -14,
+                                            fontSize: 20,
+                                            color: theme.secondaryColor,
+                                            }}/>
                                     }
                                 </Button>
                                 <Button style={{backgroundColor : "#f0f0f0", color : "#fff", width : 80, height : 80, margin : 5}}
@@ -141,30 +141,30 @@ class ETCBlock extends Component {
                                         badge vertical
                                         active={true}
                                         onPress={()=>{}}>
-                                    <Icon size={52} color={"#4472C4"} active type={'material'} name={'pool'} inverse />
-                                    <Text style={{fontSize: RFPercentage(1.6)}}>{"Кружки"}</Text>
+                                    <Icon size={52} color={theme.primaryDarkColor} active type={'material'} name={'pool'} inverse />
+                                    <Text style={{fontSize: RFPercentage(1.6)}}>{langLibrary.mobSociety}</Text>
                                 </Button>
                                 <Button style={{backgroundColor : "#f0f0f0", color : "#fff", width : 80, height : 80, margin : 5}}
                                         disabled={true}
                                         badge vertical
                                         active={true}
                                         onPress={()=>{}}>
-                                    <Icon size={52} color={"#4472C4"} active type={'material'} name={'school'} inverse />
-                                    <Text style={{fontSize: RFPercentage(1.6)}}>{"Репетиторы"}</Text>
+                                    <Icon size={52} color={theme.primaryDarkColor} active type={'material'} name={'school'} inverse />
+                                    <Text style={{fontSize: RFPercentage(1.6)}}>{langLibrary.mobTutors}</Text>
                                 </Button>
                                 <Button style={{backgroundColor : "#f0f0f0", color : "#fff", width : 80, height : 80, margin : 5}}
                                         disabled={false}
                                         badge vertical
                                         active={true}
                                         onPress={()=>{this.setState({showStat: true})}}>
-                                    <Icon size={52} color={"#4472C4"} active type={'material'} name={'equalizer'} inverse />
-                                    <Text style={{fontSize: RFPercentage(1.6)}}>{"Статистика"}</Text>
-                                    <IconBase name="checkmark-circle" color={"#33ccff"} style={{
+                                    <Icon size={52} color={theme.primaryDarkColor} active type={'material'} name={'equalizer'} inverse />
+                                    <Text style={{fontSize: RFPercentage(1.6)}}>{langLibrary.mobStatistics}</Text>
+                                    <IconBase name="checkmark-circle" style={{
                                         position: 'absolute',
-                                        top: -12,
-                                        right: -8,
-                                        fontSize: 22,
-                                        color: "#33ccff"
+                                        top: -6,
+                                        right: -14,
+                                        fontSize: 20,
+                                        color: theme.secondaryColor,
                                     }}/>
                                 </Button>
                                 <Button style={{backgroundColor : "#f0f0f0", color : "#fff", width : 80, height : 80, margin : 5}}
@@ -172,32 +172,32 @@ class ETCBlock extends Component {
                                         badge vertical
                                         active={true}
                                         onPress={()=>{}}>
-                                    <Icon size={52} color={"#4472C4"} active type={'material'} name={'bookmark'} inverse />
-                                    <Text style={{fontSize: RFPercentage(1.6)}}>{"Метки чата"}</Text>
+                                    <Icon size={52} color={theme.primaryDarkColor} active type={'material'} name={'bookmark'} inverse />
+                                    <Text style={{fontSize: RFPercentage(1.6)}}>{langLibrary.mobTagList}</Text>
                                 </Button>
                                 <Button style={{backgroundColor : "#f0f0f0", color : "#fff", width : 80, height : 80, margin : 5}}
                                         disabled={true}
                                         badge vertical
                                         active={true}
                                         onPress={()=>{}}>
-                                    <Icon size={52} color={"#4472C4"} active type={'material'} name={'album'} inverse />
-                                    <Text style={{fontSize: RFPercentage(1.6)}}>{"Музыка"}</Text>
+                                    <Icon size={52} color={theme.primaryDarkColor} active type={'material'} name={'album'} inverse />
+                                    <Text style={{fontSize: RFPercentage(1.6)}}>{langLibrary.mobMusic}</Text>
                                 </Button>
                                 <Button style={{backgroundColor : "#f0f0f0", color : "#fff", width : 80, height : 80, margin : 5}}
                                         disabled={true}
                                         badge vertical
                                         active={true}
                                         onPress={()=>{}}>
-                                    <Icon size={52} color={"#4472C4"} active type={'material'} name={'build'} inverse />
-                                    <Text style={{fontSize: RFPercentage(1.6)}}>{"Настройки"}</Text>
+                                    <Icon size={52} color={theme.primaryDarkColor} active type={'material'} name={'build'} inverse />
+                                    <Text style={{fontSize: RFPercentage(1.6)}}>{langLibrary.mobSettings}</Text>
                                 </Button>
                             </View>
-                            <View style={{flex: 1, flexDirection : "row", padding : 10}}>
-                            </View>
+                            {/*<View style={{flex: 1, flexDirection : "row", padding : 10}}>*/}
+                            {/*</View>*/}
                            </View>
                         </Tab>
-                        <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>ВЫБРАННЫЕ</Text></TabHeading>}>
-                            <View style={styles.homeworkSubjectList}>
+                        <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{langLibrary.mobAppsSelected.toUpperCase()}</Text></TabHeading>}>
+                            <View style={[styles.homeworkSubjectList, {height : Dimensions.get('window').height}]}>
                                 {/*<RadioForm*/}
                                     {/*// style={{ paddingBottom : 20 }}*/}
                                     {/*dataSource={daysArr}*/}

@@ -8,9 +8,9 @@
 import React, {Component} from 'react';
 import {SafeAreaView, StyleSheet, ScrollView, View, Text, StatusBar, TouchableOpacity, Image } from 'react-native';
 import { Dimensions, AppState, Platform} from 'react-native';
-import {setStorageData, getStorageData, getNextStudyDay, daysList, toYYYYMMDD, themeOptions} from './js/helpersLight'
+import {setStorageData, getStorageData, getNextStudyDay, daysList, toYYYYMMDD, themeOptions, hasAPIConnection, axios2} from './js/helpersLight'
 import axios from 'axios';
-import {API_URL}        from './config/config'
+import {API_URL, AUTH_URL, arrLangs}        from './config/config'
 import { Container, Content, Footer, FooterTab, Spinner, } from 'native-base';
 import HeaderBlock from './components/HeaderBlock/headerBlock'
 import ChatBlock from './components/ChatBlock/chatblock'
@@ -30,6 +30,7 @@ import Foundation from 'react-native-vector-icons/Foundation'
 import FlagUK from './img/united-kingdom-flag-square-icon-32.png'
 import FlagRU from './img/russia-flag-square-icon-32.png'
 import FlagUA from './img/ukraine-flag-square-icon-32.png'
+// import { checkInternetConnection, offlineActionCreators } from 'react-native-offline';
 // import {AsyncStorage} from 'react-native';
 // import {AsyncStorage} from '@react-native-community/async-storage';
 
@@ -56,15 +57,37 @@ class App extends Component {
             appNetWorkChanget : false,
             initialDay : 0,
             showDrawer : false,
+            langLibrary : {},
             daysArr : daysList().map(item => { let o = {}; o.label = item.name; o.value = item.id; o.date = item.date; return o; }),
         }
+        this.defLang = this.props.userSetup.langCode && arrLangs.includes(this.props.userSetup.langCode)?this.props.userSetup.langCode : "UA"
         this.session_id = '';
         this.updateState = this.updateState.bind(this)
         this.setstate = this.setstate.bind(this)
         this.showDrawer = this.showDrawer.bind(this)
+        this.connectivityCheck = this.connectivityCheck.bind(this)
+        // this.loading = true
+    }
+    componentWillMount(){
+        (async ()=> {
+
+            if (this.props.userSetup.langLibrary===undefined) {
+                this.props.onStartLoading()
+                await this.getLangAsync(this.props.userSetup.langCode && arrLangs.includes(this.props.userSetup.langCode) ? this.props.userSetup.langCode : this.defLang)
+                this.props.onStopLoading()
+            }
+            else {
+                if (!Object.keys(this.props.userSetup.langLibrary).length) {
+                    this.props.onStartLoading()
+                    await this.getLangAsync(this.props.userSetup.langCode && arrLangs.includes(this.props.userSetup.langCode) ? this.props.userSetup.langCode : this.defLang)
+                    this.props.onStopLoading()
+                }
+            }
+
+        })()
     }
     async componentDidMount() {
-        // console.log("COMPONENT_DID_MOUNT", Platform.OS, Platform.Version)
+        // console.log("COMPONENT_DID_MOUNT", this.props.userSetup.langLibrary)
         if ((Platform.OS === 'ios') || ((Platform.OS === 'android')&&(Platform.Version > 22))) // > 5.1
         {
             MaterialIcons.loadFont()
@@ -74,28 +97,89 @@ class App extends Component {
             AppState.addEventListener('change', this._handleAppStateChange);
             this.getSessionID();
 
+            this.connectivityCheck();
+
             const dataSaved = JSON.parse(await getStorageData("myMarks.data"))
             const {email, token} = dataSaved
             this.props.onReduxUpdate("UPDATE_TOKEN", token===null?'':token)
             this.setState({userEmail: email, userToken: token===null?'':token})
 
-            /*
-            AsyncStorage.getItem("myMarks.data")
-                .then(res => {
-                        const dataSaved = JSON.parse(res)
-                        if (!(res === null)) {
-                            const langLibrary = {}
-                            const {email, token} = dataSaved
-                            this.props.onReduxUpdate("UPDATE_TOKEN", token===null?'':token)
-                            this.setState({userEmail: email, userToken: token===null?'':token})
-                        }
-                    }
-                )
-                .catch(res=>console.log("localStorage:Error", res))
-            */
         }
     }
+    shouldComponentUpdate(nextProps, nextState) {
+        return true
+        // const {langLibrary : lngLib} = this.props.userSetup
+        // let langLibrary = {}
+        // if (Object.keys(lngLib).length) {
+        //     langLibrary = lngLib
+        // }
+        // else {
+        //     langLibrary = getDefLangLibrary()
+        // }
+        // return Object.keys(langLibrary).length
+    }
+    getLangAsync = async (lang) => {
+        // this.props.onStartLoading()
+        if (!lang) {
+            lang = this.props.userSetup.langCode ? this.props.userSetup.langCode : this.defLang
+        }
+        let langObj = {}
 
+        // console.log("getLangLibrary:start", lang)
+        // console.log("langURL_0")
+        // console.log('langURL_', `${API_URL}langs/get${lang?('/'+lang):''}`)
+        // console.log('langURL', AUTH_URL + ('/api/langs/get' + (lang.length?('/' + lang) : '')))
+
+        let {token} = this.props.userSetup
+
+        this.props.onReduxUpdate("LANG_CODE", lang)
+
+        const headers = {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        }
+        await axios.get(`${API_URL}langs/get${lang?('/'+lang):''}`, null, headers)
+            .then(res => {
+                    console.log("LANG_RES", res)
+                    res.data.forEach(item => langObj[item.alias] = item.word)
+                    this.props.onReduxUpdate("LANG_LIBRARY", langObj)
+                    this.setState({langLibrary: langObj});
+                    this.props.onStopLoading()
+            })
+            .catch(res => {
+                this.props.onStopLoading()
+                console.log("ERROR_LANG", res)
+            })
+    }
+    onSelectLang = async countryCode => {
+        this.getLangAsync(countryCode)
+        this.props.onReduxUpdate("LANG_LIBRARY", this.state.langLibrary)
+        this.props.onReduxUpdate("LANG_CODE", countryCode)
+    }
+    connectivityCheck() {
+        // const { connectionChange } = offlineActionCreators;
+        // console.log("connnectivityCheck:App")
+        // const isConnected = await checkInternetConnection(AUTH_URL, 3000, true);
+        // this.props.onReduxUpdate('UPDATE_ONLINE', isConnected)
+        // AUTH_URL, 3000, true
+
+        hasAPIConnection()
+            .then(res=> {
+                console.log("AppCheck", res)
+                    this.props.onReduxUpdate('UPDATE_ONLINE', res)
+            })
+
+        // checkInternetConnection()
+        //     .then(isConnected => {
+        //             console.log("AppCheck", isConnected)
+        //             // store.dispatch(connectionChange(isConnected));
+        //             this.props.onReduxUpdate('UPDATE_ONLINE', isConnected)
+        //     })
+        //     .catch(res=>console.log("AppCheck:error", res))
+    }
     componentWillUnmount() {
         if ((Platform.OS === 'ios') || ((Platform.OS === 'android')&& (Platform.Version > 22))) // > 5.1
         {
@@ -180,8 +264,9 @@ class App extends Component {
             </View>
     };
     renderDrawer(){
-        const {theme} = this.props.userSetup
+        const {theme, langLibrary, themeColor} = this.props.userSetup
         const colorOptions = Object.keys(themeOptions);
+        console.log("renderDrawer", this.props.userSetup, langLibrary)
         return <View style={{
             backgroundColor : theme.primaryColor,
             height : Dimensions.get('window').height,
@@ -190,34 +275,34 @@ class App extends Component {
             flexDirection : 'column',
             }}>
             <View style={{height: 100, width: 300, margin : 5}}>
-                <View><Text style={{color : theme.primaryTextColor, fontWeight : '800', marginLeft : 10}}>Язык:</Text></View>
+                <View><Text style={{color : theme.primaryTextColor, fontWeight : '800', marginLeft : 10}}>{langLibrary===undefined?'':(langLibrary.lang===undefined?'':langLibrary.lang)}:</Text></View>
                 <View style={{  flex : 1, margin : 10, backgroundColor : "#fff", borderRadius: 10, height : 100, width : Dimensions.get('window').width - 30,
                     flexDirection : 'row', justifyContent : "space-around", alignItems : "center"}}>
-                    <TouchableOpacity key={0} onPress={() =>{console.log("pressed"); this.props.onReduxUpdate('CHANGE_LNG', 'GB')}}>
-                        <View style={{position : 'relative', borderWidth : 1, borderColor : "#dcdcdc"}}>
+                    <TouchableOpacity key={0} onPress={()=>{this.onSelectLang('GB')}}>
+                        <View style={{position : 'relative', textAligh: "center", borderColor : langLibrary.langCode!=='GB'?"#dcdcdc":theme.secondaryColor, borderWidth : langLibrary.langCode!=='GB'?1:4}}>
                             <Image source={FlagUK}/>
                         </View>
                     </TouchableOpacity>
-                    <TouchableOpacity key={1} onPress={() =>{console.log("pressed"); this.props.onReduxUpdate('CHANGE_LNG', 'RU')}}>
-                        <View style={{position : 'relative', textAligh: "center", borderWidth : 1, borderColor : "#dcdcdc"}}>
+                    <TouchableOpacity key={1} onPress={()=>{this.onSelectLang('RU')}}>
+                        <View style={{position : 'relative', textAligh: "center", borderColor : langLibrary.langCode!=='RU'?"#dcdcdc":theme.secondaryColor, borderWidth : langLibrary.langCode!=='RU'?1:4}}>
                             <Image source={FlagRU}/>
                         </View>
                     </TouchableOpacity>
-                    <TouchableOpacity key={2} onPress={() =>{console.log("pressed"); this.props.onReduxUpdate('CHANGE_LNG', 'UA')}}>
-                        <View style={{position : 'relative', borderWidth : 1, borderColor : "#dcdcdc"}}>
+                    <TouchableOpacity key={2} onPress={()=>{this.onSelectLang('UA')}}>
+                        <View style={{position : 'relative', textAligh: "center", borderColor : langLibrary.langCode!=='UA'?"#dcdcdc":theme.secondaryColor, borderWidth : langLibrary.langCode!=='UA'?1:4}}>
                             <Image source={FlagUA}/>
                         </View>
                     </TouchableOpacity>
                 </View>
             </View>
             <View style={{height: 100, width: 300, margin : 5}}>
-                <View><Text style={{color : theme.primaryTextColor, fontWeight : '800', marginLeft : 10}}>Цветовая гамма:</Text></View>
+                <View><Text style={{color : theme.primaryTextColor, fontWeight : '800', marginLeft : 10}}>{langLibrary===undefined?'':(langLibrary.colorTheme===undefined?'':langLibrary.colorTheme)}:</Text></View>
                 <View style={{  flex : 1, margin : 10, backgroundColor : "#fff", borderRadius: 10, height : 100, width : Dimensions.get('window').width - 30,
                                 flexDirection : 'row', justifyContent : "space-around", alignItems : "center"}}>
                     {
                         colorOptions.map(color=>
-                            <TouchableOpacity key={color} onPress={() =>{console.log("pressed"); this.props.onReduxUpdate('CHANGE_THEME', themeOptions[color])}}>
-                                <View style={{position : 'relative', borderWidth : 1, borderColor : "#dcdcdc"}}>
+                            <TouchableOpacity key={color} onPress={() =>{console.log("pressed"); this.props.onReduxUpdate('CHANGE_THEME', themeOptions[color]); this.props.onReduxUpdate('CHANGE_COLOR', color)}}>
+                                <View style={{position : 'relative', borderColor : themeColor!==color?"#dcdcdc":theme.secondaryColor, borderWidth : themeColor!==color?1:4}}>
                                     <View
                                         style={{
                                             width: 40,
@@ -242,12 +327,13 @@ class App extends Component {
     }
     render() {
         let marksReadCount = 0
-        const {marks, localChatMessages, userID, token, theme} = this.props.userSetup
+        const {marks, localChatMessages, userID, token, theme, online, langLibrary, loading} = this.props.userSetup
         const hwarray = localChatMessages.filter(item=>(item.homework_date!==null))
         let {daysArr, initialDay} = this.state
 
         initialDay = initialDay?initialDay: getNextStudyDay(daysArr)[0]
-        console.log("App:render", this.props.userSetup)
+
+        console.log("App:render", loading)
 
         const homework =
             (hwarray.length&&daysArr.length&&initialDay?hwarray.filter(item=>{
@@ -256,6 +342,7 @@ class App extends Component {
                 }
             ).length:0)
 
+        // if (loading&&loading!==-1)
         return (
                 <Container>
                     <StatusBar backgroundColor={theme.primaryDarkColor} hidden={false}/>
@@ -263,7 +350,9 @@ class App extends Component {
                                  email={this.state.userEmail}
                                  showdrawer={this.showDrawer}
                                  token={(!this.props.user.logging)&&(!this.props.user.loggedin)?token:''} footer={this.state.selectedFooter}/>
-                    {this.state.isSpinner ? <Spinner color={theme.secondaryColor}/> : null}
+                    {this.state.isSpinner||(loading&&loading!==-1) ? <View style={{position : "absolute", flex: 1, alignSelf : 'center', marginTop : 240, zIndex : 100 }}>
+                        <Spinner color={theme.secondaryColor}/>
+                    </View> : null}
                     <Drawer
                         open={this.state.showDrawer}
                         type="overlay"
@@ -330,13 +419,13 @@ class App extends Component {
                     {this.state.showFooter ?
                         <View
                             onLayout={(event) =>this.measureView(event)}>
-                        <Footer style={styles.header}>
-                            <FooterTab style={styles.header}>
+                        <Footer style={{elevation: 0, borderWidth : .5, borderColor : theme.secondaryColor}}>
+                            <FooterTab style={{elevation: 0, borderWidth : .5, borderColor : theme.secondaryColor}}>
                                 <ButtonWithBadge
                                     enabled={this.state.selectedFooter === 0}
                                     disabled={this.state.showLogin} //  || (this.props.userSetup.userID === 0)
                                     onpress={this.setstate} // this.props.userSetup.userID?this.setstate:null
-                                    name={"Чат"}
+                                    name={langLibrary.mobChat}
                                     icontype={'material'}
                                     iconname={'message'}
                                     badgestatus={'primary'}
@@ -349,7 +438,7 @@ class App extends Component {
                                     enabled={this.state.selectedFooter === 1}
                                     disabled={this.state.showLogin} //  || (this.props.userSetup.userID === 0)
                                     onpress={this.setstate} // this.props.userSetup.userID?this.setstate:null
-                                    name={"Домашка"}
+                                    name={langLibrary.mobHomework===undefined?'':langLibrary.mobHomework}
                                     icontype={'material'}
                                     iconname={'notifications'}
                                     badgestatus={'error'}
@@ -362,7 +451,7 @@ class App extends Component {
                                     enabled={this.state.selectedFooter === 2}
                                     disabled={this.state.showLogin} //  || (this.props.userSetup.userID === 0)
                                     onpress={this.setstate} // this.props.userSetup.userID?this.setstate:null
-                                    name={"Оценки"}
+                                    name={langLibrary.mobMarks===undefined?'':langLibrary.mobMarks}
                                     icontype={'material'}
                                     iconname={'timeline'}
                                     badgestatus={'success'}
@@ -388,7 +477,7 @@ class App extends Component {
                                     enabled={this.state.selectedFooter === 4}
                                     disabled={this.state.showLogin} //  || (this.props.userSetup.userID === 0)
                                     onpress={this.setstate} // this.props.userSetup.userID?this.setstate:null
-                                    name={"Камера"}
+                                    name={langLibrary.mobCamera===undefined?'':langLibrary.mobCamera}
                                     icontype={'material'}
                                     iconname={'camera'}
                                     badgestatus={'error'}
@@ -409,7 +498,6 @@ class App extends Component {
                                     value={0}
                                     setstate={this.setstate}
                                     stateid={5}/>
-
                             </FooterTab>
                         </Footer></View> : null}
 

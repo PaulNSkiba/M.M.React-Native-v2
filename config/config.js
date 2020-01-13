@@ -1,7 +1,6 @@
 /**
  * Created by Paul on 17.08.2019.
  */
-// import { store } from '../store/configureStore'
 // import axios from 'axios';
 
 // Global consts
@@ -73,3 +72,6 @@ export const markType = [
     {id : 6, letter : 'A', name : 'Годовая'},
 ]
 
+export const arrClasses = [1,2,3,4,5,6,7,8,9,10,11,12]
+export const arrLangs = ["DE", "FR", "IT", "PL", "PT", "RU", "ES", "UA", "GB"]
+// export const defLang = localStorage.getItem("myCountryCode")&& arrLangs.includes(localStorage.getItem("myCountryCode")) ? localStorage.getItem("myCountryCode") : "GB"

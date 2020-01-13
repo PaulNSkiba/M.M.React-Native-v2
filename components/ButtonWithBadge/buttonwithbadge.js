@@ -17,8 +17,9 @@ class ButtonWithBadge extends Component {
         };
     }
     render () {
+        const {theme, localChatMessages} = this.props.userSetup
         const windowRatio = Dimensions.get('window').width? Dimensions.get('window').height / Dimensions.get('window').width : 1.9
-        const todayMessages = this.props.userSetup.localChatMessages.filter(item=>(new Date(item.msg_date).toLocaleDateString())===(new Date().toLocaleDateString())).length
+        const todayMessages = localChatMessages.filter(item=>(new Date(item.msg_date).toLocaleDateString())===(new Date().toLocaleDateString())).length
         // const test = true
         // const hwarray = this.props.userSetup.localChatMessages.filter(item=>(item.homework_date!==null))
         // const homework = hwarray.length?hwarray.filter(item=>{
@@ -29,11 +30,14 @@ class ButtonWithBadge extends Component {
         // console.log("ButtonWithBadge", this.props.icontype, this.props.iconname, todayMessages, homework)
         // if (this.props.kind==='marks') console.log("MARKS_COUNT", this.props.value)
         return (
-            <Button style={this.props.enabled?{backgroundColor : "#A9A9A9", color : "#fff"}:{backgroundColor : "#f0f0f0", color : "#fff"}}
+            <Button style={this.props.enabled?  {   backgroundColor : theme.secondaryColor,
+                                                    color : theme.secondaryDarkColor, borderWidth : 2, borderColor : theme.secondaryColor}:
+                                                {   backgroundColor : theme.secondaryColor,
+                                                    color : theme.secondaryLightColor, borderWidth : 2, borderColor : theme.secondaryColor}}
                     badge vertical
                     active={this.props.enabled&&(!this.props.disabled)}
                     onPress={()=> {
-                        this.props.setstate({selectedFooter: this.props.stateid, showLogin: false})
+                        this.props.setstate({selectedFooter: this.props.stateid, showLogin: false, isSpinner : false})
                     }
                     }>
                 {(this.props.kind==='chat'&&(todayMessages||this.props.value))?
@@ -56,8 +60,11 @@ class ButtonWithBadge extends Component {
                            status={this.props.badgestatus}
                            containerStyle={{ position: 'absolute', top: -8, right: 2 }}>
                     </Badge>:null}
-                <Icon color={this.props.enabled?"#fff":"#4472C4"} active type={this.props.icontype} name={this.props.iconname} inverse />
-                <Text style={this.props.enabled?[styles.tabColorSelected, {fontSize: windowRatio < 1.8?RFPercentage(1.5):RFPercentage(1.6)}]:[styles.tabColor, {fontSize: RFPercentage(1.6)}]}>{this.props.name}</Text>
+                <Icon color={!this.props.enabled?theme.secondaryLightColor:theme.primaryDarkColor} active type={this.props.icontype} name={this.props.iconname} inverse />
+                <Text style={{color :!this.props.enabled?theme.secondaryLightColor:theme.primaryDarkColor,
+                    fontSize: (windowRatio < 1.8?RFPercentage(1.5):RFPercentage(1.6))}}>
+                    {this.props.name}
+                </Text>
             </Button>)
     }
 }

@@ -59,9 +59,11 @@ class CameraBlock extends Component {
             })
             .catch(response=> {
                     console.log("AXIOUS_ERROR", response)
+                    let {offlineMsgs} = this.props.userSetup
+                    offlineMsgs.push(JSON.parse(text))
+                    this.props.onReduxUpdate("ADD_OFFLINE", offlineMsgs)
                 }
             )
-        // console.log("sendMessage", text, id)
     }
     takePicture = async() => {
         if (this.camera) {
@@ -152,13 +154,13 @@ class CameraBlock extends Component {
         // const daysArr = daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;})
         // const initialDay = this.getNextStudyDay(daysArr)[0];
         // console.log("PhotoPath", this.state.photoPath, this.state.prevuri)
-        const {theme} = this.props.userSetup
+        const {theme, langLibrary} = this.props.userSetup
         console.log("uriAdded", this.state.uriAdded)
         return (
             <Container>
                 <View style={styles.modalView}>
                     <Tabs>
-                        <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>КАМЕРА</Text></TabHeading>}>
+                        <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{langLibrary.mobCamera.toUpperCase()}</Text></TabHeading>}>
                             <View style={styles.cameraBlock}>
                                 {this.state.isSpinner ? <View
                                     style={{position: "absolute", flex: 1, alignSelf: 'center', marginTop: 240, zIndex: 100}}>
@@ -181,7 +183,7 @@ class CameraBlock extends Component {
                                 </View>
                             </View>
                         </Tab>
-                        <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text badge vertical style={{color: theme.primaryTextColor}}>ИЗОБРАЖЕНИЯ</Text>
+                        <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text badge vertical style={{color: theme.primaryTextColor}}>{langLibrary.mobShapshot.toUpperCase()}</Text>
                             {this.state.photoPath.length?
                                 <Badge value={this.state.photoPath.length}
                                        status={"warning"}
@@ -215,6 +217,7 @@ class CameraBlock extends Component {
 
                                     </View>:
                                     this.state.photoPath.map((item, key) => {
+                                        console.log("photoPath", item)
                                         return (
                                             <Card key={key}>
                                                 <CardItem>
@@ -236,7 +239,7 @@ class CameraBlock extends Component {
                                                                 backgroundColor : this.state.uriAdded.includes(item.uri)?"#C6EFCE":"#fff"
                                                             }}>
                                                             <Text>{this.state.uriAdded.includes(item.uri)?"Добавлен в чат":"Добавить в чат"}</Text>
-                                                            <Text note>{item.time.toLocaleTimeString()}</Text>
+                                                            <Text note>{(new Date(item.time)).toLocaleTimeString()}</Text>
                                                             </Body>
                                                         </TouchableOpacity>
                                                     </Left>

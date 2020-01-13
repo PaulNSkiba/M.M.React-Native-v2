@@ -4,9 +4,9 @@
 import { LOGINUSER_URL, LOGOUTUSER_URL, LOGINUSERBYTOKEN_URL  } from '../config/config'
 import { instanceAxios, axios2, langLibrary as langLibraryF } from '../js/helpersLight'
 import { AsyncStorage } from 'react-native';
-import axios from 'axios';
+// import axios from 'axios';
 
-export const userLoggedIn = (email, pwd, provider, provider_id, langLibrary) => {
+export const userLoggedIn = (email, pwd, provider, provider_id, langLibrary, theme, themeColor) => {
     return dispatch => {
 
         const data = {
@@ -27,7 +27,7 @@ export const userLoggedIn = (email, pwd, provider, provider_id, langLibrary) => 
                     // alert('USER_LOGGEDIN.1')
                         console.log('USER_LOGGIN', response.data)
                         dispatch({type: 'SHOW_LOGIN',  payload : false})
-                        dispatch ({type: 'USER_LOGGEDIN', payload: response.data, langLibrary: langLibrary});
+                        dispatch ({type: 'USER_LOGGEDIN', payload: {data : response.data, langLibrary : langLibrary, theme : theme, themeColor : themeColor}});
                         dispatch({type: 'ADD_CHAT_MESSAGES', payload: response.data.chatrows});
                         // пробуем записать в LocalStorage имя пользователя, ID, имя и тип авторизации
                         saveToLocalStorage("myMarks.data", email, response.data)
@@ -55,7 +55,7 @@ export const userLoggedIn = (email, pwd, provider, provider_id, langLibrary) => 
    };
 }
 
-export const userLoggedInByToken = (email, token, kind, langLibrary) => {
+export const userLoggedInByToken = (email, token, kind, langLibrary, theme, themeColor) => {
     return dispatch => {
         const data = {
             "email": email,
@@ -65,45 +65,36 @@ export const userLoggedInByToken = (email, token, kind, langLibrary) => {
         // console.log("userLoggedInByToken", LOGINUSERBYTOKEN_URL, token);
         // document.body.style.cursor = 'progress';
         dispatch ({type: 'USER_LOGGING'})
-        // instanceAxios().get(LOGINUSERBYTOKEN_URL, data)
-        // axios({
-        //     method: 'get',
-        //     url: LOGINUSERBYTOKEN_URL,
-        //     headers: {
-        //         Authorization: `Bearer ${token}`,
-        //         Accept: 'application/json',
-        //         'Content-Type': 'application/json',
-        //         'Access-Control-Allow-Origin' : '*',
-        //         'Access-Control-Allow-Methods' : 'GET, POST, PUT, DELETE, OPTIONS',
-        //     }
-        // })
-            axios2('get', LOGINUSERBYTOKEN_URL)
-            .then(response => {
-                // console.log("userLoggedInByTokenError", response);
-                dispatch({type: 'SHOW_LOGIN',  payload : false})
-                response.data.token = token
-                // resp.token = token
-                dispatch({type: 'USER_LOGGEDIN', payload: response.data, langLibrary : langLibrary});
-                dispatch({type: 'ADD_CHAT_MESSAGES', payload : response.data.chatrows});
 
-                // пробуем записать в LocalStorage имя пользователя, ID, имя и тип авторизации
-                window.localStorage.setItem("userSetupDate", toYYYYMMDD(new Date()))
-                saveToLocalStorage("myMarks.data", email, response.data)
-                dispatch({type: 'USER_LOGGEDIN_DONE'})
+        axios2('get', LOGINUSERBYTOKEN_URL)
+        .then(response => {
+            // console.log("userLoggedInByTokenError", response);
+            dispatch({type: 'SHOW_LOGIN',  payload : false})
+            response.data.token = token
+            // resp.token = token
+            dispatch({type: 'USER_LOGGEDIN', payload: {data : response.data, langLibrary : langLibrary, theme : theme, themeColor : themeColor}});
+            dispatch({type: 'ADD_CHAT_MESSAGES', payload : response.data.chatrows});
 
-            })
-            .catch(response => {
-                console.log("userLoggedInByTokenError", response);
-                AsyncStorage.removeItem("myMarks.data")
-                dispatch({type: "LANG_LIBRARY", langLibrary: langLibrary})
-                dispatch({type: 'USER_LOGGEDIN_DONE'})
-                // dispatch({type: 'APP_LOADED'})
-            })
+            // пробуем записать в LocalStorage имя пользователя, ID, имя и тип авторизации
+            window.localStorage.setItem("userSetupDate", toYYYYMMDD(new Date()))
+
+            saveToLocalStorage("myMarks.data", email, response.data)
+            dispatch({type: 'USER_LOGGEDIN_DONE'})
+
+        })
+        .catch(response => {
+            console.log("userLoggedInByTokenError", response);
+            AsyncStorage.removeItem("myMarks.data")
+            dispatch({type: "LANG_LIBRARY", langLibrary: langLibrary})
+            dispatch({type: 'USER_LOGGEDIN_DONE'})
+            // dispatch({type: 'APP_LOADED'})
+        })
     };
 }
-export const userLoggedOut = (token, langLibrary) => {
+export const userLoggedOut = (token, langLibrary, theme, themeColor) => {
     return dispatch => {
 
+        console.log("userLoggedOut", langLibrary, theme, themeColor)
             // document.body.style.cursor = 'progress';
         AsyncStorage.removeItem("myMarks.data");
         AsyncStorage.removeItem("userSetup")
@@ -111,27 +102,20 @@ export const userLoggedOut = (token, langLibrary) => {
         AsyncStorage.removeItem("localChatMessages")
         dispatch({type: 'UPDATE_TOKEN',  payload : ''})
         dispatch({type: 'SHOW_LOGIN',  payload : true})
-        dispatch({type: 'USER_LOGGEDOUT', langLibrary : langLibrary});
+        dispatch({type: 'USER_LOGGEDOUT', payload : {langLibrary : langLibrary, theme : theme, themeColor : themeColor}});
 
-        // const header = {
-        //     Authorization: `Bearer ${token}`,
-        //     Accept: 'application/json',
-        //     'Content-Type': 'application/json',
-        //     'Access-Control-Allow-Origin' : '*',
-        //     'Access-Control-Allow-Methods' : 'GET, POST, PUT, DELETE, OPTIONS',
-        // }
-        // return
-        // console.log("userLoggedOut", token, LOGOUTUSER_URL)
-        // return
+
         dispatch({type: 'APP_LOADING'})
-                axios2('get', LOGOUTUSER_URL)
-                .then(response => {
-                    console.log("logoutSuccess", response);
-                })
-                .catch(response => {
-                    dispatch({type: "LANG_LIBRARY", payload: langLibrary})
-                    console.log("logoutError", response);
-                })
+        axios2('get', LOGOUTUSER_URL)
+        .then(response => {
+            console.log("logoutSuccess", response);
+            dispatch({type: 'APP_LOADED'})
+        })
+        .catch(response => {
+            dispatch({type: "LANG_LIBRARY", payload: langLibrary})
+            dispatch({type: 'APP_LOADED'})
+            console.log("logoutError", response);
+        })
         };
 }
 

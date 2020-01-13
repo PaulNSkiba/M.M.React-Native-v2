@@ -393,7 +393,7 @@ class HomeworkBlock extends Component {
         return chatTags
     }
     render() {
-        const {theme} = this.props.userSetup
+        const {theme, langLibrary} = this.props.userSetup
         const {daysArr, initialDay, chatTags, homeworkItems, tagItems} = this.state
         const homeworkorig = this.props.userSetup.localChatMessages.filter(item=>(item.homework_date!==null))
 
@@ -472,10 +472,10 @@ class HomeworkBlock extends Component {
                         </Modal>
                         <Container>
                             <Tabs>
-                                <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{`ЗАДАНИЯ`}</Text></TabHeading>}>
+                                <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{langLibrary.mobTasks.toUpperCase()}</Text></TabHeading>}>
                                     <AccordionCustom data={daysArr}  data2={homeworkItems} usersetup={this.props.userSetup} ishomework={true} index={index}/>
                                 </Tab>
-                                <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{`ЗАМЕТКИ `}<Icon style={{fontSize: 15, color: theme.primaryTextColor}} name="medical"/></Text></TabHeading>}>
+                                <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{langLibrary.mobTags.toUpperCase()}<Icon style={{fontSize: 15, color: theme.primaryTextColor}} name="medical"/></Text></TabHeading>}>
                                     <AccordionCustom data={chatTags} data2={tagItems} usersetup={this.props.userSetup} ishomework={true}/>
                                 </Tab>
                             </Tabs>

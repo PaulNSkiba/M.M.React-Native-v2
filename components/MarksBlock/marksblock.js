@@ -4,7 +4,7 @@
 import React, { Component } from 'react'
 import {    StyleSheet, Text, View, Image, ScrollView,
             TouchableHighlight, Modal, Radio, TouchableOpacity, FlatList, Dimensions } from 'react-native';
-import {    Container, TabHeading, Tabs, Tab, ScrollableTab} from 'native-base';
+import {    Container, TabHeading, Tabs, Tab, ScrollableTab, Spinner} from 'native-base';
 import RadioForm from 'react-native-radio-form';
 import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, addDay, toYYYYMMDD, daysList, toLocalDate, dateFromTimestamp, getNearestSeptFirst} from '../../js/helpersLight'
 import { connect } from 'react-redux'
@@ -57,6 +57,7 @@ class MarksBlock extends Component {
             ],
             tableTitle: ['Англ.мова', 'Укр.мова', 'Математика', 'Химия'],
             widthArr: [100, 60, 60, 60, 60, 60],
+            isSpinner : true,
         };
         this.markDaySteps = 6
         this.getTableGrids = this.getTableGrids.bind(this)
@@ -147,7 +148,7 @@ class MarksBlock extends Component {
                 subjPages.unshift({i : subjPages.length, arr : curItem})
             }
         }
-        this.setState({dayPages, subjPages, curPage : (dayPages.length-1)})
+        this.setState({dayPages, subjPages, curPage : (dayPages.length-1), isSpinner : false})
         // console.log("Mark_Periods", dayPages, subjPages)
     }
     markColor=mark=>{
@@ -214,6 +215,9 @@ class MarksBlock extends Component {
         // style={styles.modalView}
          return (
                 <Container>
+                    {this.state.isSpinner?<View style={{position : "absolute", flex: 1, alignSelf : 'center', marginTop : 240, zIndex : 100 }}>
+                        <Spinner color={theme.secondaryLightColor}/>
+                    </View>:null}
                     {(this.state.dayPages!==null)&&this.state.dayPages.length?
                     <Tabs renderTabBar={()=> <ScrollableTab />}>
                         {this.state.dayPages.map((rootItem, key) =>

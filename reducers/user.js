@@ -23,12 +23,17 @@ export function userReducer(state = initialState, action) {
         //     return {...state, name : username, id : id, token : token, logging : true, verified: email_verified_at, email,
         //                 loginmsg : "", loggedin : true}
         case 'USER_LOGGEDOUT' :
-            return {...state, name: '',
+            return {...state,
+                name: '',
                 surname: '',
                 age: 0,
                 id : 0,
                 token : "",
                 logging : false,
+                verified : false,
+                email : "",
+                loginmsg : "",
+                logBtnClicked : false,
                 loggedin : false,};
         case 'USER_LOGGING' :
             return {...state, logging: true, loggedin : false};

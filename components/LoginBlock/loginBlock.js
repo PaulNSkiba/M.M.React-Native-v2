@@ -56,8 +56,11 @@ class LoginBlock extends React.Component {
         this.getSavedCreds()
     }
     shouldComponentUpdate(nextProps, nextState) {
+        // console.log("shouldComponentUpdate", this.props)
+        // return true
         const {logging, loginmsg, logBtnClicked} = this.props.user
-        // console.log("shouldComponentUpdate", loginmsg)
+
+        // console.log("shouldComponentUpdate", this.props)
         if (logging) {
             return true
         }
@@ -114,9 +117,7 @@ class LoginBlock extends React.Component {
         this.setState({[key]: val})
     }
     onLogin = () => {
-        // alert(this.state.username + ' ' + this.state.password + ' ' + this.refs)
-        // alert(this.refs.nameLogin.value + " " + this.refs.pwdLogin.value)
-        // return
+        const {langLibrary, theme, themeColor} = this.props.userSetup
         this.props.updateState("userEmail", this.state.username)
 
         let name = this.state.username, //"test@gmail.com",
@@ -130,7 +131,7 @@ class LoginBlock extends React.Component {
         this.props.onReduxUpdate("SHOW_LOGIN", false)
         this.props.onReduxUpdate("USER_LOGGING")
         this.props.onReduxUpdate("LOG_BTN_CLICK")
-        this.props.onUserLogging(name, pwd, provider, provider_id);
+        this.props.onUserLogging(name, pwd, provider, provider_id, langLibrary, theme, themeColor);
     }
 
     clearError() {
@@ -171,10 +172,17 @@ class LoginBlock extends React.Component {
         )
     }
     render() {
+        if (!this.props.user.hasOwnProperty("loginmsg"))
+            this.props.user.loginmsg = ''
+        if (!this.props.user.hasOwnProperty("logBtnClicked"))
+            this.props.user.logBtnClicked = false
+
         const {logging, loginmsg, logBtnClicked} = this.props.user
-        const {theme, userID, token, footerHeight} = this.props.userSetup
-        // console.log("LOGIN_RENDER", this.props.user)
+        const {theme, userID, token, footerHeight, langLibrary, themeColor} = this.props.userSetup
+        console.log("LOGIN_RENDER")
         // const showModal = this.showLogin&&logBtnClicked&&(!loginmsg.length)
+        // return <View></View>
+
         return (
             <View style={{backgroundColor: theme.primaryColor, height : Dimensions.get('window').height}}>
                 <Modal
@@ -185,9 +193,6 @@ class LoginBlock extends React.Component {
                         // Alert.alert('Modal has been closed.');
                     }}>
                     <View style={{
-                        // borderWidth: 2,
-                        // borderColor: "#f00",
-
                         width: Dimensions.get('window').width * 1,
                         height: Dimensions.get('window').height * 0.94,
                         // marginBottom : 50,
@@ -221,10 +226,10 @@ class LoginBlock extends React.Component {
                     </View>
 
                 </Modal>
-                {this.props.user.logging ? <View
-                    style={{position: "absolute", flex: 1, alignSelf: 'center', marginTop: 240, zIndex: 100}}>
-                    <Spinner color={theme.secondaryColor}/>
-                </View> : null}
+                {/*{this.props.user.logging ? <View*/}
+                    {/*style={{position: "absolute", flex: 1, alignSelf: 'center', marginTop: 240, zIndex: 100}}>*/}
+                    {/*<Spinner color={theme.secondaryColor}/>*/}
+                {/*</View> : null}*/}
                 <Form>
                     <View>
                         <Dialog
@@ -295,8 +300,8 @@ class LoginBlock extends React.Component {
                     </Item>
                     <Item rounded style={{marginLeft : 60, marginRight : 60, marginTop : 20, borderColor: 'transparent'}}>
                         <Input
-                               style={{fontSize : RFPercentage(3), paddingLeft : 10, paddingRight : 0, color : theme.primaryDarkColor, fontWeight : "600", borderWidth: 3, borderColor : theme.primaryBorderColor, borderRadius : 30}}
-                               value={this.state.username.length?this.state.username:"Email"}
+                               style={{fontSize : RFPercentage(3), paddingLeft : 10, paddingRight : 0, color : theme.primaryTextColor, fontWeight : "600", borderWidth: 3, borderColor : theme.primaryBorderColor, borderRadius : 30}}
+                               value={this.state.username.length?this.state.username:""}
                                onChangeText={text => this.onChangeText('username', text)}
                         />
                     </Item>
@@ -311,9 +316,9 @@ class LoginBlock extends React.Component {
 
                     <Item rounded style={{marginLeft : 60, marginTop : 10, marginRight : 60, borderColor: 'transparent'}}>
                         <Input
-                            style={{fontSize : RFPercentage(3), paddingLeft : 10, paddingRight : 0, color : theme.primaryDarkColor, fontWeight : "600", borderWidth: 3, borderColor : theme.primaryBorderColor, borderRadius : 30}}
+                            style={{fontSize : RFPercentage(3), paddingLeft : 10, paddingRight : 0, color : theme.primaryTextColor, fontWeight : "600", borderWidth: 3, borderColor : theme.primaryBorderColor, borderRadius : 30}}
                             secureTextEntry={true}
-                            value={this.state.password.length?this.state.password:"Пароль"}
+                            value={this.state.password.length?this.state.password:""}
                             onChangeText={text => this.onChangeText('password', text)}
                         />
                     </Item>
@@ -324,16 +329,16 @@ class LoginBlock extends React.Component {
                             <CheckBox checked={this.state.checkSave} onPress={()=>{this.saveCredentials(!this.state.checkSave)}} color={theme.primaryDarkColor}/>
                         </View>
                         <View style={{ marginLeft : 20}}>
-                            <Text style={{color : theme.primaryDarkColor}}>{"Сохранить логин и пароль"}</Text>
+                            <Text style={{color : theme.primaryDarkColor}}>{langLibrary.mobSaveCheckBox}</Text>
                         </View>
                     </Item>
 
                     {userID ?   <Button style={{  marginLeft : 60, marginTop : 5, marginRight : 60, borderRadius : 30,
                                                 justifyContent: "center",
                                                 alignItems: "center",
-                                                color : theme.primaryDarkColor, backgroundColor : theme.secondaryLightColor}} onPress={()=>this.props.onUserLoggingOut(token)}>
+                                                color : theme.primaryDarkColor, backgroundColor : theme.secondaryLightColor}} onPress={()=>this.props.onUserLoggingOut(token, langLibrary, theme, themeColor)}>
                                     <View style={{ justifyContent: "center", alignItems: "center" }}>
-                                        <Text style={{fontSize : RFPercentage(3), color : theme.primaryDarkColor, width : "100%", fontWeight : "800"}}>ВЫЙТИ</Text>
+                                        <Text style={{fontSize : RFPercentage(3), color : theme.primaryDarkColor, width : "100%", fontWeight : "800"}}>{langLibrary.mobExit===undefined?'':langLibrary.mobExit.toUpperCase()}</Text>
                                     </View>
                                 </Button> :
                                 <Button style={{marginLeft : 60, marginTop : 5, marginRight : 60, borderRadius : 30,
@@ -341,7 +346,7 @@ class LoginBlock extends React.Component {
                                                 alignItems: "center",
                                                 color : theme.primaryDarkColor, backgroundColor : theme.primaryTextColor}} onPress={this.onLogin}>
                                     <View style={{ justifyContent: "center", alignItems: "center" }}>
-                                        <Text style={{fontSize : RFPercentage(3), color : theme.primaryDarkColor, width : "100%", fontWeight : "800"}}>ВОЙТИ</Text>
+                                        <Text style={{fontSize : RFPercentage(3), color : theme.primaryDarkColor, width : "100%", fontWeight : "800"}}>{langLibrary.mobLogin===undefined?'':langLibrary.mobLogin.toUpperCase()}</Text>
                                     </View>
                                 </Button>}
 
@@ -353,8 +358,7 @@ class LoginBlock extends React.Component {
                                     <Text style={{  color : theme.primaryDarkColor,
                                                     textDecorationLine: 'underline'}} onPress={this.forgotPwd}
                                           disabled={this.state.sendMailButtonDisabled}>
-                                        {/*{!this.state.sendMailButtonDisabled ? `Забыли пароль? Отправить на${this.state.username && this.state.username.length ? (': ' + this.state.username) : ' почту'}` : "Отправлено"}</Text>*/}
-                                        {!this.state.sendMailButtonDisabled ? `Забыли пароль - отправить на почту?`: `Забыли пароль - отправить на почту?`}</Text>
+                                        {!this.state.sendMailButtonDisabled ? `${langLibrary.mobSendPwd}`: `${langLibrary.mobSendPwd}`}</Text>
                                         </View>
 
                                 <View style={{marginTop : 50,
@@ -371,9 +375,10 @@ class LoginBlock extends React.Component {
                                             height: 40,
                                             width: 40,
                                             borderRadius: 40,
+                                            color : theme.primaryTextColor,
                                             backgroundColor : theme.facebookColor,
                                             alignItems : "center", justifyContent : "center"}}>
-                                       <Text style={{fontWeight : "800", color : "#000"}}>f</Text>
+                                       <Text style={{fontWeight : "800", color : theme.primaryTextColor}}>f</Text>
                                    </View>
 
                                     <View
@@ -465,26 +470,26 @@ const mapDispatchToProps = dispatch => {
     // console.log("mapDispatchToProps", dispatch)
     // let {userSetup} = this.props
     return ({
-        onUserLogging: (name, pwd, provider, provider_id, langLibrary) => {
+        onUserLogging: (name, pwd, provider, provider_id, langLibrary, theme, themeColor) => {
             dispatch({type: 'APP_LOADING'})
             console.log("OnUserLogging")
-            const asyncLoggedIn = (name, pwd, provider, provider_id, langLibrary) => {
+            const asyncLoggedIn = (name, pwd, provider, provider_id, langLibrary, theme, themeColor) => {
                 return dispatch => {
-                    dispatch(userLoggedIn(name, pwd, provider, provider_id, langLibrary))
+                    dispatch(userLoggedIn(name, pwd, provider, provider_id, langLibrary, theme, themeColor))
                 }
             }
-            dispatch(asyncLoggedIn(name, pwd, provider, provider_id, langLibrary))
+            dispatch(asyncLoggedIn(name, pwd, provider, provider_id, langLibrary, theme, themeColor))
         },
-        onUserLoggingByToken: async (email, token, kind, langLibrary) => {
+        onUserLoggingByToken: async (email, token, kind, langLibrary, theme, themeColor) => {
             const asyncLoggedInByToken = (email, token, kind, langLibrary) => {
                 return async dispatch => {
-                    dispatch(userLoggedInByToken(email, token, kind, langLibrary))
+                    dispatch(userLoggedInByToken(email, token, kind, langLibrary, theme, themeColor))
                 }
             }
-            dispatch(asyncLoggedInByToken(email, token, kind, langLibrary))
+            dispatch(asyncLoggedInByToken(email, token, kind, langLibrary, theme, themeColor))
         },
-        onUserLoggingOut: (token, langLibrary) => {
-            return dispatch(userLoggedOut(token, langLibrary))
+        onUserLoggingOut: (token, langLibrary, theme, themeColor) => {
+            return dispatch(userLoggedOut(token, langLibrary, theme, themeColor))
         },
         onClearErrorMsg: () => {
             dispatch({type: 'USER_MSG_CLEAR', payload: []})

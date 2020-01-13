@@ -3,7 +3,7 @@
  */
 import React, { Component } from 'react'
 import { connect } from 'react-redux'
-import { store } from '../../store/configureStore'
+import store from '../../store/configureStore'
 import { StyleSheet, Text, View, Image, Modal, TextInput, TouchableWithoutFeedback, AppState,
          Animated, Dimensions, Keyboard, Platform } from 'react-native';
 import { Icon } from 'react-native-elements'
@@ -17,8 +17,10 @@ import { ChatManager, TokenProvider } from '@pusher/chatkit-client'
 import arrow_down from '../../img/ARROW_DOWN.png'
 import arrow_up from '../../img/ARROW_UP.png'
 import { API_URL, BASE_HOST, WEBSOCKETPORT, LOCALPUSHERPWD, HOMEWORK_ADD_URL,
-        instanceLocator, testToken, chatUserName } from '../../config/config'
-import {dateFromYYYYMMDD, addDay, arrOfWeekDays, dateDiff, toYYYYMMDD, instanceAxios, mapStateToProps, prepareMessageToFormat, echoClient, axios2} from '../../js/helpersLight'
+        instanceLocator, testToken, chatUserName, arrLangs } from '../../config/config'
+import {dateFromYYYYMMDD, addDay, arrOfWeekDays, dateDiff,
+        toYYYYMMDD, instanceAxios, mapStateToProps, prepareMessageToFormat,
+        echoClient, axios2, hasAPIConnection, getLangAsyncFunc} from '../../js/helpersLight'
 import Pusher from 'pusher-js/react-native'
 import Echo from 'laravel-echo'
 import styles from '../../css/styles'
@@ -106,15 +108,17 @@ class ChatMobile extends Component {
     }
     measureView(event: Object) {
         console.log(`*** event: ${JSON.stringify(event.nativeEvent)}`);
-        // you'll get something like this here:
-        // {"target":1105,"layout":{"y":0,"width":256,"x":32,"height":54.5}}
     }
     componentDidMount(){
         // console.log("this.props.isnew", this.props.isnew)
-
+        let {langLibrary, langCode} = this.props.userSetup
         // Print component dimensions to console
-        console.log("chatMobile", this._animatedView)
-
+        console.log("chatMobile", langLibrary)
+        const defLang = langCode && arrLangs.includes(langCode)?langCode : "UA"
+        if (!langLibrary) {
+            // let lang = langCode ? langCode : defLang
+            this.props.onReduxUpdate("LANG_LIBRARY", getLangAsyncFunc(langCode ? langCode : defLang))
+        }
 
         NetInfo.isConnected.addEventListener('connectionChange', this.handleConnectivityChange);
         AppState.addEventListener('change', this._handleAppStateChange);
@@ -162,11 +166,44 @@ class ChatMobile extends Component {
     _handleAppStateChange = (nextAppState) => {
         const {classID, studentId, localChatMessages, markscount} = this.props.userSetup
         if (this.state.appState.match(/inactive|background/) && nextAppState === 'active') {
-            console.log('AppState: ', 'App has come to the foreground!', this.state.appState, nextAppState);
+            console.log('ChatState: ', 'App has come to the foreground!', this.state.appState, nextAppState);
+            // ToDO: Вначале проверим, вернулись ли мы в онлайн, если да, то запрос
+            let {offlineMsgs} = this.props.userSetup
+            hasAPIConnection()
+                .then(res=>{
+                    console.log("chatMobile: hasAPIConnection", res)
+                    if (res&&offlineMsgs.length){
+                        // this.props.onReduxUpdate('UPDATE_ONLINE', res)
+                        console.log("chatMobile!!!", res)
+                        if (offlineMsgs.length){
+                            // const {userID} = this.props.userSetup
+                            offlineMsgs.forEach(item=>{
+                                console.log("OFFLINE_MSG", item);
+                                // this.sendMessage(JSON.stringify(item), 0, false);
+                                 instanceAxios().post(`${API_URL}chat/add`, JSON.stringify(item))
+                                    .then(response => {
+                                        console.log('ADD_MSG', response)
+                                        // let {offlineMsgs} = this.props.userSetup
+                                        offlineMsgs = offlineMsgs.filter(itemOff=>item.uniqid!==itemOff.uniqid)
+                                        this.props.onReduxUpdate("ADD_OFFLINE", offlineMsgs)
+                                    })
+                                    .catch(response=> {
+                                            console.log("AXIOUS_ERROR", response)
+                                            // let {offlineMsgs} = this.props.userSetup
+                                            // offlineMsgs.push(JSON.parse(text))
+                                            // this.props.onReduxUpdate("ADD_OFFLINE", offlineMsgs)
+                                        }
+                                    )
+                            })
+                        }
+                    }
+                    })
+            // ToDO: Если есть неотправленные сообщения, то пытаемся отправить и чистить отправленные...
+
             if (classID) {
                 instanceAxios().get(API_URL + `class/getstat/${classID}/${studentId}'/0`)
                     .then(response => {
-                        console.log('_handleAppStateChange', response, this.props.userSetup)
+                        console.log('Chat:_handleAppStateChange', response, this.props.userSetup)
                         // homeworks: 13
                         // marks: 0
                         // msgs: 250
@@ -758,8 +795,8 @@ class ChatMobile extends Component {
     * или же просто в state в случае письма в техподдержку
     * ToDo: Вывести сообщение (сделать умный input) в случае незаполнения полей имени и электронки
     * */
-    sendMessage(text, id, fromChat) {
-        console.log("sendMessage.1", id, this.props.isnew)
+    async sendMessage(text, id, fromChat) {
+        console.log("sendMessage.1", id, text)
         let arr = this.state.addMsgs
         if (this.state.isServiceChat||!this.state.servicePlus) {
             console.log('Отправим электронку', this.state.addMsgs)
@@ -804,12 +841,12 @@ class ChatMobile extends Component {
                 else {
                    arrChat.push(JSON.parse(text))
                 }
-                console.log('616', id, arrChat, API_URL + 'chat/add' + (id?`/${id}`:''))
+                // console.log('616', id, arrChat, API_URL + 'chat/add' + (id?`/${id}`:''))
                 this.setState({messages: arrChat})
                 // this.props.onReduxUpdate("ADD_CHAT_MESSAGES", arrChat)
                 console.log('816', `${API_URL}chat/add${id?'/'+id:''}`, text, this.props.userSetup.token)
                 // instanceAxios().post(API_URL + 'chat/add' + (id?`/${id}`:''), text)
-                axios2('post', `${API_URL}chat/add${id?'/'+id:''}`, text)
+                await axios2('post', `${API_URL}chat/add${id?'/'+id:''}`, text)
                     .then(response => {
                         console.log('ADD_MSG', response)
                         // this._textarea.setNativeProps({'editable':false});
@@ -818,9 +855,10 @@ class ChatMobile extends Component {
                         this.setState({curMessage : ''})
                     })
                     .catch(response=> {
-                            console.log("AXIOUS_ERROR", response)
-                            // this._textarea.setNativeProps({'editable': false});
-                            // this._textarea.setNativeProps({'editable':true});
+                            console.log("AXIOUS_ERROR", response, text)
+                            let {offlineMsgs} = this.props.userSetup
+                            offlineMsgs.push(JSON.parse(text))
+                            this.props.onReduxUpdate("ADD_OFFLINE", offlineMsgs)
                             this.props.setstate({showFooter: true})
                             this.setState({curMessage: ''})
                         }
@@ -918,41 +956,48 @@ class ChatMobile extends Component {
         this.setState({viewHeight : (windowHeight - keyboardHeight), keyboardHeight})
         console.log("handleKeyboardDidShow")
         return;
-        this._animatedView.measure((originX, originY, width, height, pageX, pageY) => {
-            const fieldHeight = height;
-            const fieldTop = pageY;
-            const gap = (windowHeight - keyboardHeight) - (fieldTop + fieldHeight);
-            console.log("gap", gap)
-            if (gap >= 0) {
-                return;
-            }
-            Animated.timing(
-                this.state.shift,
-                {
-                    toValue: gap,
-                    duration: 1000,
-                    useNativeDriver: true,
-                }
-            ).start();
-        });
+        // this._animatedView.measure((originX, originY, width, height, pageX, pageY) => {
+        //     const fieldHeight = height;
+        //     const fieldTop = pageY;
+        //     const gap = (windowHeight - keyboardHeight) - (fieldTop + fieldHeight);
+        //     console.log("gap", gap)
+        //     if (gap >= 0) {
+        //         return;
+        //     }
+        //     Animated.timing(
+        //         this.state.shift,
+        //         {
+        //             toValue: gap,
+        //             duration: 1000,
+        //             useNativeDriver: true,
+        //         }
+        //     ).start();
+        // });
     }
 
     handleKeyboardDidHide = () => {
         const { height: windowHeight } = Dimensions.get('window');
         this.setState({viewHeight : (windowHeight), keyboardHeight : 0})
         console.log("handleKeyboardDidHide")
-        return;
-        Animated.timing(
-            this.state.shift,
-            {
-                toValue: 0,
-                duration: 1000,
-                useNativeDriver: true,
-            }
-        ).start();
+        // return;
+        // Animated.timing(
+        //     this.state.shift,
+        //     {
+        //         toValue: 0,
+        //         duration: 1000,
+        //         useNativeDriver: true,
+        //     }
+        // ).start();
     }
     render() {
-        const { showEmojiPicker, shift } = this.state;
+        let { showEmojiPicker, shift, localChatMessages } = this.state
+        const { theme, langLibrary, offlineMsgs } = this.props.userSetup
+
+        const offlineMsgsLocal = offlineMsgs.filter(item=>(!localChatMessages.filter(itemChat=>itemChat.uniqid===item.uniqid).length))
+        console.log("CHATMOBILE", localChatMessages, offlineMsgsLocal)
+        if (offlineMsgsLocal.length){
+            localChatMessages = localChatMessages.concat(offlineMsgsLocal)
+        }
         // { transform: [{translateY: shift}]} ,
         // console.log("RENDER_CHAT")
         return (
@@ -1002,7 +1047,7 @@ class ChatMobile extends Component {
                     <View style={styles.messageListContainer}>
                         <MessageList    hwdate={this.state.selDate?this.state.curDate:null}
                                         messages={this.state.messages}
-                                        localmessages={this.state.localChatMessages}
+                                        localmessages={localChatMessages}
                                         updatemessages={this.updateLocalMessages}
                                         username={chatUserName}
                                         isshortmsg={this.state.isServiceChat||!this.state.servicePlus}
@@ -1015,9 +1060,9 @@ class ChatMobile extends Component {
                     </View>
                     <View style={styles.whoTyping}>
                         {/*<Text>{this.state.typingUsers.size > 0?"Сообщение набира" + ((this.state.typingUsers.size===1?"е":"ю") + "т: ") + Array.from(this.state.typingUsers.keys()).join(', '):""}</Text>*/}
-                        <Icon size={18} color={"#4472C4"} style={[{alighSelf : "flex-start"}]} name='person'/>
-                        <Text style={{color : "#4472C4", fontSize : 12}} >{this.state.users.length?`[${this.state.users.length}]:`:null}</Text>
-                        <Text style={{color : "#4472C4", fontSize : 12}}>{this.state.typingUsers.size > 0?
+                        <Icon size={18} color={theme.primaryDarkColor} style={[{alighSelf : "flex-start"}]} name='person'/>
+                        <Text style={{color : theme.primaryDarkColor, fontSize : 12}} >{this.state.users.length?`[${this.state.users.length}]:`:null}</Text>
+                        <Text style={{color : theme.primaryDarkColor, fontSize : 12}}>{this.state.typingUsers.size > 0?
                             ` ... ${Array.from(this.state.typingUsers.keys()).length>2?(Array.from(this.state.typingUsers.keys()).length + " человека"):Array.from(this.state.typingUsers.keys()).join(', ')} ... `:null}</Text>
                     </View>
                 </View>
@@ -1038,7 +1083,7 @@ class ChatMobile extends Component {
                                           onChangeText={text=>this.onChangeText('curMessage', text)}
                                           onFocus={()=>{this.props.setstate({showFooter : false})}}
                                           onBlur={()=>{this.props.setstate({showFooter : true})}}
-                                          placeholder="Введите сообщение..."  type="text"
+                                          placeholder={langLibrary===undefined?'':(langLibrary.mobMsgHint===undefined?'':langLibrary.mobMsgHint)}  type="text"
                                           ref={component => this._textarea = component}
                                           value={this.state.curMessage}
                                 />

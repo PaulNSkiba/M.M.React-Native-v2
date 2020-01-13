@@ -240,12 +240,12 @@ class HelpBlock extends Component {
     render () {
         // const daysArr = daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;})
         const {newsArr, updatesArr, updates, news} = this.state
-        const {theme} = this.props.userSetup
+        const {theme, langLibrary} = this.props.userSetup
         console.log("HelpBlock", this.state.viewHeight)
         return (
             <View >
                  <Tabs onChangeTab={({ i, ref, from }) => this.setActiveTab(i)} style={this.state.activeTab===2?{height:this.state.viewHeight}:null}>
-                         <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>НОВОСТИ</Text></TabHeading>}
+                         <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{langLibrary.mobNews.toUpperCase()}</Text></TabHeading>}
                                 onPress={()=>console.log("Tab1_Clicked")}
                               >
                              <View style={styles.homeworkSubjectList}>
@@ -258,7 +258,7 @@ class HelpBlock extends Component {
                                  </Container>
                              </View>
                         </Tab>
-                        <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>ОБНОВЛЕНИЯ</Text></TabHeading>}>
+                        <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{langLibrary.mobBuilds.toUpperCase()}</Text></TabHeading>}>
                             <View style={styles.homeworkSubjectList}>
                                 <Container style={{flex: 1, width : "100%", flexDirection: 'column', position: "relative"}}>
                                     <AccordionCustom data={updatesArr}  data2={updates} usersetup={this.props.userSetup} ishomework={true} index={0}/>
@@ -300,7 +300,7 @@ class HelpBlock extends Component {
                                 </Container>
                             </View>
                         </Tab>
-                        <Tab style={{height:this.state.viewHeight}} heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>ВОПРОС-ОТВЕТ</Text></TabHeading>}>
+                        <Tab style={{height:this.state.viewHeight}} heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{langLibrary.mobQandA.toUpperCase()}</Text></TabHeading>}>
                             {/*<Container style={{width : "100%", flexDirection: 'column', position: "relative"}}>*/}
                                 {/*<View style={[styles.chatContainerNew, {flex: 1}]}>*/}
                                 <View
@@ -385,7 +385,7 @@ class HelpBlock extends Component {
                                                                     onChangeText={text=>this.onChangeText('curMessage', text)}
                                                                     onFocus={()=>{this.props.setstate({showFooter : false}); this.setState({showFooter : false})}}
                                                                     onBlur={()=>{this.props.setstate({showFooter : true}); this.setState({showFooter : true})}}
-                                                                    placeholder={this.props.userSetup.userID?"Задать вопрос разработчику..." : "Задавая вопрос без логина, пожалуста, укажите в сообщении контактный email для связи)..."} type="text"
+                                                                    placeholder={this.props.userSetup.userID?"Задать вопрос разработчику..." : "Задавая вопрос без логина, пожалуйста, укажите в сообщении контактный email для связи)..."} type="text"
                                                                     rowSpan={this.props.userSetup.userID?3:5}
                                                                     value={this.state.curMessage}
                                                                 />

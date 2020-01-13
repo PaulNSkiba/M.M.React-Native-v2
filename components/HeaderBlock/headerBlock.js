@@ -6,8 +6,9 @@ import {connect} from 'react-redux';
 import { StyleSheet, Text, View, Image, Modal, Dimensions, TouchableOpacity} from 'react-native';
 import { Header, Left, Body, Right, Button, Title } from 'native-base';
 import { Icon } from 'react-native-elements'
+import store from '../../store/configureStore'
 import axios from 'axios';
-import {instanceAxios, mapStateToProps} from '../../js/helpersLight'
+import {instanceAxios, mapStateToProps, hasAPIConnection} from '../../js/helpersLight'
 import { version, AUTH_URL, API_URL} from '../../config/config'
 import LoggingByToken from '../../components/LoggingByToken/loggingbytoken'
 import styles from '../../css/styles'
@@ -17,6 +18,8 @@ import Hamburger from 'react-native-hamburger';
 import LogoBlack from '../../img/LogoMyMsmallBlack.png'
 import OfflineNotice from '../OfflineNotice/offlinenotice'
 import { QRCode } from 'react-native-custom-qr-codes';
+import { checkInternetConnection, offlineActionCreators } from 'react-native-offline';
+
 // import Logo from '../../img/logo45.png'
 
 class HeaderBlock extends React.Component {
@@ -35,10 +38,54 @@ class HeaderBlock extends React.Component {
             showQR : false,
             geoObj : {city : "", country : "", iso_code : ""},
             showDrawer : false,
+            onlineTimer : {},
         }
+        this.connectivityCheck = this.connectivityCheck.bind(this)
     }
     componentDidMount() {
         this.getGeo2()
+        const timer = setInterval( this.connectivityCheck, 10000)
+        this.setState({onlineTimer : timer})
+    }
+    componentWillUnmount(){
+        clearInterval(this.state.onlineTimer)
+    }
+    connectivityCheck(){
+        hasAPIConnection()
+            .then(res=>{
+                if (res!==this.props.userSetup.online)
+                    this.props.onReduxUpdate('UPDATE_ONLINE', res)
+                console.log("connectivityCheck!!!", res)})
+
+
+        // hasAPIConnection()
+        // const { connectionChange } = offlineActionCreators;
+        // console.log("connectivtiyCheck.1")
+        // // const isConnected = await checkInternetConnection(AUTH_URL, 3000, true);
+        // Promise.resolve(
+        // Promise.resolve(axios.get(`${API_URL}ping`, null, {timeout : 2000}))
+        //     .then(res=>{
+        //         console.log(res,"----------------is gettting info")
+        //         // setIsConnected()
+        //     }).catch(err=>{
+        //         console.log(err,"-----------------not getting info")
+        //     }))
+        //     .then(res=>console.log("CONNECTED?"))
+        //     .error(res=>console.log("NOT&&&"))
+        // // this.props.onReduxUpdate('UPDATE_ONLINE', isConnected)
+        // console.log("connectivtiyCheck.2")
+        // AUTH_URL, 3000, true
+
+        // checkInternetConnection()
+        //     .then(isConnected => {
+        //         console.log("connectivtiyCheck2", isConnected)
+        //         if (isConnected!==this.props.userSetup.online) {
+        //             console.log("headerBlock", isConnected)
+        //             // store.dispatch(connectionChange(isConnected));
+        //             this.props.onReduxUpdate('UPDATE_ONLINE', isConnected)
+        //         }
+        //     })
+        //     .catch(res=>console.log("headerBlock:error", res))
     }
     getGeo2 = () => {
         axios.get(`${API_URL}getgeo`)
@@ -59,7 +106,8 @@ class HeaderBlock extends React.Component {
         // {"target":1105,"layout":{"y":0,"width":256,"x":32,"height":54.5}}
     }
     render(){
-        const {token, theme, userID, markscount, userName} = this.props.userSetup
+        const {token, theme, userID, markscount, userName, online} = this.props.userSetup
+        console.log("headerBlock:render")
         return (
             <View
                 onLayout={(event) =>this.measureView(event)}>
@@ -127,6 +175,16 @@ class HeaderBlock extends React.Component {
                             <Title style={[styles.myTitle, {color : theme.primaryTextColor}]}>My.Marks</Title>
                         </View>
                         <OfflineNotice/>
+                        {/*<NetworkConsumer>*/}
+                            {/*{({ isConnected }) => (*/}
+                                {/*isConnected ? (*/}
+                                    {/*<Text>{this.props.network.isConnected?"online":"offline"}</Text>*/}
+                                {/*) : (*/}
+                                    {/*<Text>{this.props.network.isConnected?"online":"offline"}</Text>*/}
+                                {/*)*/}
+                            {/*)}*/}
+                        {/*</NetworkConsumer>*/}
+                        {/*<Text>{!this.props.userSetup.online?"offline":"online"}</Text>*/}
                     </View>
 
                 </View>
@@ -167,11 +225,9 @@ class HeaderBlock extends React.Component {
     }
 }
 const mapDispatchToProps = dispatch => {
-    // console.log("mapDispatchToProps", this.props)
-    // console.log("mapDispatchToProps", dispatch)
-    // let {userSetup} = this.props
     return ({
         onReduxUpdate: (key, payload) => dispatch({type: key, payload: payload}),
+
     })
 }
 export default connect(mapStateToProps, mapDispatchToProps)(HeaderBlock)

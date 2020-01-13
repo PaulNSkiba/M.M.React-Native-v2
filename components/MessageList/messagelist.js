@@ -498,10 +498,10 @@ class MessageList extends Component {
                     visible={this.state.showPreview}
                     onRequestClose={() => {}}>
                     <View>
-                        {this.state.isSpinner ? <View
-                            style={{position: "absolute", flex: 1, alignSelf: 'center', marginTop: 240, zIndex: 100}}>
-                            <Spinner color={theme.secondaryColor}/>
-                        </View> : null}
+                        {/*{this.state.isSpinner ? <View*/}
+                            {/*style={{position: "absolute", flex: 1, alignSelf: 'center', marginTop: 240, zIndex: 100}}>*/}
+                            {/*<Spinner color={theme.secondaryColor}/>*/}
+                        {/*</View> : null}*/}
                         {/*{messages.length&&this.state.previewID?*/}
                         {/*<SingleImage*/}
                             {/*uri={`data:image/png;base64,${JSON.parse(messages.filter(item=>item.id===this.state.previewID)[0].attachment3).base64}`}*/}
@@ -666,7 +666,7 @@ class MessageList extends Component {
                                         <View key={i} id={"msg-"+msg.id} className={"message-block"}>
                                             {this.getDateSeparator(msg_date.length===8?dateFromYYYYMMDD(msg_date):new Date(msg_date))}
                                             <TouchableWithoutFeedback   key={i} id={"msgarea-"+msg.id}
-                                                                        delayLongPress={330}
+                                                                        delayLongPress={500}
                                                                         onLongPress={user_id===userID?()=>this.onLongPressMessage(msg.id, homework_subj_id, (homework_date===undefined)?null:homework_date, msg.text):null}
                                                                         >
                                             <View key={msg.id}

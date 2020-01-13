@@ -1,7 +1,7 @@
 /**
  * Created by Paul on 27.08.2019.
  */
-import { store } from '../store/configureStore'
+import store from '../store/configureStore'
 import axios from 'axios';
 import {AUTH_URL, API_URL, BASE_HOST, WEBSOCKETPORT, LOCALPUSHERPWD} from '../config/config'
 import Echo from 'laravel-echo'
@@ -72,14 +72,16 @@ export const axios2=(method, url, data)=>{
         }
     }))
 }
-export const mapStateToProps = store => {
-    // console.log(store) // посмотрим, что же у нас в store?
-    return {
-        user:       store.user,
-        userSetup:  store.userSetup,
-        chat :      store.chat,
-    }
-}
+export const mapStateToProps = ({user, userSetup, chat, network})=>({ user : user, userSetup : userSetup, chat : chat, network : network });
+
+// export const mapStateToProps = store => {
+//     console.log("STORE", store) // посмотрим, что же у нас в store?
+//     return {
+//         user:       store.user,
+//         userSetup:  store.userSetup,
+//         chat :      store.chat,
+//     }
+// }
 export const getNextStudyDay = arr => {
     let i = 0;
     obj = {index : 0};
@@ -131,7 +133,8 @@ export function langLibrary(lang){
         no : "Нет",
         speedByMark : "сек/оценку",
         top : "ТОП",
-        step : "Шаг"
+        step : "Шаг",
+        mobMsgHint : "Введите сообщение..."
     }
     switch (lang) {
         case "UA":
@@ -657,31 +660,32 @@ export const getNearestSeptFirst=()=>{
         }
 }
 export const themeOptions = {
-    '#01579b' : {
-        primaryColor : '#01579b',
-        primaryLightColor : '#4f83cc',
-        primaryDarkColor : '#002f6c',
-        primaryBorderColor : '#609EF7',
-        secondaryColor : '#ffeb3b',
-        secondaryLightColor : '#ffff72',
-        secondaryDarkColor : '#c8b900',
+    '#46b5be' : {
+        primaryColor : '#47b5be',
+        primaryLightColor : '#9bd7dc',
+        primaryDarkColor : '#007ba4',
+        primaryBorderColor : '#6ddce5',
+        secondaryColor : '#ffc909',
+        secondaryLightColor : '#fff674',
+        secondaryDarkColor : '#faa41b',
         primaryTextColor : '#ffffff',
         secondaryTextColor : '#000000',
-        primaryMsgColor : '#0084ff',
+        primaryMsgColor : '#007ba4',
         borderColor : "#A9A9A9",
         navbarColor : "#f0f0f0",
-        facebookColor : '#1d75ce',
-        googleColor : '#70dffb',
+        facebookColor : '#007ba4',
+        googleColor : '#fff674',
         photoButtonColor : '#33ccff',
+        errorColor : "#b40530",
     },
     '#4f83cc' : {
         primaryColor : '#01579b',
         primaryLightColor : '#4f83cc',
         primaryDarkColor : '#002f6c',
         primaryBorderColor : '#609EF7',
-        secondaryColor : '#ffffff',
+        secondaryColor : '#d4d4d4',
         secondaryLightColor : '#ffffff',
-        secondaryDarkColor : '#cccccc',
+        secondaryDarkColor : '#b1b1b1',
         primaryTextColor : '#ffffff',
         secondaryTextColor : '#000000',
         primaryMsgColor : '#0084ff',
@@ -690,6 +694,61 @@ export const themeOptions = {
         facebookColor : '#1d75ce',
         googleColor : '#70dffb',
         photoButtonColor : '#33ccff',
+        errorColor : "#b40530",
+    },
+    '#a3afbf' : {
+        primaryColor : '#a3afbf',
+        primaryLightColor : '#c4ddf2',
+        primaryDarkColor : '#3f4d59',
+        primaryBorderColor : '#c4ddf2',
+        secondaryColor : '#f2ddd0',
+        secondaryLightColor : '#FFF3E7',
+        secondaryDarkColor : '#d9c0da',
+        primaryTextColor : '#ffffff',
+        secondaryTextColor : '#000000',
+        primaryMsgColor : '#3f4d59',
+        borderColor : "#A9A9A9",
+        navbarColor : "#f0f0f0",
+        facebookColor : '#3f4d59',
+        googleColor : '#f2ddd0',
+        photoButtonColor : '#33ccff',
+        errorColor : "#b40530",
+    },
+    '#1f7363' : {
+        primaryColor : '#1f7363',
+        primaryLightColor : '#8fbf8e',
+        primaryDarkColor : '#1e5959',
+        primaryBorderColor : '#8fbf8e',
+        secondaryColor : '#5fb491',
+        secondaryLightColor : '#cbe4e5',
+        secondaryDarkColor : '#889f9f',
+        primaryTextColor : '#ffffff',
+        secondaryTextColor : '#000000',
+        primaryMsgColor : '#3f4d59',
+        borderColor : "#A9A9A9",
+        navbarColor : "#f0f0f0",
+        facebookColor : '#1e5959',
+        googleColor : '#cbe4e5',
+        photoButtonColor : '#33ccff',
+        errorColor : "#b40530",
+    },
+    '#425c59' : {
+        primaryColor : '#425c59',
+        primaryLightColor : '#a2bfbe',
+        primaryDarkColor : '#555c5a',
+        primaryBorderColor : '#a2bfbe',
+        secondaryColor : '#ffcea3',
+        secondaryLightColor : '#ffffff',
+        secondaryDarkColor : '#555c5a',
+        primaryTextColor : '#ffffff',
+        secondaryTextColor : '#000000',
+        primaryMsgColor : '#3f4d59',
+        borderColor : "#A9A9A9",
+        navbarColor : "#f0f0f0",
+        facebookColor : '#555c5a',
+        googleColor : '#ffcea3',
+        photoButtonColor : '#33ccff',
+        errorColor : "#b40530",
     },
     '#7DA8E6' : {
         primaryColor : '#7DA8E6',
@@ -697,7 +756,7 @@ export const themeOptions = {
         primaryDarkColor : '#4472C4',
         primaryBorderColor : '#BEEBF2',
         secondaryColor : '#33ccff',
-        secondaryLightColor : '#C1F3F7',
+        secondaryLightColor : '#d5fdfc',
         secondaryDarkColor : '#1890e6',
         primaryTextColor : '#ffffff',
         secondaryTextColor : '#000000',
@@ -707,24 +766,8 @@ export const themeOptions = {
         facebookColor : '#1d75ce',
         googleColor : '#70dffb',
         photoButtonColor : '#33ccff',
+        errorColor : "#b40530",
     },
-    '#46b5be' : {
-        primaryColor : '#46b5be',
-        primaryLightColor : '#9dd7db',
-        primaryDarkColor : '#006699',
-        primaryBorderColor : '#6ddce5',
-        secondaryColor : '#ffcd57',
-        secondaryLightColor : '#fff674',
-        secondaryDarkColor : '#e3c177',
-        primaryTextColor : '#ffffff',
-        secondaryTextColor : '#000000',
-        primaryMsgColor : '#0084ff',
-        borderColor : "#A9A9A9",
-        navbarColor : "#f0f0f0",
-        facebookColor : '#1d75ce',
-        googleColor : '#70dffb',
-        photoButtonColor : '#33ccff',
-    }
 };
 export const themeOptionsEx = {
     'marks' : {
@@ -769,4 +812,106 @@ export const themeOptionsEx = {
             sec700: '#434343',
             sec900: '#000000',
     },
+    '#46b5be' : {
+        primaryColor : '#46b5be',
+        primaryLightColor : '#9dd7db',
+        primaryDarkColor : '#006699',
+        primaryBorderColor : '#6ddce5',
+        secondaryColor : '#ffcd57',
+        secondaryLightColor : '#fff674',
+        secondaryDarkColor : '#e3c177',
+        primaryTextColor : '#ffffff',
+        secondaryTextColor : '#000000',
+        primaryMsgColor : '#0084ff',
+        borderColor : "#A9A9A9",
+        navbarColor : "#f0f0f0",
+        facebookColor : '#1d75ce',
+        googleColor : '#70dffb',
+        photoButtonColor : '#33ccff',
+        errorColor : "#b40530",
+    },
+    '#01579b' : {
+        primaryColor : '#01579b',
+        primaryLightColor : '#4f83cc',
+        primaryDarkColor : '#002f6c',
+        primaryBorderColor : '#609EF7',
+        secondaryColor : '#ffeb3b',
+        secondaryLightColor : '#fffcd2',
+        secondaryDarkColor : '#c8b900',
+        primaryTextColor : '#ffffff',
+        secondaryTextColor : '#000000',
+        primaryMsgColor : '#0084ff',
+        borderColor : "#A9A9A9",
+        navbarColor : "#f0f0f0",
+        facebookColor : '#1d75ce',
+        googleColor : '#70dffb',
+        photoButtonColor : '#33ccff',
+        errorColor : "#b40530",
+    },
+    '#7DA8E6' : {
+        primaryColor : '#7DA8E6',
+        primaryLightColor : '#DEEAF2',
+        primaryDarkColor : '#4472C4',
+        primaryBorderColor : '#BEEBF2',
+        secondaryColor : '#33ccff',
+        secondaryLightColor : '#d5fdfc',
+        secondaryDarkColor : '#1890e6',
+        primaryTextColor : '#ffffff',
+        secondaryTextColor : '#000000',
+        primaryMsgColor : '#0084ff',
+        borderColor : "#A9A9A9",
+        navbarColor : "#f0f0f0",
+        facebookColor : '#1d75ce',
+        googleColor : '#70dffb',
+        photoButtonColor : '#33ccff',
+        errorColor : "#b40530",
+    },
+}
+
+export async function hasAPIConnection() {
+    const timeout = 2500
+    try {
+            return await new Promise((resolve, reject) => {
+                setTimeout(() => {reject(false)}, timeout)
+                fetch(`${AUTH_URL}/ping`, {method: 'GET'})
+                    .then((response) => {resolve(true)})
+                    .catch(() => {reject(false)})
+            })
+    } catch (e) {
+        // console.log('error', e)
+        return false
+    }
+}
+
+export default getLangAsyncFunc = async (lang) => {
+    // if (!lang) {
+    //     lang = this.props.userSetup.langCode ? this.props.userSetup.langCode : this.defLang
+    // }
+    let langObj = {}
+
+    // console.log("getLangLibrary:start", lang)
+    // console.log("langURL_0")
+    // console.log('langURL_', `${API_URL}langs/get${lang?('/'+lang):''}`)
+    // console.log('langURL', AUTH_URL + ('/api/langs/get' + (lang.length?('/' + lang) : '')))
+
+    // let {token} = this.props.userSetup
+    // this.props.onReduxUpdate("LANG_CODE", lang)
+    const headers = {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    }
+    await axios.get(`${API_URL}langs/get${lang?('/'+lang):''}`, null, headers)
+        .then(res => {
+                console.log("LANG_RES", res)
+                res.data.forEach(item => langObj[item.alias] = item.word)
+                // this.props.onReduxUpdate("LANG_LIBRARY", langObj)
+                // this.setState({langLibrary: langObj});
+            }
+        )
+        .catch(res => {
+            console.log("ERROR_LANG", res)
+        })
+    return langObj
 }

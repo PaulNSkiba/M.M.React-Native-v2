@@ -2,6 +2,7 @@
  * Created by Paul on 20.01.2019.
  */
 import {themeOptions} from '../js/helpersLight'
+import { offlineActionTypes } from 'react-native-offline';
 
 const initialState = {
         // console.log("initialState", themeOptions)
@@ -29,23 +30,25 @@ const initialState = {
             localChatMessages : [], isMobile : true, photoPath : [], markscount : 0,
             needRenew : false, chatTags : [], budget : [], budgetpays : [], renderBudget : 1, classNews : [],
             statsBudget : null, statsBudgetPays : null, selectedFooter : 0, showLogin : false, logoutToken : '',
-            timetable : [], subjects : [], headerHeight : 0, footerHeight : 0,
+            timetable : [], subjects : [], headerHeight : 0, footerHeight : 0, online : false, langCode : "", offlineMsgs : [],
+            themeColor : "#46b5be",
             theme : {
-                primaryColor : '#46b5be',
-                primaryLightColor : '#9dd7db',
+                primaryColor : '#47b5be',
+                primaryLightColor : '#9bd7dc',
                 primaryDarkColor : '#007ba4',
                 primaryBorderColor : '#6ddce5',
-                secondaryColor : '#ffcd57',
+                secondaryColor : '#ffc909',
                 secondaryLightColor : '#fff674',
-                secondaryDarkColor : '#e3c177',
+                secondaryDarkColor : '#faa41b',
                 primaryTextColor : '#ffffff',
                 secondaryTextColor : '#000000',
-                primaryMsgColor : '#0084ff',
+                primaryMsgColor : '#007ba4',
                 borderColor : "#A9A9A9",
                 navbarColor : "#f0f0f0",
-                facebookColor : '#1d75ce',
-                googleColor : '#70dffb',
+                facebookColor : '#007ba4',
+                googleColor : '#fff674',
                 photoButtonColor : '#33ccff',
+                errorColor : "#b40530",
             }
     //         }
     // return obj
@@ -65,13 +68,13 @@ export function userSetupReducer(state = initialState, action) {
                     mark_dates, best_lines, avg_lines, avg_marks, addUserToken,
                     lastmarkssent, emails, homework, stats2, stats3, mark_date,
                     avgclassmarks, classObj, chatrows, markscount, classNews, tags,
-                    statsBudget, statsBudgetPays, timetable, subjects} = action.payload;
-            let {   name : userName, id : userID, isadmin } = action.payload.user;
+                    statsBudget, statsBudgetPays, timetable, subjects} = action.payload.data;
+            let {   name : userName, id : userID, isadmin } = action.payload.data.user;
             let {   class_number, pupil_count, year_name, perioddayscount,
                     markblank_id, markblank_alias, selected_marker, titlekind,
-                    direction, class_id } = action.payload.usersetup;
-            let {   id : studentId, student_name : studentName} = action.payload.student;
-            let {   cnt_marks, stud_cnt, subj_cnt } = action.payload.stats[0];
+                    direction, class_id } = action.payload.data.usersetup;
+            let {   id : studentId, student_name : studentName} = action.payload.data.student;
+            let {   cnt_marks, stud_cnt, subj_cnt } = action.payload.data.stats[0];
                     studentId = studentId?studentId:0;
 
             setup = {...state, userName, userID, token,
@@ -83,13 +86,18 @@ export function userSetupReducer(state = initialState, action) {
                 selectedSubj : selected_subj, students : students?students:[], classObj,
                 isadmin, studentName, studentId, marks, mark_dates, best_lines, avg_lines, avg_marks, addUserToken,
                 cnt_marks, stud_cnt, subj_cnt, lastmarkssent, emails, homework, stats2 : stats2[0], stats3 : stats3[0],
-                mark_date, avgclassmarks, langLibrary : action.langLibrary, localChatMessages : chatrows, markscount,
+                mark_date, avgclassmarks, langLibrary : action.payload.langLibrary, localChatMessages : chatrows, markscount,
                 classNews, chatTags : tags, statsBudget, statsBudgetPays, showLogin : false, timetable, subjects,
-                theme : themeOptions['#46b5be']}
+                theme : action.payload.theme?action.payload.theme:themeOptions['#46b5be'], themeColor : action.payload.themeColor?action.payload.themeColor:'#46b5be'}
             return setup
             }
         case "USER_SETUP" :
             return {...state}
+        case offlineActionTypes.CONNECTION_CHANGE:
+            console.log("online_event", action.payload, state, {...state, online : action.payload})
+            return {...state, online : action.payload}
+        case 'UPDATE_ONLINE':
+            return {...state, online : action.payload}
         case 'UPDATE_SETUP_REMOTE' : {
             let {   class_number, pupil_count, year_name, perioddayscount,
                     markblank_id, markblank_alias, selected_marker, titlekind, direction} = action.payload.usersetup;
@@ -165,17 +173,20 @@ export function userSetupReducer(state = initialState, action) {
             classObj.chatroom_id = action.payload
             return{...state, classObj}
         }
-        case 'APP_LOADED' : {
-            return{...state, loading : false}
-        }
         case 'LANG_LIBRARY' : {
             return{...state, langLibrary: action.payload}
+        }
+        case 'LANG_CODE' : {
+            return{...state, langCode: action.payload}
         }
         case 'CHAT_SESSION_ID' : {
             return{...state, chatSessionID : action.payload}
         }
         case 'APP_LOADING' : {
             return{...state, loading : true}
+        }
+        case 'APP_LOADED' : {
+            return{...state, loading : false}
         }
         case 'IS_MOBILE' : {
             return{...state, isMobile : action.payload}
@@ -215,8 +226,10 @@ export function userSetupReducer(state = initialState, action) {
         }
         case 'USER_LOGGEDOUT' :
             let initState = initialState
-            initState.langLibrary = action.langLibrary
-            console.log("userSetupReducer", 'USER_LOGGEDOUT', initState, action.langLibrary)
+            initState.langLibrary = action.payload.langLibrary
+            initState.themeColor = action.payload.themeColor
+            initState.theme = action.payload.theme
+            // console.log("userSetupReducer", 'USER_LOGGEDOUT', initState, action.langLibrary)
             return {...initState};
         case 'UPDATE_PAGE' :
             /*
@@ -242,6 +255,10 @@ export function userSetupReducer(state = initialState, action) {
             return{...state, footerHeight: action.payload}
         case 'CHANGE_THEME' :
             return{...state, theme : action.payload}
+        case 'CHANGE_COLOR' :
+            return{...state, themeColor : action.payload}
+        case 'ADD_OFFLINE' :
+            return{...state, offlineMsgs : action.payload}
         default :
             return state
     }

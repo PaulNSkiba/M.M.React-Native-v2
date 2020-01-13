@@ -21,17 +21,16 @@ class LoggingByToken extends Component {
 const mapDispatchToProps = dispatch => {
     return ({
         onReduxUpdate : (key, payload) => dispatch({type: key, payload: payload}),
-        onUserLoggingByToken :
-            async (email, token, kind, langLibrary)=>{
-                const asyncLoggedInByToken = (email, token, kind, langLibrary) => {
+        onUserLoggingByToken : async (email, token, kind, langLibrary, theme, themeColor)=>{
+                const asyncLoggedInByToken = (email, token, kind, langLibrary, theme, themeColor) => {
                     return async dispatch => {
-                        dispatch(userLoggedInByToken(email, token, kind, langLibrary))
+                        dispatch(userLoggedInByToken(email, token, kind, langLibrary, theme, themeColor))
                     }
                 }
-                dispatch(asyncLoggedInByToken(email, token, kind, langLibrary))
+                dispatch(asyncLoggedInByToken(email, token, kind, langLibrary, theme, themeColor))
             },
-        onUserLoggingOut  : (token, langLibrary) => {
-            return dispatch(userLoggedOut(token, langLibrary))
+        onUserLoggingOut  : (token, langLibrary, theme, themeColor) => {
+            return dispatch(userLoggedOut(token, langLibrary, theme, themeColor))
         },
     })
 }

@@ -2,7 +2,7 @@
  * Created by Paul on 06.01.2019.
  */
 import axios from 'axios';
-import { store } from '../store/configureStore'
+import store from '../store/configureStore'
 import {AUTH_URL, API_URL, BASE_HOST, WEBSOCKETPORT, LOCALPUSHERPWD} from '../config/config'
 import Echo from 'laravel-echo'
 import Pusher from 'pusher-js/react-native'
