@@ -132,7 +132,7 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 7
-        versionName "1.08.218"
+        versionName "1.08.228"
 		missingDimensionStrategy 'react-native-camera', 'general'
 		multiDexEnabled true
 		resConfigs "en", "US"
@@ -223,6 +223,7 @@ android {
 }
 
 dependencies {
+    implementation project(':react-native-sensitive-info')
 	//compile project(':react-native-video')
 	//mplementation "androidx.appcompat:appcompat:1.0.0"
     implementation fileTree(dir: "libs", include: ["*.jar"])

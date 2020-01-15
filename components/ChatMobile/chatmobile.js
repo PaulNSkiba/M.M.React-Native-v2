@@ -107,13 +107,13 @@ class ChatMobile extends Component {
         return true
     }
     measureView(event: Object) {
-        console.log(`*** event: ${JSON.stringify(event.nativeEvent)}`);
+        // console.log(`*** event: ${JSON.stringify(event.nativeEvent)}`);
     }
     componentDidMount(){
         // console.log("this.props.isnew", this.props.isnew)
         let {langLibrary, langCode} = this.props.userSetup
         // Print component dimensions to console
-        console.log("chatMobile", langLibrary)
+        // console.log("chatMobile", langLibrary)
         const defLang = langCode && arrLangs.includes(langCode)?langCode : "UA"
         if (!langLibrary) {
             // let lang = langCode ? langCode : defLang
@@ -166,12 +166,12 @@ class ChatMobile extends Component {
     _handleAppStateChange = (nextAppState) => {
         const {classID, studentId, localChatMessages, markscount} = this.props.userSetup
         if (this.state.appState.match(/inactive|background/) && nextAppState === 'active') {
-            console.log('ChatState: ', 'App has come to the foreground!', this.state.appState, nextAppState);
+            // console.log('ChatState: ', 'App has come to the foreground!', this.state.appState, nextAppState);
             // ToDO: Вначале проверим, вернулись ли мы в онлайн, если да, то запрос
             let {offlineMsgs} = this.props.userSetup
             hasAPIConnection()
                 .then(res=>{
-                    console.log("chatMobile: hasAPIConnection", res)
+                    // console.log("chatMobile: hasAPIConnection", res)
                     if (res&&offlineMsgs.length){
                         // this.props.onReduxUpdate('UPDATE_ONLINE', res)
                         console.log("chatMobile!!!", res)
@@ -203,7 +203,7 @@ class ChatMobile extends Component {
             if (classID) {
                 instanceAxios().get(API_URL + `class/getstat/${classID}/${studentId}'/0`)
                     .then(response => {
-                        console.log('Chat:_handleAppStateChange', response, this.props.userSetup)
+                        // console.log('Chat:_handleAppStateChange', response, this.props.userSetup)
                         // homeworks: 13
                         // marks: 0
                         // msgs: 250
@@ -217,7 +217,7 @@ class ChatMobile extends Component {
                                     // console.log('NewData', response, this.props.userSetup)
                                     const msgs = response.data.msgs
                                     let arr = this.state.localChatMessages
-                                    console.log("RESPONSE", msgs)
+                                    // console.log("GetStatMsgs", msgs)
                                     if (msgs.length) {
                                         msgs.forEach(msgitem=>{
                                             let isinmsg = false
@@ -237,7 +237,7 @@ class ChatMobile extends Component {
                                         })
                                     }
                                     this.setState({localChatMessages : arr})
-                                    console.log("Загружено по оффлайну!")
+                                    // console.log("Загружено по оффлайну!")
                                     this.props.onReduxUpdate("UPDATE_HOMEWORK", response.data.msgs.filter(item=>(item.homework_date!==null)))
                                     this.props.onReduxUpdate("ADD_CHAT_MESSAGES", response.data.msgs)
                                     this.props.onReduxUpdate("ADD_MARKS", response.data.marks)
@@ -253,7 +253,7 @@ class ChatMobile extends Component {
             }
         }
         else {
-            console.log('AppState: ', nextAppState);
+            // console.log('AppState: ', nextAppState);
         }
         this.setState({appState: nextAppState});
     };
@@ -994,7 +994,7 @@ class ChatMobile extends Component {
         const { theme, langLibrary, offlineMsgs } = this.props.userSetup
 
         const offlineMsgsLocal = offlineMsgs.filter(item=>(!localChatMessages.filter(itemChat=>itemChat.uniqid===item.uniqid).length))
-        console.log("CHATMOBILE", localChatMessages, offlineMsgsLocal)
+        // console.log("CHATMOBILE")
         if (offlineMsgsLocal.length){
             localChatMessages = localChatMessages.concat(offlineMsgsLocal)
         }

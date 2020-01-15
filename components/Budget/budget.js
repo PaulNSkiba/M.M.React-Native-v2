@@ -11,7 +11,7 @@ import {
 } from 'native-base';
 import {Avatar, Badge, Icon, withBadge} from 'react-native-elements'
 import {bindActionCreators} from 'redux';
-import {instanceAxios, mapStateToProps, addMonths, toYYYYMMDD, dateFromTimestamp} from '../../js/helpersLight'
+import {instanceAxios, mapStateToProps, addMonths, toYYYYMMDD, dateFromTimestamp, localDateTime} from '../../js/helpersLight'
 import {LOGINUSER_URL, version, API_URL} from '../../config/config'
 import {userLoggedIn, userLoggedInByToken, userLoggedOut} from '../../actions/userAuthActions'
 import LogginByToken from '../../components/LoggingByToken/loggingbytoken'
@@ -245,15 +245,13 @@ class Budget extends React.Component {
                             console.log("FACTINSHEADER", factInsHeader)
                             // style={styles.tabHeaderWhen}
                           return <Tab key={"year"+key} heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{item}</Text></TabHeading>}>
-
-
                                 <Tabs>
                                     <Tab heading={<TabHeading
                                         style={{color: "#387541", backgroundColor: '#C6EFCE'}}><Text
                                         style={{color: "#387541"}}>{`ВЗНОСЫ [${this.pcntOfPayments(factInsHeader)}%]`}</Text>
                                         <Text
                                             style={{color: "#387541", position: 'absolute', top : 0, right : 0, fontSize : 9.5}}>
-                                            {(new Date(dateFromTimestamp(statsBudget)) instanceof Date)?(new Date(dateFromTimestamp(statsBudget))).toLocaleDateString() + ' ' +  (new Date(dateFromTimestamp(statsBudget))).toLocaleTimeString():null}
+                                            {(new Date(dateFromTimestamp(statsBudget)) instanceof Date)?localDateTime(dateFromTimestamp(statsBudget), "UA"):null}
                                         </Text>
                                     </TabHeading>}>
                                         {factInsHeader.length ?
@@ -375,8 +373,8 @@ class Budget extends React.Component {
                                         <Text style={{color: "#b40530"}}>{`РАСХОДЫ[${this.cashLeaves(curYear)}]`}</Text>
                                          <Text
                                              style={{color: "#b40530", position: 'absolute', top : 0, right : 0, fontSize : 9.5}}>
-                                             {(new Date(dateFromTimestamp(statsBudgetPays)) instanceof Date)?(new Date(dateFromTimestamp(statsBudgetPays))).toLocaleDateString() + ' ' +  (new Date(dateFromTimestamp(statsBudgetPays))).toLocaleTimeString():null}
-                                         </Text>
+                                             {(new Date(dateFromTimestamp(statsBudgetPays)) instanceof Date)?localDateTime(dateFromTimestamp(statsBudgetPays), "UA"):null}
+                                             </Text>
                                      </TabHeading>}>
                                          <List>
                                              {this.state.planOuts.filter(item=>{

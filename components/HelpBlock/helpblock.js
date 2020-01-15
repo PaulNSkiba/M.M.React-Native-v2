@@ -234,14 +234,64 @@ class HelpBlock extends Component {
         this.setState({viewHeight : windowHeight, keyboardShowed : false, keyboardHeight : 0})
         console.log("handleKeyboardDidHide")
     }
+    // updateReadedID=(ID, tabID)=>{
+    //     const {classID} = this.props.userSetup
+    //     let {stat} = this.props
+    //     if (stat.markID < ID) {
+    //         stat.markID = ID
+    //         // console.log("updateReadedID", ID, stat.chatID, `${classID}chatID`, ID.toString())
+    //         setStorageData(`${classID}markID`, ID.toString())
+    //         this.props.onReduxUpdate("UPDATE_VIEWSTAT", stat)
+    //     }
+    // }
+    setActiveTab=i=>{
+        // console.log("ACTIVE_TAB", i, this.state.dayPages[i]);
+        const {classID, classNews} = this.props.userSetup
+        let {stat} = this.props
+        const {newsID, buildsID} = stat
+        // const ID = this.state.dayPages[i].markID
+        const unreadNewsCount = classNews.filter(item =>(item.is_news===2&&Number(item.id) > newsID)).length
+        const unreadBuildsCount = classNews.filter(item =>(item.is_news===1&&Number(item.id) > buildsID)).length
+        let ID = 0
+        console.log("updateReadedID", classNews)
+        if (i===0&&unreadNewsCount)
+            ID = classNews.filter(item =>(item.is_news===2&&Number(item.id) > newsID))[0].id
+        if (i===1&&unreadBuildsCount)
+            ID = classNews.filter(item =>(item.is_news===1&&Number(item.id) > newsID))[0].id
 
-    setActiveTab=i=>this.setState({activeTab:i})
+        if (ID) {
+            if (i===0) {
+                if (newsID < ID) {
+                    stat.newsID = Number(ID)
+                    console.log("UPDATE_VIEWSTAT")
+                    setStorageData(`${classID}newsID`, ID.toString())
+                    this.props.onReduxUpdate("UPDATE_VIEWSTAT", stat)
+                }
+            }
+            if (i===1) {
+                if (buildsID < ID) {
+                    stat.buildsID = Number(ID)
+                    console.log("UPDATE_VIEWSTAT")
+                    setStorageData(`${classID}buildsID`, ID.toString())
+                    this.props.onReduxUpdate("UPDATE_VIEWSTAT", stat)
+                }
+            }
+        }
+        this.setState({activeTab:i})
+    }
 
     render () {
         // const daysArr = daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;})
         const {newsArr, updatesArr, updates, news} = this.state
-        const {theme, langLibrary} = this.props.userSetup
+        const {theme, langLibrary, classNews} = this.props.userSetup
         console.log("HelpBlock", this.state.viewHeight)
+        let unreadNewsCount = 0, unreadBuildsCount = 0
+        if (this.props.kind==='info') {
+            let {newsID, buildsID} = this.props.stat
+            unreadNewsCount = classNews.filter(item =>(item.is_news===2&&Number(item.id) > newsID)).length
+            unreadBuildsCount = classNews.filter(item =>(item.is_news===1&&Number(item.id) > buildsID)).length
+            // console.log("button", this.props.kind, markID, unreadMarksCount, marks)
+        }
         return (
             <View >
                  <Tabs onChangeTab={({ i, ref, from }) => this.setActiveTab(i)} style={this.state.activeTab===2?{height:this.state.viewHeight}:null}>
@@ -250,11 +300,7 @@ class HelpBlock extends Component {
                               >
                              <View style={styles.homeworkSubjectList}>
                                  <Container style={{flex: 1, width : "100%", flexDirection: 'column', position: "relative"}}>
-                                     {/*<View style={{flex: 3, borderWidth : 1, borderColor : "#4472C4"}}>*/}
-                                         {/*<ScrollView>*/}
-                                             <AccordionCustom data={newsArr}  data2={news} usersetup={this.props.userSetup} ishomework={true} index={0}/>
-                                         {/*</ScrollView>*/}
-                                     {/*</View>*/}
+                                     <AccordionCustom data={newsArr}  data2={news} usersetup={this.props.userSetup} ishomework={true} index={0}/>
                                  </Container>
                              </View>
                         </Tab>

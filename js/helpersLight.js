@@ -6,8 +6,10 @@ import axios from 'axios';
 import {AUTH_URL, API_URL, BASE_HOST, WEBSOCKETPORT, LOCALPUSHERPWD} from '../config/config'
 import Echo from 'laravel-echo'
 import Pusher from 'pusher-js/react-native'
-window.Pusher = Pusher
 import AsyncStorage from '@react-native-community/async-storage';
+import SInfo from "react-native-sensitive-info";
+
+window.Pusher = Pusher
 
 export let arrOfWeekDays = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб']
 export let arrOfWeekDaysLocal = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс']
@@ -21,7 +23,8 @@ export const addDay=(strDate, intNum)=>{
 
 export const setStorageData = async (key, value) => {
     try {
-        await AsyncStorage.setItem(key, value)
+        // await AsyncStorage.setItem(key, value)
+        await SInfo.setItem(key, value, {})
     } catch (e) {
         console.log("StorageSet:Error", e)
         // saving error
@@ -29,15 +32,13 @@ export const setStorageData = async (key, value) => {
 }
 export const getStorageData = async (key) => {
     try {
-        const value = await AsyncStorage.getItem(key)
+        // const value = await AsyncStorage.getItem(key)
+        const value = await SInfo.getItem(key, {})
         if(value !== null) {
-            // console.log("getStorageData", value)
             return value
-            // value previously stored
         }
     } catch(e) {
         console.log("StorageGet:Error", e)
-        // error reading value
     }
 }
 export const instanceAxios=()=>{
@@ -72,7 +73,7 @@ export const axios2=(method, url, data)=>{
         }
     }))
 }
-export const mapStateToProps = ({user, userSetup, chat, network})=>({ user : user, userSetup : userSetup, chat : chat, network : network });
+export const mapStateToProps = ({user, userSetup, chat, network, stat})=>({ user : user, userSetup : userSetup, chat : chat, network : network, stat : stat });
 
 // export const mapStateToProps = store => {
 //     console.log("STORE", store) // посмотрим, что же у нас в store?
@@ -688,7 +689,7 @@ export const themeOptions = {
         secondaryDarkColor : '#b1b1b1',
         primaryTextColor : '#ffffff',
         secondaryTextColor : '#000000',
-        primaryMsgColor : '#0084ff',
+        primaryMsgColor : '#002f6c',
         borderColor : "#A9A9A9",
         navbarColor : "#f0f0f0",
         facebookColor : '#1d75ce',
@@ -700,7 +701,7 @@ export const themeOptions = {
         primaryColor : '#a3afbf',
         primaryLightColor : '#c4ddf2',
         primaryDarkColor : '#3f4d59',
-        primaryBorderColor : '#c4ddf2',
+        primaryBorderColor : '#3f4d59',
         secondaryColor : '#f2ddd0',
         secondaryLightColor : '#FFF3E7',
         secondaryDarkColor : '#d9c0da',
@@ -724,7 +725,7 @@ export const themeOptions = {
         secondaryDarkColor : '#889f9f',
         primaryTextColor : '#ffffff',
         secondaryTextColor : '#000000',
-        primaryMsgColor : '#3f4d59',
+        primaryMsgColor : '#1e5959',
         borderColor : "#A9A9A9",
         navbarColor : "#f0f0f0",
         facebookColor : '#1e5959',
@@ -732,17 +733,35 @@ export const themeOptions = {
         photoButtonColor : '#33ccff',
         errorColor : "#b40530",
     },
-    '#425c59' : {
-        primaryColor : '#425c59',
-        primaryLightColor : '#a2bfbe',
-        primaryDarkColor : '#555c5a',
-        primaryBorderColor : '#a2bfbe',
+    '#8fbf8e' : {
+        primaryColor : '#8fbf8e',
+        primaryLightColor : '#bad9d9',
+        primaryDarkColor : '#1e5959',
+        primaryBorderColor : '#1e5959',
+        secondaryColor : '#1f7363',
+        secondaryLightColor : '#c8e4e5',
+        secondaryDarkColor : '#889f9f',
+        primaryTextColor : '#ffffff',
+        secondaryTextColor : '#000000',
+        primaryMsgColor : '#1e5959',
+        borderColor : "#A9A9A9",
+        navbarColor : "#f0f0f0",
+        facebookColor : '#1e5959',
+        googleColor : '#cbe4e5',
+        photoButtonColor : '#33ccff',
+        errorColor : "#b40530",
+    },
+    '#a2bfbe' : {
+        primaryColor : '#a2bfbe',
+        primaryLightColor : '#dae6e4',
+        primaryDarkColor : '#425c59',
+        primaryBorderColor : '#425c59',
         secondaryColor : '#ffcea3',
         secondaryLightColor : '#ffffff',
         secondaryDarkColor : '#555c5a',
         primaryTextColor : '#ffffff',
         secondaryTextColor : '#000000',
-        primaryMsgColor : '#3f4d59',
+        primaryMsgColor : '#555c5a',
         borderColor : "#A9A9A9",
         navbarColor : "#f0f0f0",
         facebookColor : '#555c5a',
@@ -866,6 +885,24 @@ export const themeOptionsEx = {
         photoButtonColor : '#33ccff',
         errorColor : "#b40530",
     },
+    '#425c59' : {
+        primaryColor: '#425c59',
+        primaryLightColor: '#a2bfbe',
+        primaryDarkColor: '#555c5a',
+        primaryBorderColor: '#a2bfbe',
+        secondaryColor: '#ffcea3',
+        secondaryLightColor: '#ffffff',
+        secondaryDarkColor: '#555c5a',
+        primaryTextColor: '#ffffff',
+        secondaryTextColor: '#000000',
+        primaryMsgColor: '#555c5a',
+        borderColor: "#A9A9A9",
+        navbarColor: "#f0f0f0",
+        facebookColor: '#555c5a',
+        googleColor: '#ffcea3',
+        photoButtonColor: '#33ccff',
+        errorColor: "#b40530",
+    }
 }
 
 export async function hasAPIConnection() {
@@ -882,8 +919,47 @@ export async function hasAPIConnection() {
         return false
     }
 }
+export async function getViewStat(classID){
+    // await setStorageData(`${classID}chatID`,"0")
+    // await setStorageData(`${classID}tagID`,"0")
+    // setStorageData(`${classID}markID`,"0")
+    // setStorageData(`${classID}newsID`,"0")
+    // setStorageData(`${classID}buildsID`,"0")
+    // setStorageData(`${classID}QandAID`,"0")
+    // setStorageData(`${classID}budgetID`,"0")
+    // setStorageData(`${classID}statID`,"0")
 
-export default getLangAsyncFunc = async (lang) => {
+    const chatID = await getStorageData(`${classID}chatID`)
+    const tagID = await getStorageData(`${classID}tagID`)
+    const markID = await getStorageData(`${classID}markID`)
+    const newsID = await getStorageData(`${classID}newsID`)
+    const buildsID = await getStorageData(`${classID}buildsID`)
+    const QandAID = await getStorageData(`${classID}QandAID`)
+    const budgetID = await getStorageData(`${classID}budgetID`)
+    const statID = await getStorageData(`${classID}statID`)
+    const chats = await getStorageData(`${classID}chats`)
+    const tags = await getStorageData(`${classID}tags`)
+    const marks = await getStorageData(`${classID}marks`)
+    const news = await getStorageData(`${classID}news`)
+    const builds = await getStorageData(`${classID}builds`)
+    const QandAs = await getStorageData(`${classID}QandAs`)
+
+    console.log("getViewStat", chatID, tagID, markID, newsID, buildsID)
+    console.log("getViewStat2", Number(Number.isNaN(Number(chatID))?0:chatID===null?0:chatID),
+                                Number(Number.isNaN(Number(tagID))?0:tagID===null?0:tagID),
+                                Number(Number.isNaN(Number(markID))?0:markID===null?0:markID),
+                                Number(Number.isNaN(Number(newsID))?0:newsID===null?0:newsID),
+                                Number(Number.isNaN(Number(buildsID))?0:buildsID===null?0:buildsID))
+    return {    chatID : Number(Number.isNaN(Number(chatID))?0:chatID===null?0:chatID),
+                tagID : Number(Number.isNaN(Number(tagID))?0:tagID===null?0:tagID),
+                markID : Number(Number.isNaN(Number(markID))?0:markID===null?0:markID),
+                newsID : Number(Number.isNaN(Number(newsID))?0:newsID===null?0:newsID),
+                buildsID : Number(Number.isNaN(Number(buildsID))?0:buildsID===null?0:buildsID),
+                QandAID : Number(Number.isNaN(Number(QandAID))?0:QandAID===null?0:QandAID),
+        chats : chats, tags : tags, marks : marks, news : news,
+        builds : builds, QandAs : QandAs}
+}
+export async function getLangAsyncFunc(lang){
     // if (!lang) {
     //     lang = this.props.userSetup.langCode ? this.props.userSetup.langCode : this.defLang
     // }
@@ -914,4 +990,24 @@ export default getLangAsyncFunc = async (lang) => {
             console.log("ERROR_LANG", res)
         })
     return langObj
+}
+export const getSubjFieldName=lang=>{
+    let field_name = "ua"
+    switch (lang) {
+        case "RU" :
+            field_name = "ru"
+            break
+        case "EN" :
+            field_name = "en"
+            break
+        case "GB" :
+            field_name = "gb"
+            break
+        default :
+            break;
+    }
+    return "subj_name_"+field_name
+}
+export const localDateTime=(ondate, countryCode)=>{
+  return  toLocalDate((new Date(ondate)), countryCode, false, false) + ' ' +  (new Date(ondate)).toLocaleTimeString().slice(0, 5)
 }

@@ -9,6 +9,7 @@ import thunk from 'redux-thunk';
 import { userSetupReducer } from '../reducers/userSetup'
 import { userReducer } from '../reducers/user'
 import { chatReducer } from '../reducers/chatReduser'
+import { statReducer } from '../reducers/stat'
 import { persistStore, persistReducer } from "redux-persist";
 import hardSet from 'redux-persist/lib/stateReconciler/hardSet'
 import AsyncStorage from '@react-native-community/async-storage';
@@ -39,7 +40,9 @@ const rootReducer = combineReducers({
     userSetup: userSetupReducer,
     user: userReducer,
     chat : chatReducer,
-    network
+    stat : statReducer,
+    network,
+    blacklist: ["network", "user", "stat"]
 })
 export const persistedReducer = persistReducer(persistConfig, rootReducer)
 

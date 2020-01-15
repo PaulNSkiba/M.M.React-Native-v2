@@ -6,7 +6,9 @@ import {    StyleSheet, Text, View, Image, ScrollView,
             TouchableHighlight, Modal, Radio, TouchableOpacity, FlatList, Dimensions } from 'react-native';
 import {    Container, TabHeading, Tabs, Tab, ScrollableTab, Spinner} from 'native-base';
 import RadioForm from 'react-native-radio-form';
-import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, addDay, toYYYYMMDD, daysList, toLocalDate, dateFromTimestamp, getNearestSeptFirst} from '../../js/helpersLight'
+import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, addDay,
+        toYYYYMMDD, daysList, toLocalDate, dateFromTimestamp,
+        getNearestSeptFirst, getSubjFieldName, localDateTime, setStorageData} from '../../js/helpersLight'
 import { connect } from 'react-redux'
 import { Table, TableWrapper, Row, Rows, Cell, Col } from 'react-native-table-component';
 import { RFPercentage, RFValue } from "react-native-responsive-fontsize";
@@ -24,13 +26,6 @@ import ButtonWithBadge from '../../components/ButtonWithBadge/buttonwithbadge'
 //         return obj[index] ? obj[index] + character : character;
 //     });
 // };
-// const tableStyles = StyleSheet.create({
-//     container: { flex: 1, padding: 16, paddingTop: 30, backgroundColor: '#fff', borderWidth: 2, borderColor : "#8866aa" },
-//     head: { height: 40, backgroundColor: '#808B97', color : "#fff", textAlign: "center" },
-//     text: { margin: 6, textAlign : "center", backgroundColor: '#fff' },
-//     headtext : {  color : "#fff" },
-//     wrapper: { flexDirection: 'row' },
-// });
 const windowRatio = Dimensions.get('window').width? Dimensions.get('window').height / Dimensions.get('window').width : 1.9
 
 class MarksBlock extends Component {
@@ -58,6 +53,7 @@ class MarksBlock extends Component {
             tableTitle: ['Англ.мова', 'Укр.мова', 'Математика', 'Химия'],
             widthArr: [100, 60, 60, 60, 60, 60],
             isSpinner : true,
+            activeTab : 0,
         };
         this.markDaySteps = 6
         this.getTableGrids = this.getTableGrids.bind(this)
@@ -86,13 +82,14 @@ class MarksBlock extends Component {
     }
 
     getTableGrids=()=>{
-        let {marks, subjects} = this.props.userSetup
+        let {marks, subjects, langCode} = this.props.userSetup
         let dayPages = [], curItem = [], cnt = 0, periodNum = 0, subjPages = []
         let daysMap = new Map(), subjMap = new Map();
         const firstSept = getNearestSeptFirst()
         console.log("MARKS_ARRAY", toYYYYMMDD(getNearestSeptFirst()))
         marks = marks.filter(item=>(new Date(item.mark_date))>=(new Date(firstSept)))
         if (marks.length) {
+            let markID = marks[marks.length - 1].id
             for (let i = marks.length - 1; i >= 0; i--) {
                 // console.log(marks[i])
                 if (!daysMap.has(marks[i].mark_date)) {
@@ -102,18 +99,19 @@ class MarksBlock extends Component {
                         curItem.unshift(marks[i].mark_date)
                     }
                     else {
-                        dayPages.unshift({i : periodNum, arr : curItem})
+                        dayPages.unshift({i : periodNum, arr : curItem, markID : markID})
                         periodNum++
                         curItem = []
                         cnt = 0
                         cnt++
+                        markID = marks[i].id
                         // if ((dayPages.length === 5)) break;
                         curItem.unshift(marks[i].mark_date)
                     }
                 }
             }
             if (curItem.length) {
-                dayPages.unshift({i : periodNum, arr : curItem})
+                dayPages.unshift({i : periodNum, arr : curItem, markID : markID})
             }
             // console.log("Mark_Periods0", dayPages, subjPages)
             // Теперь выберем предметы для периода
@@ -125,7 +123,7 @@ class MarksBlock extends Component {
                     let elem = marks[j], values = Array.from(dayPages[i].arr.values())
                     // console.log("dayPages1", dayPages[i].arr.values(), elem.mark_date, dayPages[i].arr.values().includes(elem.mark_date))
                     if ((values.includes(elem.mark_date)) && (!(subjMap.has(elem.subj_key)))) {
-                        curItem.unshift({"subj_key" : elem.subj_key, "subj_id" : elem.subj_id, "subj_name_ua" : elem.subj_name_ua})
+                        curItem.unshift({"subj_key" : elem.subj_key, "subj_id" : elem.subj_id, "subj_name_ua" : elem[getSubjFieldName(langCode)]})
                         subjMap.set(elem.subj_key)
                     }
                 }
@@ -149,7 +147,7 @@ class MarksBlock extends Component {
             }
         }
         this.setState({dayPages, subjPages, curPage : (dayPages.length-1), isSpinner : false})
-        // console.log("Mark_Periods", dayPages, subjPages)
+        console.log("Mark_Periods")
     }
     markColor=mark=>{
 // ToDO: Для разных систем оценивания указать разные подходы к отображению оценок
@@ -204,12 +202,35 @@ class MarksBlock extends Component {
         // you'll get something like this here:
         // {"target":1105,"layout":{"y":0,"width":256,"x":32,"height":54.5}}
     }
+    // updateReadedID=ID=>{
+    //     const {classID} = this.props.userSetup
+    //     let {stat} = this.props
+    //     if (stat.markID < ID) {
+    //         stat.markID = ID
+    //         // console.log("updateReadedID", ID, stat.chatID, `${classID}chatID`, ID.toString())
+    //         setStorageData(`${classID}markID`, ID.toString())
+    //         this.props.onReduxUpdate("UPDATE_VIEWSTAT", stat)
+    //     }
+    // }
+    setActiveTab=i=>{
+        console.log("ACTIVE_TAB", i, this.state.dayPages[i]);
+        const {classID} = this.props.userSetup
+        let {stat} = this.props
+        const ID = this.state.dayPages[i].markID
+        console.log("updateReadedID", ID, stat.markID, `${classID}markID`, ID.toString())
+        if (stat.markID < ID) {
+            stat.markID = Number(ID)
+            console.log("UPDATE_VIEWSTAT")
+            setStorageData(`${classID}markID`, ID.toString())
+            this.props.onReduxUpdate("UPDATE_VIEWSTAT", stat)
+        }
+        this.setState({activeTab:i})
+    }
     render () {
-        const {headerHeight, footerHeight, theme} = this.props.userSetup
+        const {headerHeight, footerHeight, theme, langCode, langLibrary} = this.props.userSetup
         const initialDay = this.getNextStudyDay(daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;}))[0];
         const viewSize = Number(Number(Dimensions.get("window").height) - 2 *(headerHeight + footerHeight))
-        console.log("MARKS_RENDER", this.props.userSetup)
-        // <View onLayout={(event) => { this.find_dimesions(event.nativeEvent.layout) }} style={styles.container}>
+        console.log("MARKS_RENDER")
         let {marks, stats3} = this.props.userSetup, mark = "", subjmarks = ""
         {/*<Container>*/}
         // style={styles.modalView}
@@ -219,21 +240,21 @@ class MarksBlock extends Component {
                         <Spinner color={theme.secondaryLightColor}/>
                     </View>:null}
                     {(this.state.dayPages!==null)&&this.state.dayPages.length?
-                    <Tabs renderTabBar={()=> <ScrollableTab />}>
+                    <Tabs renderTabBar={()=> <ScrollableTab />}  onChangeTab={({ i, ref, from }) => this.setActiveTab(i)}>
                         {this.state.dayPages.map((rootItem, key) =>
                             <Tab key={"tab" + key} heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor, fontSize: RFPercentage(1.5)}}>{toLocalDate(new Date(rootItem.arr.slice(-1)), "UA", false, false)}</Text>
                             </TabHeading>}>
                                 <View style={{flex : 1, flexDirection : "column"}}>
                                     <View style={globalStyles.head}>
                                         <View key={1000}>
-                                            <Text style={globalStyles.headerCellFirst}>{"Предмет"}</Text>
-                                            <Text style={{position : "absolute", top : 0, left : 0, fontSize : 8.5, paddingLeft : 4, paddingRight : 4, borderBottomRightRadius : 3, color : "#fff", backgroundColor : "#4472C4"}}>
-                                                {(new Date(dateFromTimestamp(stats3.max)) instanceof Date)?toLocalDate((new Date(dateFromTimestamp(stats3.max))), "UA", false, false) + ' ' +  (new Date(dateFromTimestamp(stats3.max))).toLocaleTimeString().slice(0, 5):null}
+                                            <Text style={[globalStyles.headerCellFirst, {backgroundColor : theme.primaryLightColor, borderColor : theme.primaryDarkColor}]}>{`${langLibrary===undefined?'':langLibrary.mobSubject===undefined?'':langLibrary.mobSubject.toUpperCase()}`}</Text>
+                                            <Text style={{position : "absolute", top : 0, left : 0, fontSize : 8.5, paddingLeft : 4, paddingRight : 4, borderBottomRightRadius : 3, color : theme.primaryTextColor, backgroundColor : theme.primaryDarkColor}}>
+                                                {(new Date(dateFromTimestamp(stats3.max)) instanceof Date)?localDateTime(dateFromTimestamp(stats3.max), "UA"):null}
                                                 </Text>
                                         </View>
                                         {  rootItem.arr.map((item, key) =>
                                             <View key={"header"+key}>
-                                                <Text style={globalStyles.headerCell}>{toLocalDate(new Date(item), "UA", false, true)}</Text>
+                                                <Text style={[globalStyles.headerCell, {backgroundColor : theme.primaryLightColor, borderColor : theme.primaryDarkColor}]}>{toLocalDate(new Date(item), "UA", false, true)}</Text>
                                             </View>
                                         )
                                         }
@@ -248,7 +269,7 @@ class MarksBlock extends Component {
                                                 return <View key={"viewKey"+key} style={{flexDirection: "row"}}>
                                                     <View key={"cellBody" + key + '.0@' + subjItem.subj_key + '@'+rootItem.arr.slice(-1)}>
                                                         <Text
-                                                            style={globalStyles.headerCellSubj}>{subjItem.subj_name_ua}</Text>
+                                                            style={[globalStyles.headerCellSubj, {backgroundColor : theme.primaryLightColor, borderColor : theme.primaryDarkColor}]}>{subjItem[getSubjFieldName(langCode)]}</Text>
                                                     </View>
                                                     {
                                                         rootItem.arr.map((dateItem, key2) => {
@@ -259,7 +280,7 @@ class MarksBlock extends Component {
                                                                 }
                                                                 return <View key={"cellBodyMarks" + key2 + '.1@' + subjItem.subj_key + '@'+rootItem.arr.slice(-1)}>
                                                                     <Text
-                                                                        style={[globalStyles.bodyCell, {backgroundColor: mark.length ? this.markColor(mark[0].mark) : "#fff"}]}>
+                                                                        style={[globalStyles.bodyCell, {backgroundColor: mark.length ? this.markColor(mark[0].mark) : "#fff", borderColor : theme.primaryDarkColor}]}>
                                                                         {mark.length ? mark[0].mark : null}
                                                                     </Text>
                                                                 </View>
@@ -296,10 +317,10 @@ const globalStyles = StyleSheet.create({
         paddingLeft : 14,
         fontSize : RFPercentage(2),
         borderWidth : 0.5,
-        borderColor : "#4472C4",
+        // borderColor : "#4472C4",
     },
     headerCellFirst : {
-        backgroundColor: "rgba(64, 155, 230, 0.16)",
+        // backgroundColor: "rgba(64, 155, 230, 0.16)",
         width: windowRatio<1.8? 120: 120,
         height: 40,
         paddingTop: 12,
@@ -307,7 +328,7 @@ const globalStyles = StyleSheet.create({
         paddingLeft : 40,
         fontSize: RFPercentage(1.8),
         borderWidth : 0.5,
-        borderColor : "#4472C4",
+        // borderColor : "#4472C4",
     },
     headerCellSubj : {
         backgroundColor: "#fff",
@@ -318,10 +339,10 @@ const globalStyles = StyleSheet.create({
         fontSize: RFPercentage(1.8),
         fontWeight : "600",
         borderWidth : 0.5,
-        borderColor : "#4472C4",
+        // borderColor : "#4472C4",
     },
     headerCell : {
-        backgroundColor: "rgba(64, 155, 230, 0.16)",
+        // backgroundColor: "rgba(64, 155, 230, 0.16)",
         width: 40,
         height: 40,
         // justifyContent : "center",
@@ -330,7 +351,7 @@ const globalStyles = StyleSheet.create({
         paddingLeft : 4,
         fontSize : RFPercentage(1.4),
         borderWidth : 0.5,
-        borderColor : "#4472C4",
+        // borderColor : "#4472C4",
     },
     text : {
         margin: 6,

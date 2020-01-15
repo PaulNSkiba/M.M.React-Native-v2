@@ -30,7 +30,8 @@ const initialState = {
             localChatMessages : [], isMobile : true, photoPath : [], markscount : 0,
             needRenew : false, chatTags : [], budget : [], budgetpays : [], renderBudget : 1, classNews : [],
             statsBudget : null, statsBudgetPays : null, selectedFooter : 0, showLogin : false, logoutToken : '',
-            timetable : [], subjects : [], headerHeight : 0, footerHeight : 0, online : false, langCode : "", offlineMsgs : [],
+            timetable : [], subjects : [], headerHeight : 0, footerHeight : 0, online : false, langCode : "",
+            offlineMsgs : [],
             themeColor : "#46b5be",
             theme : {
                 primaryColor : '#47b5be',

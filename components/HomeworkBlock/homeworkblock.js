@@ -189,6 +189,7 @@ class HomeworkBlock extends Component {
 
     }
     getHomeworkItems = arr => {
+        const {theme, userName} = this.props.userSetup
         return ( arr.map((item, key) => {
                 let msg = prepareMessageToFormat(item, true)
                 let hw = msg.hasOwnProperty('hwdate') && (!(msg.hwdate === undefined)) ? (toLocalDate(msg.hwdate, "UA", false, false)) + ':' + msg.subjname : ''
@@ -203,9 +204,12 @@ class HomeworkBlock extends Component {
                 return (
                     <View key={key} id={"msg-" + msg.id} style={{marginTop: 10}}>
                         <View key={msg.id}
-                              style={(hw.length ? [styles.msgRightSide, styles.homeworkBorder] : [styles.msgRightSide, styles.homeworkNoBorder])}>
-                            <View key={'id' + i} style={styles.msgRightAuthor}><Text
-                                style={styles.msgAuthorText}>{item.student_name ? item.student_name : this.props.userSetup.userName}</Text></View>
+                              // style={(hw.length ? [styles.msgRightSide, styles.homeworkBorder] : [styles.msgRightSide, styles.homeworkNoBorder])}
+                              style={
+                                  (hw.length?[styles.msgRightSide, {borderWidth : 2, borderColor : theme.primaryMsgColor, backgroundColor : "#D8FBFF"}]:[styles.msgRightSide, styles.homeworkNoBorder, {backgroundColor : "#D8FBFF"}])}
+                            >
+                            {/*<View key={'id' + i} style={styles.msgRightAuthor}><Text style={styles.msgAuthorText}>{item.student_name ? item.student_name : this.props.userSetup.userName}</Text></View>*/}
+                            <View key={'id'+i} style={[[styles.msgRightAuthor, {borderColor : theme.primaryColor, backgroundColor : theme.primaryColor}], msg.tagid?styles.authorBorder:'']} >{<Text style={{color : theme.primaryTextColor}}>{item.student_name ? item.student_name : username}</Text>}</View>
                             {isImage ?
                                 <View style={{display: "flex", flex: 1, flexDirection: "row"}}>
                                     <TouchableOpacity onPress={() => {
@@ -235,7 +239,7 @@ class HomeworkBlock extends Component {
                                 <Text style={msg.id ? styles.btnAddTimeDone : styles.btnAddTime}>{msg.time}</Text>
                             </View>
                             {hw.length ?
-                                <View key={'idhw' + i} style={[styles.msgRightIshw, {color: 'white'}]}>
+                                <View key={'idhw' + i} style={[styles.msgRightIshw, {color : theme.primaryTextColor, backgroundColor : theme.primaryMsgColor}]}>
                                     <Text style={{color: 'white'}}>{hw}</Text>
                                 </View> : null}
                         </View>
@@ -245,6 +249,7 @@ class HomeworkBlock extends Component {
         )
     }
     getTagItems = arr => {
+        const {theme, userName} = this.props.userSetup
         return ( arr.map((item, key) => {
                 let msg = prepareMessageToFormat(item, true)
                 let hw = msg.hasOwnProperty('hwdate') && (!(msg.hwdate === undefined)) ? (toLocalDate(msg.hwdate, "UA", false, false)) + ':' + msg.subjname : ''
@@ -255,12 +260,14 @@ class HomeworkBlock extends Component {
                 if (item !== undefined && item.attachment3 !== null && item.attachment3 !== undefined) {
                     isImage = true
                 }
+                const username = msg.hasOwnProperty('userID')?msg.userName:msg.senderId
+                const ownMsg = (username===userName)
                 return (
                     <View key={key} id={"msg-" + msg.id} style={{marginTop: 10}}>
                         <View key={msg.id}
-                              style={(hw.length ? [styles.msgRightSide, styles.homeworkBorder] : [styles.msgRightSide, styles.homeworkNoBorder])}>
-                            <View key={'id' + i} style={styles.msgRightAuthor}><Text
-                                style={styles.msgAuthorText}>{item.student_name ? item.student_name : this.props.userSetup.userName}</Text></View>
+                              style={[styles.msgLeftSide, styles.homeworkNoBorder]}>
+                            {/*<View key={'id' + i} style={styles.msgRightAuthor}><Text style={styles.msgAuthorText}>{item.student_name ? item.student_name : this.props.userSetup.userName}</Text></View>*/}
+                            <View key={'id'+i} style={[[styles.msgLeftAuthor, {borderColor : theme.primaryColor, backgroundColor : theme.primaryColor}], msg.tagid?styles.authorBorder:'']} >{<Text style={{color : theme.primaryTextColor}}>{item.student_name ? item.student_name : username}</Text>}</View>
                             {isImage ?
                                 <View style={{display: "flex", flex: 1, flexDirection: "row"}}>
                                     <TouchableOpacity onPress={() => {
@@ -294,7 +301,7 @@ class HomeworkBlock extends Component {
                                 <Text style={{color: 'white'}}>{hw}</Text>
                             </View> : null}
                             {msg.tagid?<View style={{ position : "absolute", right : 3, top : -7, display : "flex", alignItems : "center"}}>
-                                <View><Icon style={{fontSize: 15, color: '#b40530'}} name="medical"/></View>
+                                <View><Icon style={{fontSize: 15, color: theme.primaryMsgColor}} name="medical"/></View>
                             </View>:null}
                             {/*{msg.tagid?<View style={{ position : "absolute", right : 5, top : -5, display : "flex", alignItems : "center"}}>*/}
                                 {/*<View><Icon style={{fontSize: 20, color: '#4472C4'}} name="bookmark"/></View>*/}

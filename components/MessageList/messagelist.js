@@ -9,12 +9,18 @@ import {    Container, Header, Left, Body, Right, Button,
     Form, Item, Input, Label, Textarea, CheckBox, ListItem, Thumbnail, Spinner } from 'native-base';
 import RadioForm from 'react-native-radio-form';
 import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, addDay, toYYYYMMDD,
-        daysList, toLocalDate, instanceAxios, axios2, arrOfWeekDaysLocal, getStorageData, setStorageData} from '../../js/helpersLight'
+        daysList, toLocalDate, instanceAxios, axios2, arrOfWeekDaysLocal,
+        getStorageData, setStorageData, getSubjFieldName} from '../../js/helpersLight'
 import {SingleImage,wrapperZoomImages,ImageInWraper} from 'react-native-zoom-lightbox';
 import LinkPreviewEx from '../LinkPreviewEx/linkpreviewex'
 import { connect } from 'react-redux'
 import ImageZoom from 'react-native-image-pan-zoom';
 import { API_URL } from '../../config/config'
+import { Viewport } from '@skele/components'
+
+// import VisibilitySensor from 'react-native-visibility-sensor'
+// import InViewPort from 'react-native-inviewport'
+
 // import {AsyncStorage} from 'react-native';
 // import ScrollToBottom from 'react-scroll-to-bottom';
 // import MicrolinkCard from '@microlink/react';
@@ -58,14 +64,21 @@ class MessageList extends Component {
         this.onDelMsgClick=this.onDelMsgClick.bind(this)
         this.onLongPressMessage=this.onLongPressMessage.bind(this)
         this.getImage = this.getImage.bind(this)
+        this.unreadY = null
+        this.isViewed = false
+        this.msgsY = {}
+        this.updateReadedID = this.updateReadedID.bind(this)
+        this.updateY = this.updateY.bind(this)
     }
     componentDidMount(){
         this.getSavedCreds()
-        }
+        // ToDO: Если прочитаны все сообщения, то ничего не скроллить
+        this._scrollView.scrollTo({ x: 0, y: this.unreadY, animated: true });
+    }
     getSavedCreds=async ()=>{
         const credents = await getStorageData("checkTimetable")
         if (credents.length){
-            if (credents.slice(0,1)==="1"){
+            if (credents.slice(0, 1)==="1"){
                 this.setState({checkTimetable : true})
             }
         }
@@ -141,9 +154,10 @@ class MessageList extends Component {
         if (Number(key)!==this.state.editKey) this.setState({editKey : Number(key)})
     }
     onLongPressMessage=(id, hwSubjID, hwOnDate, text)=>{
-        const subjects = this.props.userSetup.selectedSubjects.map(item=>{
+        const {selectedSubjects, langCode} = this.props.userSetup
+        const subjects = selectedSubjects.map(item=>{
             return {
-                label : item.subj_name_ua.toUpperCase(),
+                label : item[getSubjFieldName(langCode)].toUpperCase(),
                 value : item.id
             }
         })
@@ -169,6 +183,7 @@ class MessageList extends Component {
     }
     setModalVisible(visible, setHomework) {
         let {selSubject, selDate, currentHomeworkID} = this.state
+        const {localChatMessages} = this.props.userSetup
         this.setState({modalVisible: visible});
         if (setHomework) {
             let messages = []
@@ -197,7 +212,6 @@ class MessageList extends Component {
                 this.props.sendmessage(JSON.stringify(homeworkMsg), currentHomeworkID, true)
 
                 // Здесь будем апдейтить базу домашки
-                // txt, subj_key, subj_name_ua, ondate, chat_id
                 if (currentHomeworkID)
                 this.props.addhomework(homeworkMsg.message, subject.subj_key, subject.subj_name_ua, new Date(addDay(new Date(), selDate.value)), currentHomeworkID)
 
@@ -205,8 +219,8 @@ class MessageList extends Component {
                                 selSubject : 0,
                                 selDate : this.getNextStudyDay(daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;}))[1]})
 
-                const todayMessages = this.props.userSetup.localChatMessages.filter(item=>(new Date(item.msg_date).toLocaleDateString())===(new Date().toLocaleDateString()))
-                const homeworks = this.props.userSetup.localChatMessages.filter(item=>(item.homework_date!==null))
+                const todayMessages = localChatMessages.filter(item=>(new Date(item.msg_date).toLocaleDateString())===(new Date().toLocaleDateString()))
+                const homeworks = localChatMessages.filter(item=>(item.homework_date!==null))
                 // this.props.forceupdate(todayMessages.length, homeworks.length)
                 // this.props.onReduxUpdate(, newmessages)
             }
@@ -343,6 +357,23 @@ class MessageList extends Component {
 
         console.log("UPDATE", this.state.curMessage)
     }
+    updateReadedID=ID=>{
+        const {classID} = this.props.userSetup
+        let {stat} = this.props
+
+        if (stat.chatID < ID) {
+            stat.chatID = ID
+            // console.log("updateReadedID", ID, stat.chatID, `${classID}chatID`, ID.toString())
+            setStorageData(`${classID}chatID`, ID.toString())
+            this.props.onReduxUpdate("UPDATE_VIEWSTAT", stat)
+
+        }
+    }
+    updateY=offsetY=> {
+        // console.log('updateY', offsetY)
+        this.unreadY = offsetY
+        this._scrollView.scrollTo({ x: 0, y: offsetY, animated: true });
+    }
     render() {
 
          // console.log("addmsgs", this.props.addmsgs)
@@ -426,8 +457,8 @@ class MessageList extends Component {
         //         </div>:null}
         // ):null}
 
-        const {userID, theme, chatTags, selectedSubjects} = this.props.userSetup
-
+        const {userID, theme, chatTags, selectedSubjects, langLibrary, langCode} = this.props.userSetup
+        const {chatID} = this.props.stat
         let questionText = "Здравствуйте. Оставьте, пожалуйста, своё сообщение в этом чате. " +
             "Оно автоматически будет доставлено в нашу службу поддержки и мы как можно скорее отправим Вам ответ на "
         questionText = questionText.concat(this.props.classID?"Вашу электронную почту.":"указанную Вами электронной почте.")
@@ -440,7 +471,7 @@ class MessageList extends Component {
 
         const subjects = selectedSubjects.filter(item=>item.subj_key!=="#xxxxxx").map(item=>{
             return {
-                    label : item.subj_name_ua.toUpperCase(),
+                    label : item[getSubjFieldName(langCode)].toUpperCase(),
                     value : item.id
             }
         })
@@ -490,6 +521,8 @@ class MessageList extends Component {
             //     .then(res => {console.log("File : ", res)})
             //     .catch(res => console.log("FileWrite: Error", res))
         }
+        const ViewportView = Viewport.Aware(View)
+        // console.log("MSG_LIST")
         return (
             <View>
                 <Modal
@@ -540,7 +573,7 @@ class MessageList extends Component {
                     onRequestClose={() => {}}>
                     <View style={styles.modalView}>
                         <Tabs>
-                            <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color : theme.primaryTextColor}}>ПРЕДМЕТ</Text></TabHeading>}>
+                            <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color : theme.primaryTextColor}}>{langLibrary===undefined?'':langLibrary.mobSubject===undefined?'':langLibrary.mobSubject.toUpperCase()}</Text></TabHeading>}>
                                 <View style={styles.homeworkSubjectList}>
                                     <RadioForm
                                         // style={{ paddingBottom : 20 }}
@@ -555,7 +588,7 @@ class MessageList extends Component {
                                     />
                                 </View>
                             </Tab>
-                            <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color : theme.primaryTextColor}}>НА КОГДА</Text></TabHeading>}>
+                            <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color : theme.primaryTextColor}}>{langLibrary===undefined?'':langLibrary.mobWhen===undefined?'':langLibrary.mobWhen.toUpperCase()}</Text></TabHeading>}>
                                 <View style={styles.homeworkSubjectList}>
                                     <RadioForm
                                         // style={{ paddingBottom : 20 }}
@@ -570,26 +603,26 @@ class MessageList extends Component {
                                     />
                                 </View>
                             </Tab>
-                            <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>ИЗМЕНИТЬ</Text></TabHeading>}>
+                            <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{langLibrary===undefined?'':langLibrary.mobChange===undefined?'':langLibrary.mobChange.toUpperCase()}</Text></TabHeading>}>
                                 <View>
                                         <Textarea style={styles.msgUpdateTextarea}
                                             // onKeyPress={this._handleKeyDown}
                                                   onChangeText={text=>this.onChangeText('curMessage', text)}
                                             // onFocus={()=>{this.props.setstate({showFooter : false})}}
                                             // onBlur={()=>{this.props.setstate({showFooter : true})}}
-                                                  placeholder="Внесите изменения..."  type="text"
+                                                  placeholder={langLibrary===undefined?'':langLibrary.mobChangeText===undefined?'':langLibrary.mobChangeText}  type="text"
                                                   ref={input=>{this.inputMessage=input}}
                                                   value={this.state.curMessage}
                                         />
                                     <TouchableOpacity
                                         onPress={()=>this.updateMsg(this.state.currentHomeworkID)}>
                                         <View style={styles.updateMsg}>
-                                            <Text style={this.state.isEdited?styles.updatedMsgText:styles.updateMsgText} >{this.state.isEdited?"СОХРАНИТЬ ИЗМЕНЕНИЯ":"ВНЕСИТЕ ИЗМЕНЕНИЯ"}</Text>
+                                            <Text style={this.state.isEdited?styles.updatedMsgText:styles.updateMsgText} >{this.state.isEdited?langLibrary===undefined?'':langLibrary.mobSaveChanges===undefined?'':langLibrary.mobSaveChanges.toUpperCase():langLibrary===undefined?'':langLibrary.mobChangeTextUpper===undefined?'':langLibrary.mobChangeTextUpper.toUpperCase()}</Text>
                                         </View>
                                     </TouchableOpacity>
                                 </View>
                             </Tab>
-                            <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>ЗАМЕТКИ</Text></TabHeading>}>
+                            <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{langLibrary===undefined?'':langLibrary.mobTags===undefined?'':langLibrary.mobTags.toUpperCase()}</Text></TabHeading>}>
                                 <View style={styles.homeworkSubjectList}>
                                     <RadioForm
                                         dataSource={tagsArr}
@@ -606,34 +639,38 @@ class MessageList extends Component {
                         <ListItem style={styles.modalHeader}>
                             <Text style={styles.modalHeaderText}>
                                 {this.state.selSubject.value?this.state.selSubject.label:null}
-                                {this.state.selDate.value>-3?` на ${this.state.selDate.label}`:null}
+                                {this.state.selDate.value>-3?` ${langLibrary===undefined?'':langLibrary.mobTo===undefined?'':langLibrary.mobTo} ${this.state.selDate.label}`:null}
                             </Text>
                         </ListItem>
                         <ListItem className={styles.editHomeworkCheckbox}>
                             <CheckBox checked={this.state.checkTimetable} onPress={()=>{this.saveCredentials(!this.state.checkTimetable)}} color={theme.primaryDarkColor}/>
                             <Body>
-                                <Text>  Учитывать расписание при выборе даты</Text>
+                                <Text>{`  ${langLibrary===undefined?'':langLibrary.mobConsiderTimetable===undefined?'':langLibrary.mobConsiderTimetable}`}</Text>
                             </Body>
                         </ListItem>
                         <Footer style={styles.header}>
                             <FooterTab style={styles.header}>
-                                <Button style={this.state.selSubject.value&&this.state.selDate.value>-3?{backgroundColor : theme.primaryColor}:styles.btnHomeworkDisabled} vertical
+                                <Button style={this.state.selSubject.value&&this.state.selDate.value>-3?{backgroundColor : theme.primaryColor, padding : 20}:styles.btnHomeworkDisabled} vertical
                                         onPress={this.state.selSubject.value&&this.state.selDate.value>-3?()=>this.setModalVisible(!this.state.modalVisible, true):null}>
-                                    <Text style={{color : theme.primaryTextColor}}>ДОБАВИТЬ</Text>
+                                    <Text style={{color : theme.primaryTextColor, height : "100%", marginTop : 12, flex : 1, alignItems: "center", justifyContent : "center"}}>{langLibrary===undefined?'':langLibrary.mobAdd===undefined?'':langLibrary.mobAdd.toUpperCase()}</Text>
                                 </Button>
                                 <Button style={styles.btnClose} vertical onPress={()=>this.setModalVisible(!this.state.modalVisible, false)}>
-                                    <Text style={{color : theme.primaryTextColor}}>ВЫХОД</Text>
+                                    <Text style={{color : theme.primaryTextColor}}>{langLibrary===undefined?'':langLibrary.mobCancel===undefined?'':langLibrary.mobCancel.toUpperCase()}</Text>
                                 </Button>
                             </FooterTab>
                         </Footer>
                     </View>
                 </Modal>
+                <Viewport.Tracker>
                 <ScrollView
-                    ref="scrollView"
+                    // ref="_scrollViewMain"
+                    ref={ref => this._scrollView = ref}
                     decelerationRate={0.6}
-                    onContentSizeChange={( contentWidth, contentHeight ) => {
-                        this.refs.scrollView.scrollToEnd()
-                    }}>
+                    // style={{backgroundColor : theme.primaryLightColor}}
+                    // onContentSizeChange={(contentWidth, contentHeight)=>this._scrollView.scrollToEnd()}
+
+                    // onContentSizeChange={(contentWidth, contentHeight)=>{this._scrollView.scrollResponderScrollToEnd({animated: true})}
+                >
                     {messages.length?
                         messages.map((message, i) =>{
                                 let msg = this.props.isnew?prepareMessageToFormat(message, true):JSON.parse(message)
@@ -662,16 +699,34 @@ class MessageList extends Component {
 
                                 // console.log("RENDER MESSAGE_LIST")
                                 const {user_id, msg_date, homework_subj_id, homework_date} = message
-                                return (this.props.hwdate===null||(!(this.props.hwdate===null)&&((new Date(this.props.hwdate)).toLocaleDateString()===(new Date(msg.hwdate)).toLocaleDateString())))?
-                                        <View key={i} id={"msg-"+msg.id} className={"message-block"}>
-                                            {this.getDateSeparator(msg_date.length===8?dateFromYYYYMMDD(msg_date):new Date(msg_date))}
+                                // <VisibilitySensor intervalDelay={3000} onChange={()=>console.log("visibility", msg.id)}>
+                                    return (this.props.hwdate===null||(!(this.props.hwdate===null)&&((new Date(this.props.hwdate)).toLocaleDateString()===(new Date(msg.hwdate)).toLocaleDateString())))?
+                                        <ViewportView key={i}
+                                                      id={"msg-"+msg.id}
+                                                      className={"message-block"}
+                                                      onViewportEnter={() =>{ /*console.log('Entered!', msg.id);*/ this.updateReadedID(msg.id) }}
+                                                      onViewportLeave={() =>null /* console.log('Left!', msg.id)*/}
+                                                      onLayout={event => {
+                                                          const layout = event.nativeEvent.layout;
+                                                          // console.log('height:', layout.height);
+                                                          // console.log('width:', layout.width);
+                                                          // console.log('x:', layout.x);
+                                                          // console.log('y:', layout.y);
+                                                          this.msgsY[msg.id] = layout.y
+                                                          // console.log("layout", layout.y, this.unreadY, user_id, userID, msg.id, chatID)
+                                                          // Если начальная позиция ещё null и текущий ID больше максимального
+                                                          if (this.unreadY!==null&&user_id!==userID&&this.isViewed===false&&Number(msg.id) >=Number(chatID)) this.isViewed = true
+                                                          if ((this.unreadY===null&&user_id!==userID&&Number(msg.id) >=Number(chatID))||(user_id===userID&&this.isViewed===false)) this.updateY(layout.y)
+                                                      }}
+                                        >
+                                             {this.getDateSeparator(msg_date.length===8?dateFromYYYYMMDD(msg_date):new Date(msg_date))}
                                             <TouchableWithoutFeedback   key={i} id={"msgarea-"+msg.id}
                                                                         delayLongPress={500}
                                                                         onLongPress={user_id===userID?()=>this.onLongPressMessage(msg.id, homework_subj_id, (homework_date===undefined)?null:homework_date, msg.text):null}
                                                                         >
                                             <View key={msg.id}
                                                 style={ownMsg?
-                                                (hw.length?[styles.msgRightSide, {borderWidth : 2, borderColor : theme.primaryMsgColor}]:[styles.msgRightSide, styles.homeworkNoBorder]):
+                                                (hw.length?[styles.msgRightSide, {borderWidth : 2, borderColor : theme.primaryMsgColor, backgroundColor : "#D8FBFF"}]:[styles.msgRightSide, styles.homeworkNoBorder, {backgroundColor : "#D8FBFF"}]):
                                                 (hw.length?[styles.msgLeftSide, {borderWidth : 2, borderColor : theme.primaryMsgColor}]:[styles.msgLeftSide, styles.homeworkNoBorder])}>
                                                 <View key={'id'+i} style={[ownMsg?{}:[styles.msgLeftAuthor, {borderColor : theme.primaryColor, backgroundColor : theme.primaryColor}], msg.tagid?styles.authorBorder:'']} >{ownMsg?null:<Text style={{color : theme.primaryTextColor}}>{username}</Text>}</View>
                                                 {urlMatches.length > 0?(
@@ -716,11 +771,14 @@ class MessageList extends Component {
                                                 </View>:null}
                                             </View>
                                             </TouchableWithoutFeedback>
-                                        </View>
+
+                                        </ViewportView>
+
                                     :null
                             }
                         ):null}
                 </ScrollView>
+                </Viewport.Tracker>
             </View>
         )
     }

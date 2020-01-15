@@ -62,7 +62,7 @@ export const userLoggedInByToken = (email, token, kind, langLibrary, theme, them
             "token": token,
             "kind": kind,
         };
-        // console.log("userLoggedInByToken", LOGINUSERBYTOKEN_URL, token);
+        console.log("userLoggedInByToken", langLibrary, token);
         // document.body.style.cursor = 'progress';
         dispatch ({type: 'USER_LOGGING'})
 
@@ -76,7 +76,7 @@ export const userLoggedInByToken = (email, token, kind, langLibrary, theme, them
             dispatch({type: 'ADD_CHAT_MESSAGES', payload : response.data.chatrows});
 
             // пробуем записать в LocalStorage имя пользователя, ID, имя и тип авторизации
-            window.localStorage.setItem("userSetupDate", toYYYYMMDD(new Date()))
+            // window.localStorage.setItem("userSetupDate", toYYYYMMDD(new Date()))
 
             saveToLocalStorage("myMarks.data", email, response.data)
             dispatch({type: 'USER_LOGGEDIN_DONE'})

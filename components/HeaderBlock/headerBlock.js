@@ -52,40 +52,40 @@ class HeaderBlock extends React.Component {
     }
     connectivityCheck(){
         hasAPIConnection()
-            .then(res=>{
-                if (res!==this.props.userSetup.online)
+            .then(res=> {
+                if (res !== this.props.userSetup.online)
                     this.props.onReduxUpdate('UPDATE_ONLINE', res)
-                console.log("connectivityCheck!!!", res)})
+                // console.log("connectivityCheck!!!", res)
+            })
 
+            // hasAPIConnection()
+            // const { connectionChange } = offlineActionCreators;
+            // console.log("connectivtiyCheck.1")
+            // // const isConnected = await checkInternetConnection(AUTH_URL, 3000, true);
+            // Promise.resolve(
+            // Promise.resolve(axios.get(`${API_URL}ping`, null, {timeout : 2000}))
+            //     .then(res=>{
+            //         console.log(res,"----------------is gettting info")
+            //         // setIsConnected()
+            //     }).catch(err=>{
+            //         console.log(err,"-----------------not getting info")
+            //     }))
+            //     .then(res=>console.log("CONNECTED?"))
+            //     .error(res=>console.log("NOT&&&"))
+            // // this.props.onReduxUpdate('UPDATE_ONLINE', isConnected)
+            // console.log("connectivtiyCheck.2")
+            // AUTH_URL, 3000, true
 
-        // hasAPIConnection()
-        // const { connectionChange } = offlineActionCreators;
-        // console.log("connectivtiyCheck.1")
-        // // const isConnected = await checkInternetConnection(AUTH_URL, 3000, true);
-        // Promise.resolve(
-        // Promise.resolve(axios.get(`${API_URL}ping`, null, {timeout : 2000}))
-        //     .then(res=>{
-        //         console.log(res,"----------------is gettting info")
-        //         // setIsConnected()
-        //     }).catch(err=>{
-        //         console.log(err,"-----------------not getting info")
-        //     }))
-        //     .then(res=>console.log("CONNECTED?"))
-        //     .error(res=>console.log("NOT&&&"))
-        // // this.props.onReduxUpdate('UPDATE_ONLINE', isConnected)
-        // console.log("connectivtiyCheck.2")
-        // AUTH_URL, 3000, true
-
-        // checkInternetConnection()
-        //     .then(isConnected => {
-        //         console.log("connectivtiyCheck2", isConnected)
-        //         if (isConnected!==this.props.userSetup.online) {
-        //             console.log("headerBlock", isConnected)
-        //             // store.dispatch(connectionChange(isConnected));
-        //             this.props.onReduxUpdate('UPDATE_ONLINE', isConnected)
-        //         }
-        //     })
-        //     .catch(res=>console.log("headerBlock:error", res))
+            // checkInternetConnection()
+            //     .then(isConnected => {
+            //         console.log("connectivtiyCheck2", isConnected)
+            //         if (isConnected!==this.props.userSetup.online) {
+            //             console.log("headerBlock", isConnected)
+            //             // store.dispatch(connectionChange(isConnected));
+            //             this.props.onReduxUpdate('UPDATE_ONLINE', isConnected)
+            //         }
+            //     })
+            //     .catch(res=>console.log("headerBlock:error", res))
     }
     getGeo2 = () => {
         axios.get(`${API_URL}getgeo`)
@@ -106,8 +106,8 @@ class HeaderBlock extends React.Component {
         // {"target":1105,"layout":{"y":0,"width":256,"x":32,"height":54.5}}
     }
     render(){
-        const {token, theme, userID, markscount, userName, online} = this.props.userSetup
-        console.log("headerBlock:render")
+        const {token, theme, userID, markscount, userName, online, langLibary, themeColor} = this.props.userSetup
+        // console.log("headerBlock:render")
         return (
             <View
                 onLayout={(event) =>this.measureView(event)}>
@@ -137,11 +137,11 @@ class HeaderBlock extends React.Component {
                             <View style={{
                                 paddingTop: 5, paddingBottom: 5,
                                 paddingLeft: 15, paddingRight: 15, borderRadius: 5,
-                                borderWidth: 2, borderColor: "#33ccff", zIndex: 10,
+                                borderWidth: 2, borderColor: theme.photoButtonColor, zIndex: 10,
                             }}>
                                 <Text style={{
                                     fontSize: 20,
-                                    color: "#33ccff",
+                                    color: theme.photoButtonColor,
                                     zIndex: 10,
                                 }}
                                 >X</Text>
@@ -152,7 +152,7 @@ class HeaderBlock extends React.Component {
                 </Modal>
 
                 {this.props.token.length ?
-                    <LoggingByToken email={this.props.email} token={this.props.token} logout={false}/> :
+                    <LoggingByToken email={this.props.email} token={this.props.token} langLibary={this.props.langLibary} theme={this.props.theme} themeColor={this.props.themeColor} logout={false}/> :
                     null}
                 {this.props.userSetup.token.length?this.props.updateState("userToken", token):null}
                 {this.props.updateState("marksInBaseCount", markscount)}

@@ -56,7 +56,7 @@ class AccordionCustom extends Component {
                 backgroundColor : theme.primaryTextColor,
                 // borderColor: "#ecabb9",
                 borderLeftWidth: 4,
-                marginTop : 8,
+                marginTop : 6,
                 borderLeftColor : theme.secondaryColor
             }}>
                     {item.hasOwnProperty("labelEx")?<Left style={{width: 120}}><Text style={{

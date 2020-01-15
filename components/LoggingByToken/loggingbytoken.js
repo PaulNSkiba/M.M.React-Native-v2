@@ -12,7 +12,7 @@ class LoggingByToken extends Component {
         this.state = {}
     }
     componentDidMount(){
-        this.props.onUserLoggingByToken(this.props.email, this.props.token, null, this.props.langLibrary);
+        this.props.onUserLoggingByToken(this.props.email, this.props.token, null, this.props.langLibrary, this.props.theme, this.props.themeColor);
      }
     render(){
         return null;

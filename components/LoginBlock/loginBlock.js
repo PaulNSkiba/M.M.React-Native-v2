@@ -95,7 +95,7 @@ class LoginBlock extends React.Component {
         console.log("creds")
         const store = await getStorageData("creds")
         const creds = JSON.parse(store)
-        console.log("getCreds", creds)
+        // console.log("getCreds", creds)
         if (creds){
             if (creds.isSet){
                 this.setState({checkSave : true, username : creds.userName, password : creds.userPwd})
@@ -125,7 +125,7 @@ class LoginBlock extends React.Component {
             provider = null,
             provider_id = null
 
-        if (Platform.OS !== 'ios')
+        // if (Platform.OS !== 'ios')
         this.saveCredentials(this.state.checkSave);
 
         this.props.onReduxUpdate("SHOW_LOGIN", false)
@@ -233,7 +233,7 @@ class LoginBlock extends React.Component {
                 <Form>
                     <View>
                         <Dialog
-                            visible={loginmsg.length ? true : false}
+                            visible={loginmsg===undefined?'':loginmsg.length ? true : false}
                             dialogStyle={{backgroundColor: theme.primaryColor, color: theme.primaryDarkColor}}
                             footer={
                                 <DialogFooter>
@@ -329,7 +329,7 @@ class LoginBlock extends React.Component {
                             <CheckBox checked={this.state.checkSave} onPress={()=>{this.saveCredentials(!this.state.checkSave)}} color={theme.primaryDarkColor}/>
                         </View>
                         <View style={{ marginLeft : 20}}>
-                            <Text style={{color : theme.primaryDarkColor}}>{langLibrary.mobSaveCheckBox}</Text>
+                            <Text style={{color : theme.primaryDarkColor}}>{langLibrary===undefined?'':langLibrary.mobSaveCheckBox===undefined?'':langLibrary.mobSaveCheckBox}</Text>
                         </View>
                     </Item>
 
@@ -338,7 +338,7 @@ class LoginBlock extends React.Component {
                                                 alignItems: "center",
                                                 color : theme.primaryDarkColor, backgroundColor : theme.secondaryLightColor}} onPress={()=>this.props.onUserLoggingOut(token, langLibrary, theme, themeColor)}>
                                     <View style={{ justifyContent: "center", alignItems: "center" }}>
-                                        <Text style={{fontSize : RFPercentage(3), color : theme.primaryDarkColor, width : "100%", fontWeight : "800"}}>{langLibrary.mobExit===undefined?'':langLibrary.mobExit.toUpperCase()}</Text>
+                                        <Text style={{fontSize : RFPercentage(3), color : theme.primaryDarkColor, width : "100%", fontWeight : "800"}}>{langLibrary===undefined?'':langLibrary.mobExit===undefined?'':langLibrary.mobExit.toUpperCase()}</Text>
                                     </View>
                                 </Button> :
                                 <Button style={{marginLeft : 60, marginTop : 5, marginRight : 60, borderRadius : 30,
@@ -346,7 +346,7 @@ class LoginBlock extends React.Component {
                                                 alignItems: "center",
                                                 color : theme.primaryDarkColor, backgroundColor : theme.primaryTextColor}} onPress={this.onLogin}>
                                     <View style={{ justifyContent: "center", alignItems: "center" }}>
-                                        <Text style={{fontSize : RFPercentage(3), color : theme.primaryDarkColor, width : "100%", fontWeight : "800"}}>{langLibrary.mobLogin===undefined?'':langLibrary.mobLogin.toUpperCase()}</Text>
+                                        <Text style={{fontSize : RFPercentage(3), color : theme.primaryDarkColor, width : "100%", fontWeight : "800"}}>{langLibrary===undefined?'':langLibrary.mobLogin===undefined?'':langLibrary.mobLogin.toUpperCase()}</Text>
                                     </View>
                                 </Button>}
 
@@ -358,7 +358,7 @@ class LoginBlock extends React.Component {
                                     <Text style={{  color : theme.primaryDarkColor,
                                                     textDecorationLine: 'underline'}} onPress={this.forgotPwd}
                                           disabled={this.state.sendMailButtonDisabled}>
-                                        {!this.state.sendMailButtonDisabled ? `${langLibrary.mobSendPwd}`: `${langLibrary.mobSendPwd}`}</Text>
+                                        {!this.state.sendMailButtonDisabled ? `${langLibrary===undefined?'':langLibrary.mobSendPwd===undefined?'':langLibrary.mobSendPwd}`: `${langLibrary===undefined?'':langLibrary.mobSendPwd===undefined?'':langLibrary.mobSendPwd}`}</Text>
                                         </View>
 
                                 <View style={{marginTop : 50,
