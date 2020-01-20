@@ -214,7 +214,7 @@ class StatBlock extends Component {
         return ret
     }
     render() {
-        const {theme} = this.props.userSetup
+        const {showFooter, showKeyboard, theme, themeColor, online} = this.props.interface
         return (
             <View style={styles.modalView}>
                 <View style={{height: (Dimensions.get('window').height - 100)}}>

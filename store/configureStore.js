@@ -10,14 +10,17 @@ import { userSetupReducer } from '../reducers/userSetup'
 import { userReducer } from '../reducers/user'
 import { chatReducer } from '../reducers/chatReduser'
 import { statReducer } from '../reducers/stat'
+import { interfaceReducer } from '../reducers/interface'
+import { saveddataReducer } from '../reducers/saveddata'
+import { tempdataReducer } from '../reducers/tempdata'
 import { persistStore, persistReducer } from "redux-persist";
 import hardSet from 'redux-persist/lib/stateReconciler/hardSet'
 import AsyncStorage from '@react-native-community/async-storage';
-// import { PersistGate } from "redux-persist/integration/react";
 import createSagaMiddleware from "redux-saga";
-import { withNetworkConnectivity, reducer as network, createNetworkMiddleware, networkEventsListenerSaga } from "react-native-offline";
-// import storage from "redux-persist/lib/storage";
+import { reducer as network, createNetworkMiddleware, networkEventsListenerSaga } from "react-native-offline";
 
+// import { PersistGate } from "redux-persist/integration/react";
+// import storage from "redux-persist/lib/storage";
 // function* watcherSaga() {
 //     yield all([
 //         fork(networkEventsListenerSaga, {
@@ -41,8 +44,11 @@ const rootReducer = combineReducers({
     user: userReducer,
     chat : chatReducer,
     stat : statReducer,
+    interFace : interfaceReducer,
+    saveddata : saveddataReducer,
+    tempdata : tempdataReducer,
     network,
-    blacklist: ["network", "user", "stat"]
+    blacklist: ["network", "user", "tempdata"]
 })
 export const persistedReducer = persistReducer(persistConfig, rootReducer)
 

@@ -40,16 +40,8 @@ import {
     Spinner
 } from 'native-base';
 import RadioForm from 'react-native-radio-form';
-import {
-    toLocalDate,
-    dateFromYYYYMMDD,
-    mapStateToProps,
-    prepareMessageToFormat,
-    addDay,
-    toYYYYMMDD,
-    daysList,
-    instanceAxios
-} from '../../js/helpersLight'
+import { toLocalDate, dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, addDay, toYYYYMMDD, daysList,
+        instanceAxios, getSubjFieldName} from '../../js/helpersLight'
 import {SingleImage, wrapperZoomImages, ImageInWraper} from 'react-native-zoom-lightbox';
 import SingleImageZoomViewer from 'react-native-single-image-zoom-viewer'
 import ImageViewer from 'react-native-image-zoom-viewer';
@@ -137,6 +129,7 @@ class HomeworkBlock extends Component {
     }
     componentDidMount() {
         requestSDPermission()
+        this.props.onStopLoading()
     }
     getDaysArrMap=()=>{
         const homeworkorig = this.props.userSetup.localChatMessages.filter(item=>(item.homework_date!==null))
@@ -188,65 +181,183 @@ class HomeworkBlock extends Component {
             })
 
     }
-    getHomeworkItems = arr => {
-        const {theme, userName} = this.props.userSetup
-        return ( arr.map((item, key) => {
-                let msg = prepareMessageToFormat(item, true)
-                let hw = msg.hasOwnProperty('hwdate') && (!(msg.hwdate === undefined)) ? (toLocalDate(msg.hwdate, "UA", false, false)) + ':' + msg.subjname : ''
-                let i = key
-                let isImage = false
-                // console.log("homeWork", item, msg)
+    getHomeworkItems = (arr, tt) => {
+        // const {userName} = this.props.userSetup
+        const {langCode, theme} = this.props.interface
+        // console.log("getHomeworkItems:timetable", tt, arr)
+        if (tt.length) {
+            return (tt.map((ttItem, ttKey)=>{
+                let arr2 = arr.filter(item=>item.homework_subj_key===ttItem.subj_key)
+                //console.log("arr2", ttItem, arr2)
+                if (arr2.length) {
+                    return ( arr2.map((item, key) => {
+                            let msg = prepareMessageToFormat(item, true)
+                            let hw = msg.hasOwnProperty('hwdate') && (!(msg.hwdate === undefined)) ? msg.subjname : ''
+                            let i = key
+                            let isImage = false
+                            // console.log("homeWork", item, msg)
 
-                if (item !== undefined && item.attachment3 !== null && item.attachment3 !== undefined) {
-                    isImage = true
-                }
+                            if (item !== undefined && item.attachment3 !== null && item.attachment3 !== undefined) {
+                                isImage = true
+                            }
 
-                return (
-                    <View key={key} id={"msg-" + msg.id} style={{marginTop: 10}}>
-                        <View key={msg.id}
-                              // style={(hw.length ? [styles.msgRightSide, styles.homeworkBorder] : [styles.msgRightSide, styles.homeworkNoBorder])}
-                              style={
-                                  (hw.length?[styles.msgRightSide, {borderWidth : 2, borderColor : theme.primaryMsgColor, backgroundColor : "#D8FBFF"}]:[styles.msgRightSide, styles.homeworkNoBorder, {backgroundColor : "#D8FBFF"}])}
-                            >
-                            {/*<View key={'id' + i} style={styles.msgRightAuthor}><Text style={styles.msgAuthorText}>{item.student_name ? item.student_name : this.props.userSetup.userName}</Text></View>*/}
-                            <View key={'id'+i} style={[[styles.msgRightAuthor, {borderColor : theme.primaryColor, backgroundColor : theme.primaryColor}], msg.tagid?styles.authorBorder:'']} >{<Text style={{color : theme.primaryTextColor}}>{item.student_name ? item.student_name : username}</Text>}</View>
-                            {isImage ?
-                                <View style={{display: "flex", flex: 1, flexDirection: "row"}}>
-                                    <TouchableOpacity onPress={() => {
-                                       this.getImage(msg.id)
-                                    }}>
-                                        <View style={{flex: 1}}>
-                                            <Image
-                                                source={{uri: `data:image/png;base64,${JSON.parse(item.attachment3).base64}`}}
-                                                style={{
-                                                    width: 100, height: 100,
-                                                    // marginBottom : 15,
-                                                    borderRadius: 15,
-                                                    overflow: "hidden", margin: 7
-                                                }}/>
+                            return (
+                                <View key={key} id={"msg-" + msg.id} style={{marginTop: 10}}>
+                                    <View key={msg.id}
+                                        // style={(hw.length ? [styles.msgRightSide, styles.homeworkBorder] : [styles.msgRightSide, styles.homeworkNoBorder])}
+                                          style={
+                                              (hw.length ? [styles.msgRightSide, {
+                                                  borderWidth: 2,
+                                                  borderColor: theme.primaryMsgColor,
+                                                  backgroundColor: "#D8FBFF"
+                                              }] : [styles.msgRightSide, styles.homeworkNoBorder, {backgroundColor: "#D8FBFF"}])}
+                                    >
+                                        {/*<View key={'id' + i} style={styles.msgRightAuthor}><Text style={styles.msgAuthorText}>{item.student_name ? item.student_name : this.props.userSetup.userName}</Text></View>*/}
+                                        <View key={'id' + i} style={[[styles.msgRightAuthor, {
+                                            borderColor: theme.primaryColor,
+                                            backgroundColor: theme.primaryColor
+                                        }], msg.tagid ? styles.authorBorder : '']}>{<Text
+                                            style={{color: theme.primaryTextColor}}>{item.student_name ? item.student_name : username}</Text>}</View>
+                                        {isImage ?
+                                            <View style={{display: "flex", flex: 1, flexDirection: "row"}}>
+                                                <TouchableOpacity onPress={() => {
+                                                    this.getImage(msg.id)
+                                                }}>
+                                                    <View style={{flex: 1}}>
+                                                        <Image
+                                                            source={{uri: `data:image/png;base64,${JSON.parse(item.attachment3).base64}`}}
+                                                            style={{
+                                                                width: 100, height: 100,
+                                                                // marginBottom : 15,
+                                                                borderRadius: 15,
+                                                                overflow: "hidden", margin: 7
+                                                            }}/>
+                                                    </View>
+                                                </TouchableOpacity>
+                                                <View key={'msg' + i} id={"msg-text-" + i}
+                                                      style={[styles.msgText,
+                                                          {flex: 3, marginLeft: 20, marginTop: 10}]}>
+                                                    <Text>{msg.text}</Text>
+                                                </View>
+                                            </View>
+                                            : <View key={'msg' + i} id={"msg-text-" + i} style={styles.msgText}>
+                                                <Text>{msg.text}</Text>
+                                            </View>}
+                                        <View style={msg.id ? styles.btnAddTimeDone : styles.btnAddTime}>
+                                            <Text style={msg.id ? styles.btnAddTimeDone : styles.btnAddTime}>{msg.time}</Text>
                                         </View>
-                                    </TouchableOpacity>
-                                    <View key={'msg' + i} id={"msg-text-" + i}
-                                          style={[styles.msgText,
-                                              {flex: 3, marginLeft: 20, marginTop: 10}]}>
-                                        <Text>{msg.text}</Text>
+                                        {hw.length ?
+                                            <View key={'idhw' + i} style={[styles.msgRightIshw, {
+                                                color: theme.primaryTextColor,
+                                                backgroundColor: theme.primaryMsgColor
+                                            }]}>
+                                                <Text style={{color: 'white'}}>{ttItem.position+': '+hw}</Text>
+                                            </View> : null}
                                     </View>
                                 </View>
-                                : <View key={'msg' + i} id={"msg-text-" + i} style={styles.msgText}>
-                                    <Text>{msg.text}</Text>
-                                </View>}
-                            <View style={msg.id ? styles.btnAddTimeDone : styles.btnAddTime}>
-                                <Text style={msg.id ? styles.btnAddTimeDone : styles.btnAddTime}>{msg.time}</Text>
+                            )
+                        })
+                    )
+                }
+                else {
+                        let msg = {id : ttKey, subjname : ttItem[getSubjFieldName(langCode)]}//prepareMessageToFormat(item, true)
+                        let hw = msg.subjname
+                        let i = ttKey
+                        let key = ttKey
+                        let isImage = false
+
+                        return (
+                            <View key={key} id={"msg-" + msg.id} style={{marginTop: 10}}>
+                                <View key={msg.id}
+                                      style={
+                                          [styles.msgRightSide, {
+                                              borderWidth: 2,
+                                              borderColor: theme.errorColor,
+                                              backgroundColor: "#D8FBFF"}]}>
+                                            {hw.length ?
+                                                <View key={'idhw' + i} style={[styles.msgRightIshw, {
+                                                    color: theme.primaryTextColor,
+                                                    backgroundColor: theme.primaryMsgColor
+                                                }]}>
+                                                    <Text style={{color: 'white'}}>{ttItem.position+': '+hw}</Text>
+                                                </View> : null}
+                                </View>
                             </View>
-                            {hw.length ?
-                                <View key={'idhw' + i} style={[styles.msgRightIshw, {color : theme.primaryTextColor, backgroundColor : theme.primaryMsgColor}]}>
-                                    <Text style={{color: 'white'}}>{hw}</Text>
-                                </View> : null}
+                        )
+
+                }
+            }))
+        }
+        else {
+            return ( arr.map((item, key) => {
+                    let msg = prepareMessageToFormat(item, true)
+                    let hw = msg.hasOwnProperty('hwdate') && (!(msg.hwdate === undefined)) ? msg.subjname : ''
+                    let i = key
+                    let isImage = false
+                    // console.log("homeWork", item, msg)
+
+                    if (item !== undefined && item.attachment3 !== null && item.attachment3 !== undefined) {
+                        isImage = true
+                    }
+
+                    return (
+                        <View key={key} id={"msg-" + msg.id} style={{marginTop: 10}}>
+                            <View key={msg.id}
+                                // style={(hw.length ? [styles.msgRightSide, styles.homeworkBorder] : [styles.msgRightSide, styles.homeworkNoBorder])}
+                                  style={
+                                      (hw.length ? [styles.msgRightSide, {
+                                          borderWidth: 2,
+                                          borderColor: theme.primaryMsgColor,
+                                          backgroundColor: "#D8FBFF"
+                                      }] : [styles.msgRightSide, styles.homeworkNoBorder, {backgroundColor: "#D8FBFF"}])}
+                            >
+                                {/*<View key={'id' + i} style={styles.msgRightAuthor}><Text style={styles.msgAuthorText}>{item.student_name ? item.student_name : this.props.userSetup.userName}</Text></View>*/}
+                                <View key={'id' + i} style={[[styles.msgRightAuthor, {
+                                    borderColor: theme.primaryColor,
+                                    backgroundColor: theme.primaryColor
+                                }], msg.tagid ? styles.authorBorder : '']}>{<Text
+                                    style={{color: theme.primaryTextColor}}>{item.student_name ? item.student_name : username}</Text>}</View>
+                                {isImage ?
+                                    <View style={{display: "flex", flex: 1, flexDirection: "row"}}>
+                                        <TouchableOpacity onPress={() => {
+                                            this.getImage(msg.id)
+                                        }}>
+                                            <View style={{flex: 1}}>
+                                                <Image
+                                                    source={{uri: `data:image/png;base64,${JSON.parse(item.attachment3).base64}`}}
+                                                    style={{
+                                                        width: 100, height: 100,
+                                                        // marginBottom : 15,
+                                                        borderRadius: 15,
+                                                        overflow: "hidden", margin: 7
+                                                    }}/>
+                                            </View>
+                                        </TouchableOpacity>
+                                        <View key={'msg' + i} id={"msg-text-" + i}
+                                              style={[styles.msgText,
+                                                  {flex: 3, marginLeft: 20, marginTop: 10}]}>
+                                            <Text>{msg.text}</Text>
+                                        </View>
+                                    </View>
+                                    : <View key={'msg' + i} id={"msg-text-" + i} style={styles.msgText}>
+                                        <Text>{msg.text}</Text>
+                                    </View>}
+                                <View style={msg.id ? styles.btnAddTimeDone : styles.btnAddTime}>
+                                    <Text style={msg.id ? styles.btnAddTimeDone : styles.btnAddTime}>{msg.time}</Text>
+                                </View>
+                                {hw.length ?
+                                    <View key={'idhw' + i} style={[styles.msgRightIshw, {
+                                        color: theme.primaryTextColor,
+                                        backgroundColor: theme.primaryMsgColor
+                                    }]}>
+                                        <Text style={{color: 'white'}}>{hw}</Text>
+                                    </View> : null}
+                            </View>
                         </View>
-                    </View>
-                )
-            })
-        )
+                    )
+                })
+            )
+        }
     }
     getTagItems = arr => {
         const {theme, userName} = this.props.userSetup
@@ -266,7 +377,6 @@ class HomeworkBlock extends Component {
                     <View key={key} id={"msg-" + msg.id} style={{marginTop: 10}}>
                         <View key={msg.id}
                               style={[styles.msgLeftSide, styles.homeworkNoBorder]}>
-                            {/*<View key={'id' + i} style={styles.msgRightAuthor}><Text style={styles.msgAuthorText}>{item.student_name ? item.student_name : this.props.userSetup.userName}</Text></View>*/}
                             <View key={'id'+i} style={[[styles.msgLeftAuthor, {borderColor : theme.primaryColor, backgroundColor : theme.primaryColor}], msg.tagid?styles.authorBorder:'']} >{<Text style={{color : theme.primaryTextColor}}>{item.student_name ? item.student_name : username}</Text>}</View>
                             {isImage ?
                                 <View style={{display: "flex", flex: 1, flexDirection: "row"}}>
@@ -317,7 +427,8 @@ class HomeworkBlock extends Component {
 
     }
     getHomeWorksForAccordion=()=>{
-        let {timetable, theme, localChatMessages} = this.props.userSetup
+        let {timetable, localChatMessages} = this.props.userSetup
+        const {theme} = this.props.interface
         const homeworkorig = localChatMessages.filter(item=>(item.homework_date!==null))
         const daysArr = daysList().map(item => {
             let newObj = {};
@@ -345,9 +456,9 @@ class HomeworkBlock extends Component {
             // console.log("homework", homework, item, key)
             return   <View key={key} style={{flex: 1}}>
                         <View style={{flex: 7, marginBottom: 5}}>
-                            {tt.length?<View style={{marginLeft : 10, marginRight : 10}}><Text style={{color :theme.primaryDarkColor, fontSize : RFPercentage(2)}}>{tt.map((item,key)=>(`${item.position}.${item.subj_name_ua}${key<tt.length?',':''}`))}</Text></View>:null}
+                            {/*{tt.length?<View style={{marginLeft : 10, marginRight : 10}}><Text style={{color :theme.primaryDarkColor, fontSize : RFPercentage(2)}}>{tt.map((item,key)=>(`${item.position}.${item.subj_name_ua}${key<tt.length?',':''}`))}</Text></View>:null}*/}
                             {homework.length ? <ScrollView>
-                            {homework.length ? this.getHomeworkItems(homework) : null}
+                            {homework.length ? this.getHomeworkItems(homework, tt) : null}
                             </ScrollView> : null}
                         </View>
                     </View>
@@ -363,7 +474,7 @@ class HomeworkBlock extends Component {
         })
         // const { localChatMessages: homeworkorig } = this.props.userSetup
         // По умолчанию выбираем домашку на завтра...
-        console.log("getTagsForAccordion: chatTags", chatTags)
+        // console.log("getTagsForAccordion: chatTags", chatTags)
         return chatTags.map((itemTag, key)=>{
             const tags = origChat.length?origChat.filter(item=>itemTag.value===item.tagid):[]
             // console.log("HOMEWORK", itemTag, homework)
@@ -400,11 +511,13 @@ class HomeworkBlock extends Component {
         return chatTags
     }
     render() {
-        const {theme, langLibrary} = this.props.userSetup
+        const {langLibrary, localChatMessages} = this.props.userSetup
+        const {theme} = this.props.interface
         const {daysArr, initialDay, chatTags, homeworkItems, tagItems} = this.state
-        const homeworkorig = this.props.userSetup.localChatMessages.filter(item=>(item.homework_date!==null))
 
-        console.log("getHomeworkItems", daysArr, homeworkorig)
+        const homeworkorig = localChatMessages.filter(item=>(item.homework_date!==null))
+        // console.log("getHomeworkItems", daysArr, homeworkorig)
+
         const homework = homeworkorig.length ? homeworkorig.filter(
             item => {
                 // console.log("HOMEWORK", item)
@@ -497,6 +610,8 @@ class HomeworkBlock extends Component {
 const mapDispatchToProps = dispatch => {
     return ({
         onReduxUpdate: (key, payload) => dispatch({type: key, payload: payload}),
+        onStartLoading: () => dispatch({type: 'APP_LOADING'}),
+        onStopLoading: () => dispatch({type: 'APP_LOADED'}),
     })
 }
 export default connect(mapStateToProps, mapDispatchToProps)(HomeworkBlock)

@@ -41,7 +41,7 @@ class Timetable extends Component {
         this.props.onexit()
     }
     getDaysArr=()=>{
-        // console.log("getChatTagsObj", this.props.userSetup.localChatMessages.filter(item=>(item.tagid!==null)))
+        // console.log("getChatTagsObj")
         const   {timetable} = this.props.userSetup
         let     daysArr = []
         for (let i = 0; i < arrOfWeekDaysLocal.length; i++){
@@ -57,7 +57,8 @@ class Timetable extends Component {
         return daysArr
     }
     getDayItems=()=>{
-        const   {timetable, theme} = this.props.userSetup
+        const   {timetable} = this.props.userSetup
+        const {theme} = this.props.interface
         let     daysArr = []
         for (let i = 0; i < arrOfWeekDaysLocal.length; i++){
             let newObj = {};
@@ -89,8 +90,9 @@ class Timetable extends Component {
     }
     render() {
         const {daysArr, dayItems} = this.state
-        const {theme, headerHeight} = this.props.userSetup
-        console.log("TIMETABLE", this.props.userSetup)
+        const {headerHeight, footerHeight, showFooter, showKeyboard, theme, themeColor} = this.props.interface
+        const {online} = this.props.tempdata
+        console.log("TIMETABLE")
         return (
             <View style={styles.modalView}>
                 <View style={{height : headerHeight, backgroundColor : theme.primaryLightColor}}>

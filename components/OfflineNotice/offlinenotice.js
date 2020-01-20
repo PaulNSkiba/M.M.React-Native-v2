@@ -28,10 +28,11 @@ class OfflineNotice extends Component {
         this.setState({ netType : type });
     };
     render() {
-        const {theme} = this.props.userSetup
-            return  <View style={[{paddingRight : 2}, (this.state.isConnected&&this.props.userSetup.online)? {} : {}]}>
+        const {theme} = this.props.interface
+        const {online} = this.props.tempdata
+            return  <View style={[{paddingRight : 2}, (this.state.isConnected&&online)? {} : {}]}>
                 <Text style={[{fontSize: RFPercentage(1),position: "relative", left: 0, top: 0},
-                    (this.state.isConnected&&this.props.userSetup.online)? {color: theme.secondaryLightColor} : {color: theme.errorColor}]}>
+                    (this.state.isConnected&&online)? {color: theme.secondaryLightColor} : {color: theme.errorColor}]}>
                     {this.state.isConnected && this.state.netType ? this.state.netType : "offline"}
                 </Text>
             </View>

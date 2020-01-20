@@ -37,13 +37,10 @@ class AccordionCustom extends Component {
         this._renderHeader = this._renderHeader.bind(this)
         this._renderContent = this._renderContent.bind(this)
     }
-
     componentDidMount() {
-
     }
-
     _renderHeader(item, expanded) {
-        const {theme} = this.props.userSetup
+        const {showFooter, showKeyboard, theme, themeColor, online} = this.props.interface
         return (
             <View style={{
                 flexDirection: "row",
@@ -92,7 +89,7 @@ class AccordionCustom extends Component {
     }
 
     render() {
-        const {theme} = this.props.userSetup
+        const {showFooter, showKeyboard, theme, themeColor, online} = this.props.interface
         // console.log("Accordion: dataArray", this.state.dataArray)
         return (
             <Container>

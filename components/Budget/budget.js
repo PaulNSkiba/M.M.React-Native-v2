@@ -54,8 +54,9 @@ class Budget extends React.Component {
     }
 
     initData() {
+        const {classID} = this.props.userSetup
         this.setState({isSpinner : true})
-        instanceAxios().get(`${API_URL}budgetpays/get/${this.props.userSetup.classID}`)
+        instanceAxios().get(`${API_URL}budgetpays/get/${classID}`)
             .then(res => {
 
                     const planIns = res.data.filter(item => item.debet === 1)
@@ -78,7 +79,7 @@ class Budget extends React.Component {
             .catch(res => {
                 console.log("getpaysError", res)
             })
-        instanceAxios().get(`${API_URL}budget/get/${this.props.userSetup.classID}`)
+        instanceAxios().get(`${API_URL}budget/get/${classID}`)
             .then(res => {
                     this.setState({
                         factIns: res.data
@@ -229,7 +230,8 @@ class Budget extends React.Component {
 
         console.log("Budget")
         const {years} = this.state
-        const {statsBudgetPays, statsBudget, theme} = this.props.userSetup
+        const {statsBudgetPays, statsBudget} = this.props.userSetup
+        const {theme} = this.props.interface
         let index = 0
         years.forEach((item, key)=>item===(new Date()).getFullYear()?index=key:null)
         return (

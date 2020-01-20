@@ -10,6 +10,7 @@ const initialState = {
 export function statReducer(state = initialState, action) {
     switch (action.type) {
         case 'UPDATE_VIEWSTAT' : {
+            console.log('UPDATE_VIEWSTAT_REDUCER', action.payload)
             return action.payload
         }
         default :

@@ -44,18 +44,18 @@ class HeaderBlock extends React.Component {
     }
     componentDidMount() {
         this.getGeo2()
-        const timer = setInterval( this.connectivityCheck, 10000)
+        const timer = setInterval( this.connectivityCheck, 60000)
         this.setState({onlineTimer : timer})
     }
     componentWillUnmount(){
         clearInterval(this.state.onlineTimer)
     }
     connectivityCheck(){
+        const {online} = this.props.tempdata
         hasAPIConnection()
             .then(res=> {
-                if (res !== this.props.userSetup.online)
+                if (res !== online)
                     this.props.onReduxUpdate('UPDATE_ONLINE', res)
-                // console.log("connectivityCheck!!!", res)
             })
 
             // hasAPIConnection()
@@ -106,7 +106,9 @@ class HeaderBlock extends React.Component {
         // {"target":1105,"layout":{"y":0,"width":256,"x":32,"height":54.5}}
     }
     render(){
-        const {token, theme, userID, markscount, userName, online, langLibary, themeColor} = this.props.userSetup
+        const {token, userID, markscount, userName, langLibary} = this.props.userSetup
+        const {showFooter, showKeyboard, theme, themeColor, showLogin} = this.props.interface
+        const {online} = this.props.tempdata
         // console.log("headerBlock:render")
         return (
             <View
@@ -175,16 +177,6 @@ class HeaderBlock extends React.Component {
                             <Title style={[styles.myTitle, {color : theme.primaryTextColor}]}>My.Marks</Title>
                         </View>
                         <OfflineNotice/>
-                        {/*<NetworkConsumer>*/}
-                            {/*{({ isConnected }) => (*/}
-                                {/*isConnected ? (*/}
-                                    {/*<Text>{this.props.network.isConnected?"online":"offline"}</Text>*/}
-                                {/*) : (*/}
-                                    {/*<Text>{this.props.network.isConnected?"online":"offline"}</Text>*/}
-                                {/*)*/}
-                            {/*)}*/}
-                        {/*</NetworkConsumer>*/}
-                        {/*<Text>{!this.props.userSetup.online?"offline":"online"}</Text>*/}
                     </View>
 
                 </View>
@@ -200,18 +192,22 @@ class HeaderBlock extends React.Component {
                             color: theme.primaryTextColor
                         }]}>{version}</Text>
                         <View >
-                            <Button transparent disabled={this.props.userSetup.showLogin}>
+                            <Button transparent disabled={showLogin}>
                                 {userID?<Text style={{color: theme.primaryTextColor, fontWeight: "700"}}>{userName}</Text>:null}
                                 <Icon size={36} color={userID ? theme.primaryTextColor : theme.primaryLightColor}
                                       style={styles.menuIcon} name='person'
                                       onPress={ () => {
-                                          if (!this.props.userSetup.showLogin) {
+                                          if (!showLogin) {
+                                              // this.props.updateState("showFooter", false)
+                                              this.props.onReduxUpdate('UPDATE_FOOTER_SHOW', false);
                                               this.props.onReduxUpdate("USER_LOGGEDIN_DONE");
                                               this.props.onReduxUpdate("SHOW_LOGIN", true);
                                               this.props.updateState('selectedFooter', 0);
                                               this.props.updateState('showLogin')
                                           }
                                           else {
+                                              // this.props.updateState("showFooter", true)
+                                              this.props.onReduxUpdate('UPDATE_FOOTER_SHOW', true);
                                               this.props.onReduxUpdate("SHOW_LOGIN", false);
                                           }
                                       }}/>

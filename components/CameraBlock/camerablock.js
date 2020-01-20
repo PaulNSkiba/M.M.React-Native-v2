@@ -154,7 +154,8 @@ class CameraBlock extends Component {
         // const daysArr = daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;})
         // const initialDay = this.getNextStudyDay(daysArr)[0];
         // console.log("PhotoPath", this.state.photoPath, this.state.prevuri)
-        const {theme, langLibrary} = this.props.userSetup
+        const {langLibrary} = this.props.userSetup
+        const {theme} = this.props.interface
         console.log("uriAdded", this.state.uriAdded)
         return (
             <Container>

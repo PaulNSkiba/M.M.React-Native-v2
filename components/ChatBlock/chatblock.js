@@ -19,13 +19,13 @@ class ChatBlock extends React.Component {
         }
     }
     render=()=>{
-        // console.log("chatRender", this.props.user.logging, this.props.userSetup.loading)
-        const {userID, showLogin, theme} = this.props.userSetup
+        // console.log("chatRender", this.props.user.logging)
+        const {userID} = this.props.userSetup
+        const {showLogin, theme} = this.props.interface
         return (
         <View style={{flex : 1, position : "relative", flexDirection: 'column', height : "50%"}}>
             {/*{this.props.user.logging?<View style={{position : "absolute", flex: 1, alignSelf : 'center', marginTop : 240, zIndex : 100 }}><Spinner color={theme.secondaryColor}/></View>:null}*/}
             <View style={{flex : 1, position : "relative"}}>
-            {/*{!userID||showLogin?<LoginBlock updateState={this.props.updateState}/>:null}*/}
             {userID&&(!showLogin)?
                         <ChatMobile
                             isnew={true}
@@ -37,6 +37,7 @@ class ChatBlock extends React.Component {
                             subjs={this.props.userSetup.selectedSubjects}
                             btnclose={() => { this.setState({displayChat: !this.state.displayChat}) }}
                             display={this.state.displayChat} newmessage={this.newChatMessage}
+                            updateState={this.props.updateState}
                         />
                 :<LoginBlock updateState={this.props.updateState}/>}
             </View>

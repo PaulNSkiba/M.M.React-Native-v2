@@ -60,7 +60,8 @@ class ETCBlock extends Component {
     render () {
         const daysArr = daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;})
         const initialDay = this.getNextStudyDay(daysArr)[0];
-        const {theme, langLibrary} = this.props.userSetup
+        const {langLibrary} = this.props.userSetup
+        const {theme} = this.props.interface
         return (
             <Container style={{backgroundColor : theme.primaryLightColor, height : Dimensions.get('window').height}}>
                 <Modal

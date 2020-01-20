@@ -38,7 +38,7 @@ class HelpBlock extends Component {
             updates : this.getUpdateForAccordion(),
             news : this.getNewsForAccordion(),
             curMessage : '',
-            showFooter : true,
+            // showFooter : true,
             isSpinner : false,
             showMsg : false,
             viewHeight : Dimensions.get('window').height,
@@ -61,11 +61,14 @@ class HelpBlock extends Component {
             })
         };
         this.session_id = ''//getStorageData('chatSessionID')//AsyncStorage.getItem('chatSessionID')
+
     }
     async componentDidMount(){
         this.keyboardDidShowSub = Keyboard.addListener('keyboardDidShow', this.handleKeyboardDidShow);
         this.keyboardDidHideSub = Keyboard.addListener('keyboardDidHide', this.handleKeyboardDidHide);
         this.session_id = await getStorageData('chatSessionID')
+        // this.setActiveTab(0)
+        this.props.onStopLoading()
         // console.log("session_id", this.session_id)
     }
     componentWillUnmount() {
@@ -110,8 +113,11 @@ class HelpBlock extends Component {
 
                     this._textarea.setNativeProps({'editable': false});
                     this._textarea.setNativeProps({'editable':true});
-                    this.props.setstate({showFooter : true})
-                    this.setState({news : arr, curMessage : '', showFooter : true, isSpinner : false})
+                    // this.props.setstate({showFooter : true})
+                    this.setState({news : arr, curMessage : '',
+                        // showFooter : true,
+                        isSpinner : false})
+                    this.props.onReduxUpdate('UPDATE_FOOTER_SHOW', true);
                 }
                 else {
                     // console.log("QUESTION", text)
@@ -124,9 +130,12 @@ class HelpBlock extends Component {
                     this._textarea.setNativeProps({'editable': false});
                     this._textarea.setNativeProps({'editable':true});
                     console.log("SETSTATE", arr)
-                    this.props.setstate({showFooter : true})
 
-                    this.setState({questions : arr, curMessage : '', showFooter : true})
+                    // this.props.setstate({showFooter : true})
+                    this.props.onReduxUpdate('UPDATE_FOOTER_SHOW', true);
+                    this.setState({questions : arr, curMessage : '',
+                        // showFooter : true
+                    })
                 }
             })
             .catch(response=> {
@@ -283,7 +292,8 @@ class HelpBlock extends Component {
     render () {
         // const daysArr = daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;})
         const {newsArr, updatesArr, updates, news} = this.state
-        const {theme, langLibrary, classNews} = this.props.userSetup
+        const {langLibrary, classNews, userID} = this.props.userSetup
+        const {theme} = this.props.interface
         console.log("HelpBlock", this.state.viewHeight)
         let unreadNewsCount = 0, unreadBuildsCount = 0
         if (this.props.kind==='info') {
@@ -358,7 +368,6 @@ class HelpBlock extends Component {
                                         style={{position: "absolute", flex: 1, alignSelf: 'center', marginTop: 240, zIndex: 100}}>
                                         <Spinner color={theme.secondaryColor}/>
                                     </View> : null}
-                                    {/*this.state.showFooter?{flex: 7}:{flex: 1.5}*/}
                                             <View style={{flex : 7}}>
                                                 <ScrollView>
                                                 {/*<Text>Блок вопросов</Text>*/}
@@ -429,10 +438,14 @@ class HelpBlock extends Component {
                                                                         this._textarea.setNativeProps({'editable':true});
                                                                     }}
                                                                     onChangeText={text=>this.onChangeText('curMessage', text)}
-                                                                    onFocus={()=>{this.props.setstate({showFooter : false}); this.setState({showFooter : false})}}
-                                                                    onBlur={()=>{this.props.setstate({showFooter : true}); this.setState({showFooter : true})}}
-                                                                    placeholder={this.props.userSetup.userID?"Задать вопрос разработчику..." : "Задавая вопрос без логина, пожалуйста, укажите в сообщении контактный email для связи)..."} type="text"
-                                                                    rowSpan={this.props.userSetup.userID?3:5}
+                                                                    onFocus={()=>{this.props.onReduxUpdate('UPDATE_FOOTER_SHOW', false);
+                                                                    // this.props.setstate({showFooter : false}); this.setState({showFooter : false})
+                                                                    }}
+                                                                    onBlur={()=>{this.props.onReduxUpdate('UPDATE_FOOTER_SHOW', true);
+                                                                    // this.props.setstate({showFooter : true}); this.setState({showFooter : true})
+                                                                    }}
+                                                                    placeholder={userID?"Задать вопрос разработчику..." : "Задавая вопрос без логина, пожалуйста, укажите в сообщении контактный email для связи)..."} type="text"
+                                                                    rowSpan={userID?3:5}
                                                                     value={this.state.curMessage}
                                                                 />
                                                 </View>
@@ -458,6 +471,8 @@ class HelpBlock extends Component {
 const mapDispatchToProps = dispatch => {
     return ({
         onReduxUpdate : (key, payload) => dispatch({type: key, payload: payload}),
+        onStartLoading: () => dispatch({type: 'APP_LOADING'}),
+        onStopLoading: () => dispatch({type: 'APP_LOADED'}),
     })
 }
 export default connect(mapStateToProps, mapDispatchToProps)(HelpBlock)

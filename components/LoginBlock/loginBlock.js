@@ -2,7 +2,8 @@
  * Created by Paul on 27.08.2019.
  */
 import React from 'react';
-import {StyleSheet, Text, View, TextInput, Dimensions, Modal, TouchableOpacity, Image} from 'react-native';
+import {StyleSheet, Text, View, TextInput, Dimensions, Modal,
+        TouchableOpacity, Image, TouchableWithoutFeedback, Keyboard} from 'react-native';
 import {connect} from 'react-redux';
 import {
     Container, Header, Left, Body, Right, Button,
@@ -31,7 +32,6 @@ import {RFPercentage, RFValue} from "react-native-responsive-fontsize";
 class LoginBlock extends React.Component {
     constructor(props) {
         super(props);
-
         this.state = {
             chatMessages: [],
             selectedFooter: 0,
@@ -39,13 +39,9 @@ class LoginBlock extends React.Component {
             username: '',
             password: '',
             userID: 0,
-            // userName: '',
             sendMailButtonDisabled: false,
             showVideo: false,
             checkSave : false,
-            // buttonClicked : false,
-            // loading : false,
-            // buttonClicked : false,
         }
         this.showLogin = true
         this.onLogin = this.onLogin.bind(this)
@@ -54,6 +50,15 @@ class LoginBlock extends React.Component {
     }
     componentDidMount(){
         this.getSavedCreds()
+        this.keyboardDidShowSub = Keyboard.addListener('keyboardDidShow', this.handleKeyboardDidShow);
+        this.keyboardDidHideSub = Keyboard.addListener('keyboardDidHide', this.handleKeyboardDidHide);
+        this.props.onReduxUpdate("UPDATE_KEYBOARD_SHOW", false)
+        this.props.onReduxUpdate('UPDATE_FOOTER_SHOW', false);
+    }
+    componentWillUnmount(){
+        this.keyboardDidShowSub.remove();
+        this.keyboardDidHideSub.remove();
+        this.props.onReduxUpdate('UPDATE_FOOTER_SHOW', true);
     }
     shouldComponentUpdate(nextProps, nextState) {
         // console.log("shouldComponentUpdate", this.props)
@@ -70,6 +75,26 @@ class LoginBlock extends React.Component {
             this.props.onReduxUpdate("LOG_BTN_UNCLICK")
         }
         return true
+    }
+    handleKeyboardDidShow = (event) => {
+        const { height: windowHeight } = Dimensions.get('window');
+        const keyboardHeight = event.endCoordinates.height;
+        console.log("keyboardHeight", keyboardHeight)
+        const currentlyFocusedField = this._animatedView;
+
+        this.props.onReduxUpdate("UPDATE_KEYBOARD_SHOW", true)
+        // this.setState({viewHeight : (windowHeight - keyboardHeight), keyboardHeight})
+
+        console.log("handleKeyboardDidShow")
+    }
+
+    handleKeyboardDidHide = () => {
+        const { height: windowHeight } = Dimensions.get('window');
+        // this.setState({viewHeight : (windowHeight), keyboardHeight : 0})
+
+        this.props.onReduxUpdate("UPDATE_KEYBOARD_SHOW", false)
+        console.log("handleKeyboardDidHide")
+
     }
     // getSavedCreds=async()=>{
     //     const credents = await getStorageData("credent#")
@@ -117,7 +142,8 @@ class LoginBlock extends React.Component {
         this.setState({[key]: val})
     }
     onLogin = () => {
-        const {langLibrary, theme, themeColor} = this.props.userSetup
+        const {langLibrary} = this.props.userSetup
+        const {theme, themeColor} = this.props.interface
         this.props.updateState("userEmail", this.state.username)
 
         let name = this.state.username, //"test@gmail.com",
@@ -178,13 +204,15 @@ class LoginBlock extends React.Component {
             this.props.user.logBtnClicked = false
 
         const {logging, loginmsg, logBtnClicked} = this.props.user
-        const {theme, userID, token, footerHeight, langLibrary, themeColor} = this.props.userSetup
-        console.log("LOGIN_RENDER")
+        const {showFooter, showKeyboard, footerHeight, theme, themeColor, online} = this.props.interface
+        const {userID, token, langLibrary} = this.props.userSetup
+        console.log("LOGIN_RENDER", footerHeight)
         // const showModal = this.showLogin&&logBtnClicked&&(!loginmsg.length)
         // return <View></View>
 
         return (
-            <View style={{backgroundColor: theme.primaryColor, height : Dimensions.get('window').height}}>
+            <TouchableWithoutFeedback onPress={()=>{Keyboard.dismiss(), console.log("LoginBlock:onPress")}}>
+            <View style={{position : "relative", backgroundColor: theme.primaryColor, height : (Dimensions.get('window').height - (footerHeight===0?60:footerHeight))}}>
                 <Modal
                     animationType="slide"
                     transparent={false}
@@ -262,8 +290,9 @@ class LoginBlock extends React.Component {
                                    {/*onChangeText={text => this.onChangeText('username', text)}*/}
                             {/*/>*/}
                     {/*</Item>*/}
-                    <Item style={{marginTop : 20, borderColor: 'transparent'}}>
-                        <View style={{flex : 1, alignItems : "center", justifyContent : "center", height : 120, width : Dimensions.get('window').width}}>
+                    <Item style={{marginTop : 10, borderColor: 'transparent'}}>
+                        {!showKeyboard?
+                        <View onPress={()=>{console.log("View: Press")}} style={{flex : 1, alignItems : "center", justifyContent : "center", height : 120, width : Dimensions.get('window').width}}>
                             <View
                                 style={{
                                     position : "relative",
@@ -297,12 +326,16 @@ class LoginBlock extends React.Component {
                                 {/*containerStyle={{flex: 2, marginLeft: 20, marginTop: 115}}*/}
                             {/*/>*/}
                         </View>
+                            :null}
+                        {/*</TouchableWithoutFeedbackComponent>*/}
                     </Item>
+
                     <Item rounded style={{marginLeft : 60, marginRight : 60, marginTop : 20, borderColor: 'transparent'}}>
                         <Input
                                style={{fontSize : RFPercentage(3), paddingLeft : 10, paddingRight : 0, color : theme.primaryTextColor, fontWeight : "600", borderWidth: 3, borderColor : theme.primaryBorderColor, borderRadius : 30}}
                                value={this.state.username.length?this.state.username:""}
                                onChangeText={text => this.onChangeText('username', text)}
+                               onBlur={()=>console.log("Input:username:blur")}
                         />
                     </Item>
 
@@ -336,7 +369,8 @@ class LoginBlock extends React.Component {
                     {userID ?   <Button style={{  marginLeft : 60, marginTop : 5, marginRight : 60, borderRadius : 30,
                                                 justifyContent: "center",
                                                 alignItems: "center",
-                                                color : theme.primaryDarkColor, backgroundColor : theme.secondaryLightColor}} onPress={()=>this.props.onUserLoggingOut(token, langLibrary, theme, themeColor)}>
+                                                color : theme.primaryDarkColor, backgroundColor : theme.secondaryLightColor}}
+                                        onPress={()=>{this.props.onReduxUpdate("UPDATE_KEYBOARD_SHOW", false); this.props.onUserLoggingOut(token, langLibrary, theme, themeColor)}}>
                                     <View style={{ justifyContent: "center", alignItems: "center" }}>
                                         <Text style={{fontSize : RFPercentage(3), color : theme.primaryDarkColor, width : "100%", fontWeight : "800"}}>{langLibrary===undefined?'':langLibrary.mobExit===undefined?'':langLibrary.mobExit.toUpperCase()}</Text>
                                     </View>
@@ -344,7 +378,8 @@ class LoginBlock extends React.Component {
                                 <Button style={{marginLeft : 60, marginTop : 5, marginRight : 60, borderRadius : 30,
                                                 justifyContent: "center",
                                                 alignItems: "center",
-                                                color : theme.primaryDarkColor, backgroundColor : theme.primaryTextColor}} onPress={this.onLogin}>
+                                                color : theme.primaryDarkColor, backgroundColor : theme.primaryTextColor}}
+                                        onPress={()=>{Keyboard.dismiss(); this.props.onReduxUpdate("UPDATE_KEYBOARD_SHOW", false);this.onLogin()}}>
                                     <View style={{ justifyContent: "center", alignItems: "center" }}>
                                         <Text style={{fontSize : RFPercentage(3), color : theme.primaryDarkColor, width : "100%", fontWeight : "800"}}>{langLibrary===undefined?'':langLibrary.mobLogin===undefined?'':langLibrary.mobLogin.toUpperCase()}</Text>
                                     </View>
@@ -445,21 +480,12 @@ class LoginBlock extends React.Component {
                     {/* Живой код*/}
 
                 </Form>
-                <View style={{marginTop: 30, marginLeft : Dimensions.get('window').width - 70}}>
-                    {/*/!*<Button block info style={[styles.inputButton, {marginTop: 10}]}*!/*/}
-                    {/*/!*onPress={() => this.setState({showVideo: true})}>*!/*/}
+
+                <View style={{position: "absolute", bottom: footerHeight===0?60:footerHeight + 30, marginLeft : Dimensions.get('window').width - 70}}>
                     <Icon onPress={() => this.setState({showVideo: true})} style={{fontSize : 54, color : theme.primaryLightColor}} name='videocam'/>
-                    {/*/!*<Text style={[styles.loginButton, {"color": "#fff"}]}>ОБУЧАЮЩЕЕ ВИДЕО</Text>*!/*/}
-                    {/*/!*</Button>*!/*/}
                 </View>
-                {/*<View style={{marginTop: 5}}>*/}
-                    {/*<Button block info style={[styles.inputButton, {marginTop: 10}]}*/}
-                            {/*onPress={() => this.setState({showVideo: true})}>*/}
-                        {/*<Icon name='videocam'/>*/}
-                        {/*<Text style={[styles.loginButton, {"color": "#fff"}]}>ОБУЧАЮЩЕЕ ВИДЕО</Text>*/}
-                    {/*</Button>*/}
-                {/*</View>*/}
             </View>
+            </TouchableWithoutFeedback>
         )
 
     }

@@ -6,13 +6,12 @@
  * @flow
  */
 import React, {Component} from 'react';
-import {SafeAreaView, StyleSheet, ScrollView, View, Text, StatusBar, TouchableOpacity, Image } from 'react-native';
-import { Dimensions, AppState, Platform} from 'react-native';
+import {SafeAreaView, StyleSheet, ScrollView, View, Text, StatusBar, TouchableOpacity, Image, Dimensions, AppState, Platform } from 'react-native';
 import {setStorageData, getStorageData, getNextStudyDay, daysList, toYYYYMMDD,
-        themeOptions, hasAPIConnection, axios2, getViewStat} from './js/helpersLight'
+        themeOptions, hasAPIConnection, axios2, getViewStat, getNearestSeptFirst} from './js/helpersLight'
 import axios from 'axios';
 import {API_URL, AUTH_URL, arrLangs}        from './config/config'
-import { Container, Content, Footer, FooterTab, Spinner, } from 'native-base';
+import { Container, Content, Footer, FooterTab, Spinner, Button } from 'native-base';
 import HeaderBlock from './components/HeaderBlock/headerBlock'
 import ChatBlock from './components/ChatBlock/chatblock'
 import HomeworkBlock from './components/HomeworkBlock/homeworkblock'
@@ -23,6 +22,7 @@ import ETCBlock from './components/ETCBlock/etcblock'
 import ButtonWithBadge from './components/ButtonWithBadge/buttonwithbadge'
 import styles from './css/styles'
 import {instanceAxios} from './js/helpersLight'
+import {RFPercentage, RFValue} from "react-native-responsive-fontsize";
 import Drawer from 'react-native-drawer'
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
 import AntDesign from 'react-native-vector-icons/AntDesign'
@@ -48,7 +48,7 @@ class App extends Component {
             userName: '',
             msgs: 0,
             homeworks: 0,
-            showFooter: true,
+            // showFooter: true,
             userEmail: '',
             userToken: '',
             isSpinner: false,
@@ -59,32 +59,37 @@ class App extends Component {
             initialDay : 0,
             showDrawer : false,
             langLibrary : {},
+            chatID : this.props.stat.chatID,
+            markID : this.props.stat.markID,
             daysArr : daysList().map(item => { let o = {}; o.label = item.name; o.value = item.id; o.date = item.date; return o; }),
         }
-        this.defLang = this.props.userSetup.langCode && arrLangs.includes(this.props.userSetup.langCode)?this.props.userSetup.langCode : "UA"
+        let {langCode} = this.props.interface
+        this.defLang = langCode && arrLangs.includes(this.props.userSetup.langCode)?langCode : "UA"
         this.session_id = '';
         this.updateState = this.updateState.bind(this)
         this.setstate = this.setstate.bind(this)
         this.showDrawer = this.showDrawer.bind(this)
         this.connectivityCheck = this.connectivityCheck.bind(this)
-        // this.loading = true
+        this.firstSeptember = getNearestSeptFirst()
+        this.thisYearMarks = this.props.userSetup.marks.filter(item=>(new Date(item.mark_date) >= getNearestSeptFirst()))
     }
     componentWillMount(){
         (async ()=> {
-            if (this.props.userSetup.classID > 0) {
-                const stat = await getViewStat(this.props.userSetup.classID)
-                console.log("GETSTAT", stat)
-                this.props.onReduxUpdate("UPDATE_VIEWSTAT", stat)
+            let {langCode} = this.props.interface
+            const {classID} = this.props.userSetup
+            if (classID > 0) {
+                console.log("GETSTAT")
+                this.props.onReduxUpdate("UPDATE_VIEWSTAT", await getViewStat(classID))
             }
             if (this.props.userSetup.langLibrary===undefined) {
                 this.props.onStartLoading()
-                await this.getLangAsync(this.props.userSetup.langCode && arrLangs.includes(this.props.userSetup.langCode) ? this.props.userSetup.langCode : this.defLang)
+                await this.getLangAsync(langCode && arrLangs.includes(langCode) ? langCode : this.defLang)
                 this.props.onStopLoading()
             }
             else {
                 if (!Object.keys(this.props.userSetup.langLibrary).length) {
                     this.props.onStartLoading()
-                    await this.getLangAsync(this.props.userSetup.langCode && arrLangs.includes(this.props.userSetup.langCode) ? this.props.userSetup.langCode : this.defLang)
+                    await this.getLangAsync(langCode && arrLangs.includes(langCode) ? langCode : this.defLang)
                     this.props.onStopLoading()
                 }
             }
@@ -108,28 +113,55 @@ class App extends Component {
             const dataSaved = JSON.parse(await getStorageData("myMarks.data"))
             const {email, token} = dataSaved
 
+            this.keyboardDidShowSub = Keyboard.addListener('keyboardDidShow', this.handleKeyboardDidShow);
+            this.keyboardDidHideSub = Keyboard.addListener('keyboardDidHide', this.handleKeyboardDidHide);
 
             this.props.onReduxUpdate("UPDATE_TOKEN", token===null?'':token)
             this.setState({userEmail: email, userToken: token===null?'':token})
 
         }
     }
+
+    // componentWillUnmount(){
+    //     this.keyboardDidShowSub.remove();
+    //     this.keyboardDidHideSub.remove();
+    // }
+    componentWillUnmount() {
+        // if ((Platform.OS === 'ios') || ((Platform.OS === 'android')&& (Platform.Version > 22))) // > 5.1
+        // {
+        //     AppState.removeEventListener('change', this._handleAppStateChange);
+        // }
+        AppState.removeEventListener('change', this._handleAppStateChange);
+        this.keyboardDidShowSub.remove();
+        this.keyboardDidHideSub.remove();
+    }
     shouldComponentUpdate(nextProps, nextState) {
         return true
-        // const {langLibrary : lngLib} = this.props.userSetup
-        // let langLibrary = {}
-        // if (Object.keys(lngLib).length) {
-        //     langLibrary = lngLib
-        // }
-        // else {
-        //     langLibrary = getDefLangLibrary()
-        // }
-        // return Object.keys(langLibrary).length
+    }
+    handleKeyboardDidShow = (event) => {
+        const { height: windowHeight } = Dimensions.get('window');
+        const keyboardHeight = event.endCoordinates.height;
+        console.log("keyboardHeight", keyboardHeight)
+        const currentlyFocusedField = this._animatedView;
+
+        this.props.onReduxUpdate("UPDATE_KEYBOARD_SHOW", true)
+        // this.setState({viewHeight : (windowHeight - keyboardHeight), keyboardHeight})
+
+        console.log("handleKeyboardDidShow")
+    }
+
+    handleKeyboardDidHide = () => {
+        const { height: windowHeight } = Dimensions.get('window');
+        // this.setState({viewHeight : (windowHeight), keyboardHeight : 0})
+
+        this.props.onReduxUpdate("UPDATE_KEYBOARD_SHOW", false)
+        console.log("handleKeyboardDidHide")
+
     }
     getLangAsync = async (lang) => {
-        // this.props.onStartLoading()
+        let {langCode} = this.props.interface
         if (!lang) {
-            lang = this.props.userSetup.langCode ? this.props.userSetup.langCode : this.defLang
+            lang = langCode ? langCode : this.defLang
         }
         let langObj = {}
 
@@ -168,17 +200,12 @@ class App extends Component {
         this.props.onReduxUpdate("LANG_CODE", countryCode)
     }
     connectivityCheck() {
-        // const { connectionChange } = offlineActionCreators;
-        // console.log("connnectivityCheck:App")
-        // const isConnected = await checkInternetConnection(AUTH_URL, 3000, true);
-        // this.props.onReduxUpdate('UPDATE_ONLINE', isConnected)
-        // AUTH_URL, 3000, true
-
         hasAPIConnection()
             .then(res=> {
-                // console.log("AppCheck", res)
-                    this.props.onReduxUpdate('UPDATE_ONLINE', res)
+                console.log("AppCheck", res)
+                this.props.onReduxUpdate('UPDATE_ONLINE', res)
             })
+            .catch(res=>console.log("AppCheck:error", res))
 
         // checkInternetConnection()
         //     .then(isConnected => {
@@ -188,19 +215,14 @@ class App extends Component {
         //     })
         //     .catch(res=>console.log("AppCheck:error", res))
     }
-    componentWillUnmount() {
-        if ((Platform.OS === 'ios') || ((Platform.OS === 'android')&& (Platform.Version > 22))) // > 5.1
-        {
-            AppState.removeEventListener('change', this._handleAppStateChange);
-        }
-        }
     _handleAppStateChange = (nextAppState) => {
         const {classID, studentId} = this.props.userSetup
         if (this.state.appState.match(/inactive|background/) && nextAppState === 'active') {
             // console.log('AppState: ', 'App has come to the foreground!');
             // ToDO: Проверим изменения в перечне данных (на будущее попробуем подгружать новое)...
             if (classID) {
-                instanceAxios().get(API_URL + `class/getstat/${classID}/${studentId}'/0`)
+                // instanceAxios().get(API_URL + `class/getstat/${classID}/${studentId}'/0`)
+                axios2('get', `${API_URL}class/getstat/${classID}/${studentId}/0`)
                     .then(response => {
                         // console.log('_handleAppStateChange', response)
                     })
@@ -272,8 +294,11 @@ class App extends Component {
             </View>
     };
     renderDrawer(){
-        const {theme, langLibrary, themeColor} = this.props.userSetup
+        const {langLibrary, userName, classID} = this.props.userSetup
+        const {showFooter, showKeyboard, theme, themeColor} = this.props.interface
+        const {online} = this.props.tempdata
         const colorOptions = Object.keys(themeOptions);
+
         // console.log("renderDrawer")
         return <View style={{
             backgroundColor : theme.primaryColor,
@@ -331,20 +356,52 @@ class App extends Component {
                     {/*<View style={{height: 40, width: 40, borderRadius: 20, backgroundColor: "#fff", margin: 5}}></View>*/}
                 </View>
             </View>
+            {userName==="Geo"||userName==="Paul"||userName==="Paul42"?
+                <Button style={{  marginLeft : 60, marginTop : 5, marginRight : 60, borderRadius : 30,
+                    justifyContent: "center",
+                    alignItems: "center",
+                    color : theme.primaryDarkColor, backgroundColor : theme.secondaryLightColor}} onPress={()=>{
+                            const stat = {
+                            chatID : 0, tagID : 0, markID : 0, newsID : 0, buildsID : 0, QandAID : 0,
+                            budgetID : 0, statID : 0, chats : [], tags : [], marks : [], news : [],
+                            builds : [], QandAs : []
+                        }
+                            this.props.onReduxUpdate("UPDATE_VIEWSTAT", stat)
+                            setStorageData(`${classID}markID`, "0")
+                            setStorageData(`${classID}chatID`, "0")
+                            setStorageData(`${classID}newsID`, "0")
+                            setStorageData(`${classID}buildsID`, "0")
+                        }}>
+                    <View style={{ justifyContent: "center", alignItems: "center" }}>
+                    <Text style={{fontSize : RFPercentage(3), color : theme.primaryDarkColor, width : "100%", fontWeight : "800"}}>Очистить счётчики</Text>
+                    </View>
+                </Button>
+                :null}
         </View>
     }
     render() {
+
         let marksReadCount = 0
-        const {marks, localChatMessages, userID, token, theme, themeColor, online, langLibrary, loading} = this.props.userSetup
-        const {chatID} = this.props.stat
+        const {marks, localChatMessages, userID, token, langLibrary} = this.props.userSetup
+        const {showFooter, showKeyboard, theme, themeColor, showLogin} = this.props.interface
+        const {online, loading} = this.props.tempdata
+
+        const {markID, chatID} = this.state
+        // const thisYearMarks = marks.filter(item=>(new Date(item.mark_date) >= getNearestSeptFirst()))
+
+
+        const unreadMsgsCount = localChatMessages.filter(item => (item.id > chatID && item.user_id !== userID)).length
+        const unreadMarksCount = this.thisYearMarks.filter(item =>(Number(item.id) > markID)).length
+
+        console.log("App:render")
+
         const hwarray = localChatMessages.filter(item=>(item.homework_date!==null))
+
         // let unreadMsgsCount = this.state.msgs
         // const unreadMsgsCount = localChatMessages.filter(item=>(item.id>chatID&&item.user_id!==userID)).length
+
         let {daysArr, initialDay} = this.state
-
         initialDay = initialDay?initialDay: getNextStudyDay(daysArr)[0]
-
-        // console.log("App:render", chatID, unreadMsgsCount)
 
         const homework =
             (hwarray.length&&daysArr.length&&initialDay?hwarray.filter(item=>{
@@ -353,7 +410,8 @@ class App extends Component {
                 }
             ).length:0)
 
-        // if (loading&&loading!==-1)
+
+
         return (
                 <Container>
                     <StatusBar backgroundColor={theme.primaryDarkColor} hidden={false}/>
@@ -386,7 +444,7 @@ class App extends Component {
                     >
                     <Container>
                         <ChatBlock hidden={this.state.selectedFooter !== 0}
-                                   showLogin={this.props.userSetup.showLogin || (!token.length)}
+                                   showLogin={showLogin || (!token.length)}
                                    updateState={this.updateState}
                                    forceupdate={this.fireRender}
                                    setstate={this.setstate}
@@ -402,8 +460,10 @@ class App extends Component {
                             <View style={styles.absoluteView}>
                                      <MarksBlock hidden={this.state.selectedFooter !== 2}
                                                 showLogin={this.state.showLogin}
-                                                forceupdate={this.fireRender}
-                                                setstate={this.setstate}/>
+                                                // forceupdate={this.fireRender}
+                                                // setstate={this.setstate}
+                                                updateState={this.updateState}
+                                     />
                             </View>
                             : null}
                         {this.state.selectedFooter === 3 ?
@@ -431,7 +491,7 @@ class App extends Component {
                             </View> : null}
                     </Container>
                     </Drawer>
-                    {this.state.showFooter ?
+                    {showFooter ?
                         <View
                             onLayout={(event) =>this.measureView(event)}>
                         <Footer style={{elevation: 0, borderWidth : .5, borderColor : theme.secondaryColor}}>
@@ -445,7 +505,7 @@ class App extends Component {
                                     iconname={'message'}
                                     badgestatus={'primary'}
                                     kind={'chat'}
-                                    value={null}
+                                    value={unreadMsgsCount}
                                     setstate={this.setstate}
                                     stateid={0}/>
 
@@ -471,7 +531,7 @@ class App extends Component {
                                     iconname={'timeline'}
                                     badgestatus={'success'}
                                     kind={'marks'}
-                                    value={(marks.length - marksReadCount)}
+                                    value={unreadMarksCount}
                                     setstate={this.setstate}
                                     stateid={2}/>
 

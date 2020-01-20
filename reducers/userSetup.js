@@ -24,33 +24,35 @@ const initialState = {
             addUserToken : "", cnt_marks : 0, stud_cnt : 0, subj_cnt : 0,
             lastmarkssent : "", emails : [], homework : [],
             stats2 : [], stats3 : [], mark_date : {date : new Date()},
-            avgclassmarks : [], loading : -1, stepsLeft : 6,
+            avgclassmarks : [],
+            // loading : -1,
+            stepsLeft : 6,
             chatSessionID : '', classObj : { chatroom_id : 0},
             newMsgCount : 0, countryCode : "EN", langLibrary : {}, chatSSL : true,
             localChatMessages : [], isMobile : true, photoPath : [], markscount : 0,
             needRenew : false, chatTags : [], budget : [], budgetpays : [], renderBudget : 1, classNews : [],
-            statsBudget : null, statsBudgetPays : null, selectedFooter : 0, showLogin : false, logoutToken : '',
-            timetable : [], subjects : [], headerHeight : 0, footerHeight : 0, online : false, langCode : "",
-            offlineMsgs : [],
-            themeColor : "#46b5be",
-            theme : {
-                primaryColor : '#47b5be',
-                primaryLightColor : '#9bd7dc',
-                primaryDarkColor : '#007ba4',
-                primaryBorderColor : '#6ddce5',
-                secondaryColor : '#ffc909',
-                secondaryLightColor : '#fff674',
-                secondaryDarkColor : '#faa41b',
-                primaryTextColor : '#ffffff',
-                secondaryTextColor : '#000000',
-                primaryMsgColor : '#007ba4',
-                borderColor : "#A9A9A9",
-                navbarColor : "#f0f0f0",
-                facebookColor : '#007ba4',
-                googleColor : '#fff674',
-                photoButtonColor : '#33ccff',
-                errorColor : "#b40530",
-            }
+            statsBudget : null, statsBudgetPays : null, selectedFooter : 0, logoutToken : '',
+            timetable : [], subjects : [], offlineMsgs : [],
+            // headerHeight : 0, footerHeight : 0, online : false, langCode : "",
+            // themeColor : "#46b5be",
+            // theme : {
+            //     primaryColor : '#47b5be',
+            //     primaryLightColor : '#9bd7dc',
+            //     primaryDarkColor : '#007ba4',
+            //     primaryBorderColor : '#6ddce5',
+            //     secondaryColor : '#ffc909',
+            //     secondaryLightColor : '#fff674',
+            //     secondaryDarkColor : '#faa41b',
+            //     primaryTextColor : '#ffffff',
+            //     secondaryTextColor : '#000000',
+            //     primaryMsgColor : '#007ba4',
+            //     borderColor : "#A9A9A9",
+            //     navbarColor : "#f0f0f0",
+            //     facebookColor : '#007ba4',
+            //     googleColor : '#fff674',
+            //     photoButtonColor : '#33ccff',
+            //     errorColor : "#b40530",
+            // }
     //         }
     // return obj
 }
@@ -88,7 +90,9 @@ export function userSetupReducer(state = initialState, action) {
                 isadmin, studentName, studentId, marks, mark_dates, best_lines, avg_lines, avg_marks, addUserToken,
                 cnt_marks, stud_cnt, subj_cnt, lastmarkssent, emails, homework, stats2 : stats2[0], stats3 : stats3[0],
                 mark_date, avgclassmarks, langLibrary : action.payload.langLibrary, localChatMessages : chatrows, markscount,
-                classNews, chatTags : tags, statsBudget, statsBudgetPays, showLogin : false, timetable, subjects,
+                classNews, chatTags : tags, statsBudget, statsBudgetPays,
+                // showLogin : false,
+                timetable, subjects,
                 theme : action.payload.theme?action.payload.theme:themeOptions['#46b5be'], themeColor : action.payload.themeColor?action.payload.themeColor:'#46b5be'}
             return setup
             }
@@ -96,8 +100,6 @@ export function userSetupReducer(state = initialState, action) {
             return {...state}
         case offlineActionTypes.CONNECTION_CHANGE:
             console.log("online_event", action.payload, state, {...state, online : action.payload})
-            return {...state, online : action.payload}
-        case 'UPDATE_ONLINE':
             return {...state, online : action.payload}
         case 'UPDATE_SETUP_REMOTE' : {
             let {   class_number, pupil_count, year_name, perioddayscount,
@@ -177,17 +179,8 @@ export function userSetupReducer(state = initialState, action) {
         case 'LANG_LIBRARY' : {
             return{...state, langLibrary: action.payload}
         }
-        case 'LANG_CODE' : {
-            return{...state, langCode: action.payload}
-        }
         case 'CHAT_SESSION_ID' : {
             return{...state, chatSessionID : action.payload}
-        }
-        case 'APP_LOADING' : {
-            return{...state, loading : true}
-        }
-        case 'APP_LOADED' : {
-            return{...state, loading : false}
         }
         case 'IS_MOBILE' : {
             return{...state, isMobile : action.payload}
@@ -210,9 +203,6 @@ export function userSetupReducer(state = initialState, action) {
             return{...state, budgetpays: action.payload}
         case 'RENDER_BUDGET' :
             return{...state, renderBudget: action.payload}
-        // case "INIT_CHAT_MESSAGES" : {
-        //     return{...state, localChatMessages: action.payload}
-        // }
         case "ADD_CHAT_MESSAGES" : {
             return{...state, localChatMessages: action.payload}
         }
@@ -243,21 +233,10 @@ export function userSetupReducer(state = initialState, action) {
             5 - etc
              */
             return{...state, selectedFooter: action.payload}
-        case "SHOW_LOGIN" :
-            console.log("SHOW_LOGIN", action.payload)
-            return{...state, showLogin: action.payload}
         case "UPDATE_TOKEN" :
             return{...state, token: action.payload}
         case "UPDATE_LOGOUTTOKEN" :
             return{...state, logoutToken: action.payload}
-        case "HEADER_HEIGHT" :
-            return{...state, headerHeight: action.payload}
-        case "FOOTER_HEIGHT" :
-            return{...state, footerHeight: action.payload}
-        case 'CHANGE_THEME' :
-            return{...state, theme : action.payload}
-        case 'CHANGE_COLOR' :
-            return{...state, themeColor : action.payload}
         case 'ADD_OFFLINE' :
             return{...state, offlineMsgs : action.payload}
         default :

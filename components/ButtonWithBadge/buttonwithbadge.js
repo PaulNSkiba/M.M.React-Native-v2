@@ -17,42 +17,28 @@ class ButtonWithBadge extends Component {
         };
     }
     render () {
-        const {theme, localChatMessages, userID, marks, classNews} = this.props.userSetup
+        const {localChatMessages, userID, marks, classNews} = this.props.userSetup
+        const {chatID, markID, newsID, buildsID} = this.props.stat
+        const {showFooter, showKeyboard, theme, themeColor, online} = this.props.interface
 
         const windowRatio = Dimensions.get('window').width? Dimensions.get('window').height / Dimensions.get('window').width : 1.9
         const todayMessages = localChatMessages.filter(item=>(new Date(item.msg_date).toLocaleDateString())===(new Date().toLocaleDateString())).length
-        // const test = true
-        // const hwarray = this.props.userSetup.localChatMessages.filter(item=>(item.homework_date!==null))
-        // const homework = hwarray.length?hwarray.filter(item=>{
-        //                 if (item.hasOwnProperty('ondate')) item.homework_date = new Date(item.ondate)
-        //                     return toYYYYMMDD(new Date(item.homework_date)) === toYYYYMMDD(addDay((new Date()), 1))
-        //                 }
-        //             ).length:0
-        // console.log("ButtonWithBadge", this.props.icontype, this.props.iconname, todayMessages, homework)
-        // if (this.props.kind==='marks') console.log("MARKS_COUNT", this.props.value)
-        // todayMessages||
+
         let unreadMsgsCount = 0
         if (this.props.kind==='chat') {
-            const {chatID} = this.props.stat
+            // const {chatID} = this.props.stat
             unreadMsgsCount = localChatMessages.filter(item => (item.id > chatID && item.user_id !== userID)).length
         }
-        let unreadMarksCount = 0
-        if (this.props.kind==='marks') {
-            let {markID} = this.props.stat
-            // MarkID = Number(!Number.isNaN(markID)?0:MarkID===null?0:MarkID)
-            // console.log("MarkID", this.props.stat)
-            unreadMarksCount = marks.filter(item =>(Number(item.id) > markID)).length
-            // console.log("button", this.props.kind, markID, unreadMarksCount, marks)
-        }
+        // let unreadMarksCount = 0
+        // if (this.props.kind==='marks') {
+        //     unreadMarksCount = this.props.value//marks.filter(item =>(Number(item.id) > markID)).length
+        // }
         let unreadNewsCount = 0, unreadBuildsCount = 0
         if (this.props.kind==='info') {
-            let {newsID, buildsID} = this.props.stat
-            // MarkID = Number(!Number.isNaN(markID)?0:MarkID===null?0:MarkID)
-            // console.log("MarkID", this.props.stat)
             unreadNewsCount = classNews.filter(item =>(item.is_news===2&&Number(item.id) > newsID)).length
             unreadBuildsCount = classNews.filter(item =>(item.is_news===1&&Number(item.id) > buildsID)).length
-            // console.log("button", this.props.kind, markID, unreadMarksCount, marks)
         }
+        // console.log("renderButtons", newsID, buildsID)
         return (
             <Button style={[{backgroundColor : theme.secondaryColor,
                 borderWidth : 2,
@@ -60,11 +46,11 @@ class ButtonWithBadge extends Component {
                     badge vertical
                     active={this.props.enabled&&(!this.props.disabled)}
                     onPress={()=> {
-                        this.props.setstate({selectedFooter: this.props.stateid, showLogin: false, isSpinner : false})
+                         this.props.setstate({selectedFooter: this.props.stateid, showLogin: false, isSpinner : false})
                     }
                     }>
-                {(this.props.kind==='chat'&&unreadMsgsCount)?
-                    <Badge value={unreadMsgsCount}
+                {(this.props.kind==='chat'&&this.props.value)?
+                    <Badge value={this.props.value}
                            status={this.props.badgestatus}
                            textStyle={{color : theme.primaryTextColor}}
                            badgeStyle={{backgroundColor : theme.primaryColor }}
@@ -77,8 +63,8 @@ class ButtonWithBadge extends Component {
                            badgeStyle={{backgroundColor : theme.primaryColor }}
                            containerStyle={{ position: 'absolute', top: -8, right: 2 }}>
                     </Badge>:null}
-                {(this.props.kind==='marks'&&unreadMarksCount)?
-                    <Badge value={unreadMarksCount}
+                {(this.props.kind==='marks'&&this.props.value)?
+                    <Badge value={this.props.value}
                            status={this.props.badgestatus}
                            textStyle={{color : theme.primaryTextColor}}
                            badgeStyle={{backgroundColor : theme.primaryColor }}
@@ -89,14 +75,14 @@ class ButtonWithBadge extends Component {
                            status={this.props.badgestatus}
                            textStyle={{color : theme.primaryTextColor}}
                            badgeStyle={{backgroundColor : theme.primaryColor }}
-                           containerStyle={{ position: 'absolute', top: -8, left: 2 }}>
+                           containerStyle={{ position: 'absolute', top: -8, right: 0 }}>
                     </Badge>:null}
                 {(this.props.kind==='info'&&unreadBuildsCount)?
                     <Badge value={unreadBuildsCount}
                            status={this.props.badgestatus}
                            textStyle={{color : theme.primaryTextColor}}
                            badgeStyle={{backgroundColor : theme.primaryColor }}
-                           containerStyle={{ position: 'absolute', top: -8, right: 2 }}>
+                           containerStyle={{ position: 'absolute', top: 8, right: 0 }}>
                     </Badge>:null}
                 {/*{(this.props.value)?*/}
                     {/*<Badge value={this.props.value?this.props.value:null}*/}
@@ -114,6 +100,8 @@ class ButtonWithBadge extends Component {
 const mapDispatchToProps = dispatch => {
     return ({
         onReduxUpdate : (key, payload) => dispatch({type: key, payload: payload}),
+        onStartLoading: () => dispatch({type: 'APP_LOADING'}),
+        onStopLoading: () => dispatch({type: 'APP_LOADED'}),
     })
 }
 export default connect(mapStateToProps, mapDispatchToProps)(ButtonWithBadge)

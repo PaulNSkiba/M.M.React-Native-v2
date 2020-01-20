@@ -43,16 +43,16 @@ class MarksBlock extends Component {
             dayPages : null,
             subjPages : [],
             selDate : this.getNextStudyDay(daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;}))[1],
-            tableHead: ['ПРЕДМЕТ', '2.9', '3.9', '4.9', '5.9', '6.9'],
-            tableData: [
-                ['Англ.мова', '12', '6', '4', '10', '9'],
-                ['Укр.мова', '9', '8', '8', '3', '4'],
-                ['Математика', '7', '9', '10', '8', '5'],
-                ['Химия', '8', '10', '9', '3', '6'],
-            ],
-            tableTitle: ['Англ.мова', 'Укр.мова', 'Математика', 'Химия'],
+            // tableHead: ['ПРЕДМЕТ', '2.9', '3.9', '4.9', '5.9', '6.9'],
+            // tableData: [
+            //     ['Англ.мова', '12', '6', '4', '10', '9'],
+            //     ['Укр.мова', '9', '8', '8', '3', '4'],
+            //     ['Математика', '7', '9', '10', '8', '5'],
+            //     ['Химия', '8', '10', '9', '3', '6'],
+            // ],
+            // tableTitle: ['Англ.мова', 'Укр.мова', 'Математика', 'Химия'],
             widthArr: [100, 60, 60, 60, 60, 60],
-            isSpinner : true,
+            isSpinner : false,
             activeTab : 0,
         };
         this.markDaySteps = 6
@@ -63,8 +63,10 @@ class MarksBlock extends Component {
         // this.onDelMsgClick=this.onDelMsgClick.bind(this)
         // this.onLongPressMessage=this.onLongPressMessage.bind(this)
     }
-    componentDidMount(){
-        this.getTableGrids()
+    async componentDidMount(){
+        await this.getTableGrids()
+        // this.setActiveTab(0)
+        this.props.onStopLoading()
     }
     onSelectDay=item=>{
         this.setState({selDate : item})
@@ -82,7 +84,8 @@ class MarksBlock extends Component {
     }
 
     getTableGrids=()=>{
-        let {marks, subjects, langCode} = this.props.userSetup
+        let {marks, subjects} = this.props.userSetup
+        let {langCode} = this.props.interface
         let dayPages = [], curItem = [], cnt = 0, periodNum = 0, subjPages = []
         let daysMap = new Map(), subjMap = new Map();
         const firstSept = getNearestSeptFirst()
@@ -197,7 +200,7 @@ class MarksBlock extends Component {
         return ret
     }
     measureView(event) {
-        console.log(`*** event: ${JSON.stringify(event.nativeEvent).height}`);
+        console.log(`*** even/t: ${JSON.stringify(event.nativeEvent).height}`);
         return JSON.stringify(event.nativeEvent)
         // you'll get something like this here:
         // {"target":1105,"layout":{"y":0,"width":256,"x":32,"height":54.5}}
@@ -213,38 +216,44 @@ class MarksBlock extends Component {
     //     }
     // }
     setActiveTab=i=>{
-        console.log("ACTIVE_TAB", i, this.state.dayPages[i]);
+        // console.log("ACTIVE_TAB", i, this.state.dayPages[i]);
         const {classID} = this.props.userSetup
         let {stat} = this.props
         const ID = this.state.dayPages[i].markID
-        console.log("updateReadedID", ID, stat.markID, `${classID}markID`, ID.toString())
+        console.log("updateReadedID", stat.markID, ID)
+        // stat.markID = Number(ID)
+        // this.props.onReduxUpdate("UPDATE_VIEWSTAT", stat)
+
         if (stat.markID < ID) {
             stat.markID = Number(ID)
             console.log("UPDATE_VIEWSTAT")
+            this.props.updateState('markID', Number(ID))
             setStorageData(`${classID}markID`, ID.toString())
             this.props.onReduxUpdate("UPDATE_VIEWSTAT", stat)
         }
         this.setState({activeTab:i})
     }
     render () {
-        const {headerHeight, footerHeight, theme, langCode, langLibrary} = this.props.userSetup
+        const {langLibrary} = this.props.userSetup
+        const {tempdata, online} = this.props.tempdata
+        let {langCode} = this.props.interface
+        const {headerHeight, footerHeight, showFooter, showKeyboard, theme, themeColor} = this.props.interface
+
         const initialDay = this.getNextStudyDay(daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;}))[0];
-        const viewSize = Number(Number(Dimensions.get("window").height) - 2 *(headerHeight + footerHeight))
-        console.log("MARKS_RENDER")
+        let viewSize = Number(Number(Dimensions.get("window").height) - 2 *(headerHeight + footerHeight))
+            viewSize = Math.floor(viewSize / 40) * 40
+        // console.log("MARKS_RENDER", Dimensions.get("window").height, viewSize, viewSize / 40)
         let {marks, stats3} = this.props.userSetup, mark = "", subjmarks = ""
         {/*<Container>*/}
         // style={styles.modalView}
          return (
                 <Container>
-                    {this.state.isSpinner?<View style={{position : "absolute", flex: 1, alignSelf : 'center', marginTop : 240, zIndex : 100 }}>
-                        <Spinner color={theme.secondaryLightColor}/>
-                    </View>:null}
                     {(this.state.dayPages!==null)&&this.state.dayPages.length?
                     <Tabs renderTabBar={()=> <ScrollableTab />}  onChangeTab={({ i, ref, from }) => this.setActiveTab(i)}>
                         {this.state.dayPages.map((rootItem, key) =>
                             <Tab key={"tab" + key} heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor, fontSize: RFPercentage(1.5)}}>{toLocalDate(new Date(rootItem.arr.slice(-1)), "UA", false, false)}</Text>
                             </TabHeading>}>
-                                <View style={{flex : 1, flexDirection : "column"}}>
+                                <View>
                                     <View style={globalStyles.head}>
                                         <View key={1000}>
                                             <Text style={[globalStyles.headerCellFirst, {backgroundColor : theme.primaryLightColor, borderColor : theme.primaryDarkColor}]}>{`${langLibrary===undefined?'':langLibrary.mobSubject===undefined?'':langLibrary.mobSubject.toUpperCase()}`}</Text>
@@ -261,7 +270,7 @@ class MarksBlock extends Component {
                                     </View>
                                     <View
                                         // onLayout={(event) => { this.measureView(event) }}
-                                        style={[globalStyles.body, {height: viewSize}]} >
+                                        style={{ height: viewSize, justifyContent : "flex-start", alignItems : "flex-start", alignSelf : "flex-start"}} >
                                         <ScrollView>
                                          {this.state.subjPages.filter(item=>item.i===rootItem.i)[0].arr.map(
                                             (subjItem, key)=> {
@@ -269,7 +278,8 @@ class MarksBlock extends Component {
                                                 return <View key={"viewKey"+key} style={{flexDirection: "row"}}>
                                                     <View key={"cellBody" + key + '.0@' + subjItem.subj_key + '@'+rootItem.arr.slice(-1)}>
                                                         <Text
-                                                            style={[globalStyles.headerCellSubj, {backgroundColor : theme.primaryLightColor, borderColor : theme.primaryDarkColor}]}>{subjItem[getSubjFieldName(langCode)]}</Text>
+                                                            style={[globalStyles.headerCellSubj, {backgroundColor : theme.primaryLightColor, borderColor : theme.primaryDarkColor, fontSize: subjItem[getSubjFieldName(langCode)].length >= 15?RFPercentage(1.7):RFPercentage(1.8)}]}>{subjItem[getSubjFieldName(langCode)]}
+                                                        </Text>
                                                     </View>
                                                     {
                                                         rootItem.arr.map((dateItem, key2) => {
@@ -291,6 +301,9 @@ class MarksBlock extends Component {
                                             })}
                                         </ScrollView>
                                     </View>
+                                    <View>
+
+                                    </View>
 
                                 </View>
 
@@ -311,12 +324,13 @@ const globalStyles = StyleSheet.create({
     bodyCell : {
         width: 40,
         height: 40,
-        // justifyContent : "center",
+        justifyContent : "center",
         paddingTop: 11,
         paddingBottom: 4,
-        paddingLeft : 14,
+        // paddingLeft : 14,
         fontSize : RFPercentage(2),
         borderWidth : 0.5,
+        textAlign : "center"
         // borderColor : "#4472C4",
     },
     headerCellFirst : {
@@ -331,12 +345,15 @@ const globalStyles = StyleSheet.create({
         // borderColor : "#4472C4",
     },
     headerCellSubj : {
-        backgroundColor: "#fff",
+        flex : 1,
+        alignItems : "center",
+        justifyContent : "center",
+        // backgroundColor: "#fff",
         width: windowRatio<1.8? 120: 120,
         height: 40,
-        paddingTop: 6,
+        paddingTop: 12,
         paddingLeft : 8,
-        fontSize: RFPercentage(1.8),
+
         fontWeight : "600",
         borderWidth : 0.5,
         // borderColor : "#4472C4",
@@ -345,12 +362,13 @@ const globalStyles = StyleSheet.create({
         // backgroundColor: "rgba(64, 155, 230, 0.16)",
         width: 40,
         height: 40,
-        // justifyContent : "center",
+        justifyContent : "center",
         paddingTop: 12,
         paddingBottom: 4,
-        paddingLeft : 4,
+        // paddingLeft : 4,
         fontSize : RFPercentage(1.4),
         borderWidth : 0.5,
+        textAlign : "center",
         // borderColor : "#4472C4",
     },
     text : {
@@ -375,6 +393,8 @@ const globalStyles = StyleSheet.create({
 const mapDispatchToProps = dispatch => {
     return ({
         onReduxUpdate : (key, payload) => dispatch({type: key, payload: payload}),
+        onStartLoading: () => dispatch({type: 'APP_LOADING'}),
+        onStopLoading: () => dispatch({type: 'APP_LOADED'}),
     })
 }
 export default connect(mapStateToProps, mapDispatchToProps)(MarksBlock)

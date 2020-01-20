@@ -56,6 +56,9 @@ class MessageList extends Component {
             isSpinner : false,
             selTag : {value : 0},
             isEdited : false,
+            activeSubTab : 0,
+            isDone : false,
+
             };
         this.curMsgDate = new Date('19000101')
         this.onMessageDblClick = this.onMessageDblClick.bind(this)
@@ -66,14 +69,17 @@ class MessageList extends Component {
         this.getImage = this.getImage.bind(this)
         this.unreadY = null
         this.isViewed = false
-        this.msgsY = {}
         this.updateReadedID = this.updateReadedID.bind(this)
         this.updateY = this.updateY.bind(this)
     }
     componentDidMount(){
         this.getSavedCreds()
-        // ToDO: Если прочитаны все сообщения, то ничего не скроллить
-        this._scrollView.scrollTo({ x: 0, y: this.unreadY, animated: true });
+        console.log('componentDidMount: messaglist', this.unreadY, this.props)
+        // if (Number(this.props.stat.chatID)===Number(this.props.localmessages.slice[-1].id))
+        //     this._scrollView.scrollToEnd()
+        // else {
+        //     this._scrollView.scrollTo({x: 0, y: this.unreadY, animated: true});
+        // }
     }
     getSavedCreds=async ()=>{
         const credents = await getStorageData("checkTimetable")
@@ -154,7 +160,8 @@ class MessageList extends Component {
         if (Number(key)!==this.state.editKey) this.setState({editKey : Number(key)})
     }
     onLongPressMessage=(id, hwSubjID, hwOnDate, text)=>{
-        const {selectedSubjects, langCode} = this.props.userSetup
+        const {selectedSubjects} = this.props.userSetup
+        let {langCode} = this.props.interface
         const subjects = selectedSubjects.map(item=>{
             return {
                 label : item[getSubjFieldName(langCode)].toUpperCase(),
@@ -221,8 +228,6 @@ class MessageList extends Component {
 
                 const todayMessages = localChatMessages.filter(item=>(new Date(item.msg_date).toLocaleDateString())===(new Date().toLocaleDateString()))
                 const homeworks = localChatMessages.filter(item=>(item.homework_date!==null))
-                // this.props.forceupdate(todayMessages.length, homeworks.length)
-                // this.props.onReduxUpdate(, newmessages)
             }
             console.log("messages", messages)
         }
@@ -364,15 +369,21 @@ class MessageList extends Component {
         if (stat.chatID < ID) {
             stat.chatID = ID
             // console.log("updateReadedID", ID, stat.chatID, `${classID}chatID`, ID.toString())
+            this.props.updateState('chatID', Number(ID))
             setStorageData(`${classID}chatID`, ID.toString())
             this.props.onReduxUpdate("UPDATE_VIEWSTAT", stat)
-
         }
     }
-    updateY=offsetY=> {
-        // console.log('updateY', offsetY)
+    updateY=(offsetY, chatMaxID, msgID)=> {
+        console.log('updateY', offsetY, chatMaxID)
+        if (!chatMaxID)
+            this._scrollView.scrollTo({x: 0, y: offsetY, animated: true})
+        else {
+            this._scrollView.scrollToEnd()
+            this.props.updateChatState('isLastMsg',0)
+        }
         this.unreadY = offsetY
-        this._scrollView.scrollTo({ x: 0, y: offsetY, animated: true });
+        this.setState({isDone : true})
     }
     render() {
 
@@ -457,15 +468,19 @@ class MessageList extends Component {
         //         </div>:null}
         // ):null}
 
-        const {userID, theme, chatTags, selectedSubjects, langLibrary, langCode} = this.props.userSetup
+        const {userID, chatTags, selectedSubjects, langLibrary, localChatMessages, userName} = this.props.userSetup
+        let {langCode, theme} = this.props.interface
+
         const {chatID} = this.props.stat
         let questionText = "Здравствуйте. Оставьте, пожалуйста, своё сообщение в этом чате. " +
             "Оно автоматически будет доставлено в нашу службу поддержки и мы как можно скорее отправим Вам ответ на "
         questionText = questionText.concat(this.props.classID?"Вашу электронную почту.":"указанную Вами электронной почте.")
 
         let messages = []
-        if (this.props.isnew)
+        if (this.props.isnew) {
             messages = this.props.localmessages
+
+        }
         else
             messages = this.props.messages
 
@@ -523,8 +538,18 @@ class MessageList extends Component {
         }
         const ViewportView = Viewport.Aware(View)
         // console.log("MSG_LIST")
+        if (!messages.length) return null
+
+        // console.log("MESSAGES", messages, messages.slice(-1), messages.slice(-1)[0], messages.slice(-1)[0].id)
+        // const chatMaxID =
+        let topMsgID = messages.slice(-1)[0].id
+        // Выберем первое непрочитанное чужое сообщение
+        const notOwnMsgs = messages.filter(item=>item.id>chatID&&item.user_id!==userID)
+        const chatMaxID = messages.slice(-1)[0].id
+        if (notOwnMsgs.length) topMsgID = notOwnMsgs[0].id
+
         return (
-            <View>
+            <View style={{opacity : this.state.isDone?1:0}}>
                 <Modal
                     animationType="slide"
                     transparent={false}
@@ -572,7 +597,7 @@ class MessageList extends Component {
                     visible={this.state.modalVisible}
                     onRequestClose={() => {}}>
                     <View style={styles.modalView}>
-                        <Tabs>
+                        <Tabs onChangeTab={({ i, ref, from }) => this.setState({activeSubTab : i})}>
                             <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color : theme.primaryTextColor}}>{langLibrary===undefined?'':langLibrary.mobSubject===undefined?'':langLibrary.mobSubject.toUpperCase()}</Text></TabHeading>}>
                                 <View style={styles.homeworkSubjectList}>
                                     <RadioForm
@@ -606,10 +631,7 @@ class MessageList extends Component {
                             <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{langLibrary===undefined?'':langLibrary.mobChange===undefined?'':langLibrary.mobChange.toUpperCase()}</Text></TabHeading>}>
                                 <View>
                                         <Textarea style={styles.msgUpdateTextarea}
-                                            // onKeyPress={this._handleKeyDown}
                                                   onChangeText={text=>this.onChangeText('curMessage', text)}
-                                            // onFocus={()=>{this.props.setstate({showFooter : false})}}
-                                            // onBlur={()=>{this.props.setstate({showFooter : true})}}
                                                   placeholder={langLibrary===undefined?'':langLibrary.mobChangeText===undefined?'':langLibrary.mobChangeText}  type="text"
                                                   ref={input=>{this.inputMessage=input}}
                                                   value={this.state.curMessage}
@@ -636,25 +658,27 @@ class MessageList extends Component {
                                 </View>
                             </Tab>
                         </Tabs>
+                        {this.state.activeSubTab!==2?
                         <ListItem style={styles.modalHeader}>
                             <Text style={styles.modalHeaderText}>
                                 {this.state.selSubject.value?this.state.selSubject.label:null}
                                 {this.state.selDate.value>-3?` ${langLibrary===undefined?'':langLibrary.mobTo===undefined?'':langLibrary.mobTo} ${this.state.selDate.label}`:null}
                             </Text>
-                        </ListItem>
+                        </ListItem>:null}
+                        {this.state.activeSubTab!==2?
                         <ListItem className={styles.editHomeworkCheckbox}>
                             <CheckBox checked={this.state.checkTimetable} onPress={()=>{this.saveCredentials(!this.state.checkTimetable)}} color={theme.primaryDarkColor}/>
                             <Body>
                                 <Text>{`  ${langLibrary===undefined?'':langLibrary.mobConsiderTimetable===undefined?'':langLibrary.mobConsiderTimetable}`}</Text>
                             </Body>
-                        </ListItem>
+                        </ListItem>:null}
                         <Footer style={styles.header}>
                             <FooterTab style={styles.header}>
                                 <Button style={this.state.selSubject.value&&this.state.selDate.value>-3?{backgroundColor : theme.primaryColor, padding : 20}:styles.btnHomeworkDisabled} vertical
-                                        onPress={this.state.selSubject.value&&this.state.selDate.value>-3?()=>this.setModalVisible(!this.state.modalVisible, true):null}>
+                                        onPress={this.state.selSubject.value&&this.state.selDate.value>-3?()=>{this.setState({activeSubTab : 0});this.setModalVisible(!this.state.modalVisible, true)}:()=>this.setState({activeSubTab : 0})}>
                                     <Text style={{color : theme.primaryTextColor, height : "100%", marginTop : 12, flex : 1, alignItems: "center", justifyContent : "center"}}>{langLibrary===undefined?'':langLibrary.mobAdd===undefined?'':langLibrary.mobAdd.toUpperCase()}</Text>
                                 </Button>
-                                <Button style={styles.btnClose} vertical onPress={()=>this.setModalVisible(!this.state.modalVisible, false)}>
+                                <Button style={styles.btnClose} vertical onPress={()=>{this.setModalVisible(!this.state.modalVisible, false);this.setState({activeSubTab : 0});}}>
                                     <Text style={{color : theme.primaryTextColor}}>{langLibrary===undefined?'':langLibrary.mobCancel===undefined?'':langLibrary.mobCancel.toUpperCase()}</Text>
                                 </Button>
                             </FooterTab>
@@ -667,7 +691,7 @@ class MessageList extends Component {
                     ref={ref => this._scrollView = ref}
                     decelerationRate={0.6}
                     // style={{backgroundColor : theme.primaryLightColor}}
-                    // onContentSizeChange={(contentWidth, contentHeight)=>this._scrollView.scrollToEnd()}
+                    // onContentSizeChange={(contentWidth, contentHeight)=>this.state.isDone?this._scrollView.scrollToEnd():null}
 
                     // onContentSizeChange={(contentWidth, contentHeight)=>{this._scrollView.scrollResponderScrollToEnd({animated: true})}
                 >
@@ -695,7 +719,7 @@ class MessageList extends Component {
                                 }
                                 let username = msg.hasOwnProperty('userID')?msg.userName:msg.senderId
                                 let hw = msg.hasOwnProperty('hwdate')&&(!(msg.hwdate===undefined))&&(!(msg.hwdate===null))?(toLocalDate(msg.hwdate.lenght===8?dateFromYYYYMMDD(msg.hwdate):msg.hwdate, "UA", false, false))+':'+msg.subjname:''
-                                let ownMsg = (username===this.props.userSetup.userName)
+                                let ownMsg = (username===userName)
 
                                 // console.log("RENDER MESSAGE_LIST")
                                 const {user_id, msg_date, homework_subj_id, homework_date} = message
@@ -712,11 +736,21 @@ class MessageList extends Component {
                                                           // console.log('width:', layout.width);
                                                           // console.log('x:', layout.x);
                                                           // console.log('y:', layout.y);
-                                                          this.msgsY[msg.id] = layout.y
+                                                          // this.msgsY[msg.id] = layout.y
                                                           // console.log("layout", layout.y, this.unreadY, user_id, userID, msg.id, chatID)
                                                           // Если начальная позиция ещё null и текущий ID больше максимального
-                                                          if (this.unreadY!==null&&user_id!==userID&&this.isViewed===false&&Number(msg.id) >=Number(chatID)) this.isViewed = true
-                                                          if ((this.unreadY===null&&user_id!==userID&&Number(msg.id) >=Number(chatID))||(user_id===userID&&this.isViewed===false)) this.updateY(layout.y)
+
+                                                          // if (this.unreadY!==null&&user_id!==userID&&this.isViewed===false&&Number(msg.id) >=Number(chatID)) this.isViewed = true
+                                                          // if ((this.unreadY===null&&user_id!==userID&&Number(msg.id) >=Number(chatID))||(user_id===userID&&this.isViewed===false)) this.updateY(layout.y + layout.height, false)
+
+                                                          // if ((this.unreadY===null&&user_id!==userID&&Number(msg.id) >=Number(chatID))||(user_id===userID&&this.isViewed===false)) this.updateY(layout.y + layout.height, false)
+                                                          // console.log("onLayout", msg.id, this.state.isDone, topMsgID, chatMaxID, this.props.lastmsg)
+                                                          if (msg.id===topMsgID&&!this.state.isDone&&!this.props.lastMsg) this.updateY(layout.y, topMsgID===chatMaxID, msg.id)
+                                                          // if (msg.id===0&&this.state.isDone) this.updateY(layout.y, true)
+                                                          // if (this.state.isDone) this.updateY(null, true)
+
+                                                          if (msg.id===chatMaxID&&this.props.lastmsg) this.updateY(null, true)
+
                                                       }}
                                         >
                                              {this.getDateSeparator(msg_date.length===8?dateFromYYYYMMDD(msg_date):new Date(msg_date))}

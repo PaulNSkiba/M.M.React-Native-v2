@@ -72,6 +72,7 @@ class ChatMobile extends Component {
             shift: new Animated.Value(0),
             viewHeight : Dimensions.get('window').height,
             keyboardHeight : 0,
+            isLastMsg : 0,
         }
         this.Echo = null
         this.now = new Date()
@@ -87,51 +88,34 @@ class ChatMobile extends Component {
         this._handleKeyDown = this._handleKeyDown.bind(this)
         this.sendMessage = this.sendMessage.bind(this)
         this.addMessage = this.addMessage.bind(this)
+        this.updateChatState = this.updateChatState.bind(this)
     }
-    shouldComponentUpdate(nextProps, nextState) {
-        if (nextProps.userSetup.userID&&this.Echo===null) {
-            if (this.props.isnew) {
-                console.log("shoulUpdateEcho", nextProps.userSetup.userID, this.Echo)
-                this.initLocalPusher()
-            }
-            else {
-                this.initNetPusher()
-            }
-        }
-        else {
-            if ((!nextProps.userSetup.userID) && this.Echo!==null) {
-                this.Echo.disconnect()
-                this.Echo = null
-            }
-        }
-        return true
-    }
-    measureView(event: Object) {
-        // console.log(`*** event: ${JSON.stringify(event.nativeEvent)}`);
-    }
-    componentDidMount(){
-        // console.log("this.props.isnew", this.props.isnew)
-        let {langLibrary, langCode} = this.props.userSetup
+    async componentDidMount(){
+        console.log("componentDidMount:chatmobile")
+        let {langLibrary} = this.props.userSetup
+        let {langCode} = this.props.interface
         // Print component dimensions to console
         // console.log("chatMobile", langLibrary)
         const defLang = langCode && arrLangs.includes(langCode)?langCode : "UA"
         if (!langLibrary) {
-            // let lang = langCode ? langCode : defLang
             this.props.onReduxUpdate("LANG_LIBRARY", getLangAsyncFunc(langCode ? langCode : defLang))
         }
 
         NetInfo.isConnected.addEventListener('connectionChange', this.handleConnectivityChange);
+
         AppState.addEventListener('change', this._handleAppStateChange);
+
         this.keyboardDidShowSub = Keyboard.addListener('keyboardDidShow', this.handleKeyboardDidShow);
         this.keyboardDidHideSub = Keyboard.addListener('keyboardDidHide', this.handleKeyboardDidHide);
 
+        this.props.onStartLoading()
         if (this.props.isnew)
             this.initLocalPusher()
         else {
             this.initNetPusher()
         }
 
-        this.initChatMessages()
+        await this.initChatMessages()
 
         // if (this.typingTimer) clearTimeout(this.typingTimer)
         this.typingTimer = setInterval(()=>{
@@ -150,18 +134,82 @@ class ChatMobile extends Component {
 
             }
         }, 2000)
+
     }
     componentWillUnmount() {
         if (this.typingTimer) clearInterval(this.typingTimer)
         NetInfo.isConnected.removeEventListener('connectionChange', this.handleConnectivityChange);
         AppState.removeEventListener('change', this._handleAppStateChange);
+
         this.keyboardDidShowSub.remove();
         this.keyboardDidHideSub.remove();
+    }
+    shouldComponentUpdate(nextProps, nextState) {
+        // console.log("shouldComponentUpdate:chatMobile")
+        if (nextProps.userSetup.userID&&this.Echo===null) {
+            if (this.props.isnew) {
+                console.log("shouldUpdateEcho", nextProps.userSetup.userID, this.Echo)
+                this.initLocalPusher()
+            }
+            else {
+                this.initNetPusher()
+            }
+        }
+        else {
+            if ((!nextProps.userSetup.userID) && this.Echo!==null) {
+                this.Echo.disconnect()
+                this.Echo = null
+            }
+        }
+        return true
+    }
+    measureView(event: Object) {
+        // console.log(`*** event: ${JSON.stringify(event.nativeEvent)}`);
     }
     getTags=async ()=>{
         await instanceAxios().get(`${API_URL}chat/tags/${this.props.userSetup.classID}`)
             .then(res=>this.props.onReduxUpdate("CHAT_TAGS", res.data))
             .catch(res=>console.log("tagError"))
+    }
+    handleKeyboardDidShow = (event) => {
+        const { height: windowHeight } = Dimensions.get('window');
+        const keyboardHeight = event.endCoordinates.height;
+        console.log("keyboardHeight", keyboardHeight)
+        // const currentlyFocusedField = TextInputState.currentlyFocusedField();
+        const currentlyFocusedField = this._animatedView;
+        this.setState({viewHeight : (windowHeight - keyboardHeight), keyboardHeight})
+        console.log("handleKeyboardDidShow")
+        // this._animatedView.measure((originX, originY, width, height, pageX, pageY) => {
+        //     const fieldHeight = height;
+        //     const fieldTop = pageY;
+        //     const gap = (windowHeight - keyboardHeight) - (fieldTop + fieldHeight);
+        //     console.log("gap", gap)
+        //     if (gap >= 0) {
+        //         return;
+        //     }
+        //     Animated.timing(
+        //         this.state.shift,
+        //         {
+        //             toValue: gap,
+        //             duration: 1000,
+        //             useNativeDriver: true,
+        //         }
+        //     ).start();
+        // });
+    }
+    handleKeyboardDidHide = () => {
+        const { height: windowHeight } = Dimensions.get('window');
+        this.setState({viewHeight : (windowHeight), keyboardHeight : 0})
+        console.log("handleKeyboardDidHide")
+        // return;
+        // Animated.timing(
+        //     this.state.shift,
+        //     {
+        //         toValue: 0,
+        //         duration: 1000,
+        //         useNativeDriver: true,
+        //     }
+        // ).start();
     }
     _handleAppStateChange = (nextAppState) => {
         const {classID, studentId, localChatMessages, markscount} = this.props.userSetup
@@ -176,22 +224,17 @@ class ChatMobile extends Component {
                         // this.props.onReduxUpdate('UPDATE_ONLINE', res)
                         console.log("chatMobile!!!", res)
                         if (offlineMsgs.length){
-                            // const {userID} = this.props.userSetup
                             offlineMsgs.forEach(item=>{
                                 console.log("OFFLINE_MSG", item);
                                 // this.sendMessage(JSON.stringify(item), 0, false);
                                  instanceAxios().post(`${API_URL}chat/add`, JSON.stringify(item))
                                     .then(response => {
                                         console.log('ADD_MSG', response)
-                                        // let {offlineMsgs} = this.props.userSetup
-                                        offlineMsgs = offlineMsgs.filter(itemOff=>item.uniqid!==itemOff.uniqid)
+                                         offlineMsgs = offlineMsgs.filter(itemOff=>item.uniqid!==itemOff.uniqid)
                                         this.props.onReduxUpdate("ADD_OFFLINE", offlineMsgs)
                                     })
                                     .catch(response=> {
                                             console.log("AXIOUS_ERROR", response)
-                                            // let {offlineMsgs} = this.props.userSetup
-                                            // offlineMsgs.push(JSON.parse(text))
-                                            // this.props.onReduxUpdate("ADD_OFFLINE", offlineMsgs)
                                         }
                                     )
                             })
@@ -203,7 +246,6 @@ class ChatMobile extends Component {
             if (classID) {
                 instanceAxios().get(API_URL + `class/getstat/${classID}/${studentId}'/0`)
                     .then(response => {
-                        // console.log('Chat:_handleAppStateChange', response, this.props.userSetup)
                         // homeworks: 13
                         // marks: 0
                         // msgs: 250
@@ -214,7 +256,6 @@ class ChatMobile extends Component {
                         if ((response.data.msgs!==localChatMessages.slice(-1).id)||(markscount!==response.data.marks)||(homeworks_count!==response.data.homeworks)) {
                             instanceAxios().get(API_URL + `class/getstat/${classID}/${studentId}'/1`)
                                 .then(response => {
-                                    // console.log('NewData', response, this.props.userSetup)
                                     const msgs = response.data.msgs
                                     let arr = this.state.localChatMessages
                                     // console.log("GetStatMsgs", msgs)
@@ -275,8 +316,7 @@ class ChatMobile extends Component {
                         if ((response.data.msgs!==localChatMessages.slice(-1).id)||(markscount!==response.data.marks)||(homeworks_count!==response.data.homeworks)) {
                             instanceAxios().get(API_URL + `class/getstat/${classID}/${studentId}'/1`)
                                 .then(response => {
-                                    // console.log('NewData', response, this.props.userSetup)
-                                    // this.props.onReduxUpdate("UPDATE_HOMEWORK", response.data.msgs.filter(item=>(item.homework_date!==null)))
+                                     // this.props.onReduxUpdate("UPDATE_HOMEWORK", response.data.msgs.filter(item=>(item.homework_date!==null)))
                                     // this.props.onReduxUpdate("ADD_CHAT_MESSAGES", response.data.msgs)
                                     const msgs = response.data.msgs
                                     let arr = this.state.localChatMessages
@@ -328,21 +368,24 @@ class ChatMobile extends Component {
     toggleEmojiPicker=()=>{
         this.setState({            showEmojiPicker: !this.state.showEmojiPicker,        });
     }
-    getChatMessages=(classID)=>{
-        // console.log('getChatMessages', this.props.userSetup.classID, classID)
-        instanceAxios().get(API_URL +`chat/get/${classID}`, [], null)
+    getChatMessages=classID=>{
+        console.log('getChatMessages', classID)
+        // instanceAxios().get(API_URL +`chat/get/${classID}`, [], null)
+           axios2('get', `${API_URL}chat/get/${classID}`)
             .then(resp => {
                 this.setState({localChatMessages : resp.data})
-                // console.log("getChatMessages : Загружено!", resp.data)
+                console.log("getChatMessages : Загружено!", resp.data)
                 this.props.onReduxUpdate("UPDATE_HOMEWORK", resp.data.filter(item=>(item.homework_date!==null)))
                 this.props.onReduxUpdate("ADD_CHAT_MESSAGES", resp.data)
+                this.props.onStopLoading()
             })
             .catch(error => {
                 console.log('getChatMessagesError', error)
+                this.props.onStopLoading()
             })
         this.props.onReduxUpdate("USER_LOGGEDIN_DONE")
     }
-    initChatMessages=async ()=>{
+    initChatMessages=()=>{
         if (this.props.isnew) {
             this.getChatMessages(this.props.userSetup.classID)
         }
@@ -361,7 +404,7 @@ class ChatMobile extends Component {
     }
     initLocalPusher=()=>{
         const {chatSSL, token} = this.props.userSetup
-        // console.log("initLocalPusher", this.props.userSetup.token)
+        // console.log("initLocalPusher")
         // const larasocket = pusherClient(store.getState().user.token, chatSSL)
         const echo = echoClient(token, chatSSL)
 
@@ -406,12 +449,15 @@ class ChatMobile extends Component {
                         }
                     )
                     // Если новое и стороннее!!!
-                    if (isSideMsg) arrChat.push(msgorig)
+                    if (isSideMsg) {
+                        arrChat.push(msgorig)
+                    }
 
                     this.setState({
                         localChatMessages: arrChat,
                         messages: [...arrChat, msg],
-                        messagesNew: this.state.messagesNew.filter(item => !(item.uniqid === JSON.parse(msg).uniqid))
+                        messagesNew: this.state.messagesNew.filter(item => !(item.uniqid === JSON.parse(msg).uniqid)),
+                        isLastMsg : msgorig.id,
                     })
                     const todayMessages = arrChat.filter(item=>(new Date(item.msg_date).toLocaleDateString())===(new Date().toLocaleDateString()))
                     const homeworks = arrChat.filter(item=>(item.homework_date!==null)).filter(item=>toYYYYMMDD(new Date(item.homework_date))===toYYYYMMDD(addDay((new Date()), 1)))
@@ -611,7 +657,7 @@ class ChatMobile extends Component {
                 obj.user_name = userName
                 obj.student_id = studentId
                 obj.student_name = studentName
-                obj.uniqid = new Date().getTime() + this.props.userSetup.userName //uniqid()
+                obj.uniqid = new Date().getTime() + userName //uniqid()
                 this.setState({messagesNew : [...this.state.messagesNew, obj.uniqid]})
                 break;
             default :
@@ -679,14 +725,13 @@ class ChatMobile extends Component {
     }
     _handleKeyDown = (e) => {
         // console.log("_handleKeyDown", e.nativeEvent.key, e.nativeEvent)
+        const {classID, userName} = this.props.userSetup
         let key = e.nativeEvent.key
-
         if (this.props.isnew) {
-            
-            let channelName = 'class.'+this.props.userSetup.classID
+            let channelName = 'class.'+classID
             this.Echo.join(channelName)
                 .whisper('typing', {
-                        name: this.props.userSetup.userName
+                        name: userName
                     })
         }
         return
@@ -844,14 +889,15 @@ class ChatMobile extends Component {
                 // console.log('616', id, arrChat, API_URL + 'chat/add' + (id?`/${id}`:''))
                 this.setState({messages: arrChat})
                 // this.props.onReduxUpdate("ADD_CHAT_MESSAGES", arrChat)
-                console.log('816', `${API_URL}chat/add${id?'/'+id:''}`, text, this.props.userSetup.token)
+                console.log('816', `${API_URL}chat/add${id?'/'+id:''}`, text)
                 // instanceAxios().post(API_URL + 'chat/add' + (id?`/${id}`:''), text)
                 await axios2('post', `${API_URL}chat/add${id?'/'+id:''}`, text)
                     .then(response => {
                         console.log('ADD_MSG', response)
                         // this._textarea.setNativeProps({'editable':false});
                         // this._textarea.setNativeProps({'editable':true});
-                        this.props.setstate({showFooter : true})
+                        // this.props.setstate({showFooter : true})
+                        this.props.onReduxUpdate('UPDATE_FOOTER_SHOW', true);
                         this.setState({curMessage : ''})
                     })
                     .catch(response=> {
@@ -859,7 +905,7 @@ class ChatMobile extends Component {
                             let {offlineMsgs} = this.props.userSetup
                             offlineMsgs.push(JSON.parse(text))
                             this.props.onReduxUpdate("ADD_OFFLINE", offlineMsgs)
-                            this.props.setstate({showFooter: true})
+                            this.props.onReduxUpdate('UPDATE_FOOTER_SHOW', true);
                             this.setState({curMessage: ''})
                         }
                     )
@@ -900,9 +946,6 @@ class ChatMobile extends Component {
         this.setState({
             newMessage: '',
         });
-    }
-    btnCloseOwn=()=>{
-
     }
     onChangeText = (key, val) => {
         // console.log("onChangeText", this.state.curMessage, key, val,
@@ -945,53 +988,16 @@ class ChatMobile extends Component {
         this.props.onReduxUpdate("ADD_CHAT_MESSAGES", messages)
     }
     onTextIput=()=>{
-        this.props.setstate({showFooter : false})
+        this.props.onReduxUpdate('UPDATE_FOOTER_SHOW', false);
     }
-    handleKeyboardDidShow = (event) => {
-        const { height: windowHeight } = Dimensions.get('window');
-        const keyboardHeight = event.endCoordinates.height;
-        console.log("keyboardHeight", keyboardHeight)
-        // const currentlyFocusedField = TextInputState.currentlyFocusedField();
-        const currentlyFocusedField = this._animatedView;
-        this.setState({viewHeight : (windowHeight - keyboardHeight), keyboardHeight})
-        console.log("handleKeyboardDidShow")
-        return;
-        // this._animatedView.measure((originX, originY, width, height, pageX, pageY) => {
-        //     const fieldHeight = height;
-        //     const fieldTop = pageY;
-        //     const gap = (windowHeight - keyboardHeight) - (fieldTop + fieldHeight);
-        //     console.log("gap", gap)
-        //     if (gap >= 0) {
-        //         return;
-        //     }
-        //     Animated.timing(
-        //         this.state.shift,
-        //         {
-        //             toValue: gap,
-        //             duration: 1000,
-        //             useNativeDriver: true,
-        //         }
-        //     ).start();
-        // });
-    }
-
-    handleKeyboardDidHide = () => {
-        const { height: windowHeight } = Dimensions.get('window');
-        this.setState({viewHeight : (windowHeight), keyboardHeight : 0})
-        console.log("handleKeyboardDidHide")
-        // return;
-        // Animated.timing(
-        //     this.state.shift,
-        //     {
-        //         toValue: 0,
-        //         duration: 1000,
-        //         useNativeDriver: true,
-        //     }
-        // ).start();
+    updateChatState = (stateKey, stateValue) => {
+        this.setState({[stateKey]: stateValue});
     }
     render() {
         let { showEmojiPicker, shift, localChatMessages } = this.state
-        const { theme, langLibrary, offlineMsgs } = this.props.userSetup
+        const {langLibrary, offlineMsgs } = this.props.userSetup
+        const {theme} = this.props.interface
+        const {loading} = this.props.tempdata
 
         const offlineMsgsLocal = offlineMsgs.filter(item=>(!localChatMessages.filter(itemChat=>itemChat.uniqid===item.uniqid).length))
         // console.log("CHATMOBILE")
@@ -1006,7 +1012,7 @@ class ChatMobile extends Component {
                 collapsable={false}
                 onLayout={(event) => {this.measureView(event)}}
                 style={[this.props.hidden?styles.hidden:styles.chatContainerNew, {height: this.state.viewHeight}]}>
-                <View style={{flex : 7}}>
+                <View style={{flex : 7, height: this.state.viewHeight - 70}}>
                      {showEmojiPicker ? (
                      <View className="picker-background">
                          <Picker set="emojione"
@@ -1034,8 +1040,8 @@ class ChatMobile extends Component {
                         {/*</View>*/}
                     {/*</View>*/}
 
-                     {this.props.userSetup.classID&&false?<View style={styles.servicePlus} onClick={()=>{this.setState({servicePlus : !this.state.servicePlus})}}>
-                         <Text>{this.state.servicePlus?"+":"-"} Вопрос разработчику</Text></View>:null}
+                     {/*{this.props.userSetup.classID&&false?<View style={styles.servicePlus} onClick={()=>{this.setState({servicePlus : !this.state.servicePlus})}}>*/}
+                         {/*<Text>{this.state.servicePlus?"+":"-"} Вопрос разработчику</Text></View>:null}*/}
 
                     {/*{!this.roomId?*/}
                         {/*<View className="msg-title-userdata">*/}
@@ -1055,7 +1061,9 @@ class ChatMobile extends Component {
                                         addmsgs={this.state.addMsgs}
                                         sendmessage={this.sendMessage} isnew={this.props.isnew}
                                         addhomework={this.addHomeWork}
-                                        forceupdate={this.props.forceupdate}
+                                        updateState={this.props.updateState}
+                                        lastmsg={this.state.isLastMsg}
+                                        updateChatState={this.updateChatState}
                                         tags={this.state.tags}/>
                     </View>
                     <View style={styles.whoTyping}>
@@ -1067,7 +1075,6 @@ class ChatMobile extends Component {
                     </View>
                 </View>
                 <View style={[styles.addMsgContainer, {bottom : Platform.OS==="ios"?this.state.keyboardHeight:0}]}>
-
                             {/*<Button*/}
                                 {/*type="button"*/}
                                 {/*className="toggle-emoji"*/}
@@ -1075,31 +1082,30 @@ class ChatMobile extends Component {
                             {/*>*/}
                                 {/*<Smile />*/}
                             {/*</Button>*/}
-
-                            <View style={{flex: 7}}>
-
+                            <View style={{flex: 7.5}}>
                                 <Textarea style={styles.msgAddTextarea}
                                           onKeyPress={this._handleKeyDown}
                                           onChangeText={text=>this.onChangeText('curMessage', text)}
-                                          onFocus={()=>{this.props.setstate({showFooter : false})}}
-                                          onBlur={()=>{this.props.setstate({showFooter : true})}}
+                                          onFocus={()=>{this.props.onReduxUpdate('UPDATE_FOOTER_SHOW', true);}}
+                                          // this.props.setstate({showFooter : false})
+
+                                          onBlur={()=>{this.props.onReduxUpdate('UPDATE_FOOTER_SHOW', true);}}
+                                          // this.props.setstate({showFooter : true})
+
                                           placeholder={langLibrary===undefined?'':(langLibrary.mobMsgHint===undefined?'':langLibrary.mobMsgHint)}  type="text"
                                           ref={component => this._textarea = component}
                                           value={this.state.curMessage}
                                 />
-
                             </View>
-
                             <View style={styles.btnAddMessage}>
                                 <Icon
                                     // raised
                                     name='rightcircle'
                                     type='antdesign'
-                                    color='#898989'
+                                    color={theme.primaryDarkColor}
                                     size={40}
                                     onPress={this.addMessage} />
                             </View>
-
                 </View>
 
             </View>
@@ -1107,10 +1113,11 @@ class ChatMobile extends Component {
         )
     }
 }
-
-export default connect(mapStateToProps,
-    dispatch => { return {
-                            onReduxUpdate: (key, payload) => dispatch({type: key, payload: payload}),
-                         }
-                }
-            )(ChatMobile)
+const mapDispatchToProps = dispatch => {
+    return ({
+        onReduxUpdate : (key, payload) => dispatch({type: key, payload: payload}),
+        onStartLoading: () => dispatch({type: 'APP_LOADING'}),
+        onStopLoading: () => dispatch({type: 'APP_LOADED'}),
+    })
+}
+export default connect(mapStateToProps, mapDispatchToProps)(ChatMobile)
