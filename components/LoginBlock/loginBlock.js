@@ -3,13 +3,11 @@
  */
 import React from 'react';
 import {StyleSheet, Text, View, TextInput, Dimensions, Modal,
-        TouchableOpacity, Image, TouchableWithoutFeedback, Keyboard} from 'react-native';
+        TouchableOpacity, Image, TouchableWithoutFeedback, Keyboard, Platform} from 'react-native';
 import {connect} from 'react-redux';
-import {
-    Container, Header, Left, Body, Right, Button,
-    Icon, Title, Content, Footer, FooterTab, Badge,
-    Form, Item, Input, Label, Spinner, CheckBox
-} from 'native-base';
+import {Container, Header, Left, Body, Right, Button,
+        Icon, Title, Content, Footer, FooterTab, Badge,
+        Form, Item, Input, Label, Spinner, CheckBox} from 'native-base';
 import { Avatar } from 'react-native-elements';
 import {bindActionCreators} from 'redux';
 import {instanceAxios, mapStateToProps, msgTimeOut, setStorageData, getStorageData} from '../../js/helpersLight'
@@ -69,7 +67,7 @@ class LoginBlock extends React.Component {
         if (logging) {
             return true
         }
-        if ((!logging) && (!loginmsg.length) && (logBtnClicked)) {
+        if ((!logging) && (loginmsg!==undefined&&!loginmsg.length) && (logBtnClicked)) {
             this.props.updateState("showLogin", false)
             this.showLogin = false
             this.props.onReduxUpdate("LOG_BTN_UNCLICK")
@@ -120,10 +118,22 @@ class LoginBlock extends React.Component {
         console.log("creds")
         const store = await getStorageData("creds")
         const creds = JSON.parse(store)
+        const {userName, password, email} = this.props.saveddata
         // console.log("getCreds", creds)
-        if (creds){
-            if (creds.isSet){
-                this.setState({checkSave : true, username : creds.userName, password : creds.userPwd})
+        if (Platform.OS==='ios'){
+            this.setState({checkSave: true, username: email, password: password})
+        }
+        else {
+            if (creds) {
+                if (creds.isSet) {
+                    this.setState({checkSave: true, username: creds.userName, password: creds.userPwd})
+                }
+                else {
+                    this.setState({checkSave: true, username: email, password: password})
+                }
+            }
+            else {
+                this.setState({checkSave: true, username: email, password: password})
             }
         }
     }
@@ -135,25 +145,31 @@ class LoginBlock extends React.Component {
         }
         setStorageData('creds', JSON.stringify(obj))
         this.setState({checkSave : save})
-        console.log( save)
+        // console.log( save)
     }
     onChangeText = (key, val) => {
-        // console.log("onChangeText", key, val, this.refs)
+        // console.log("onChangeText", key, val)
         this.setState({[key]: val})
     }
     onLogin = () => {
-        const {langLibrary} = this.props.userSetup
+        const {langLibrary, classID} = this.props.userSetup
         const {theme, themeColor} = this.props.interface
         this.props.updateState("userEmail", this.state.username)
-
+        this.props.updateState("calcStat", false)
         let name = this.state.username, //"test@gmail.com",
             pwd = this.state.password, //"test1",
             provider = null,
             provider_id = null
 
-        // if (Platform.OS !== 'ios')
+        if (Platform.OS !== 'ios')
         this.saveCredentials(this.state.checkSave);
 
+        // if (classID > 0) {
+        //     console.log("GETSTAT")
+        //     this.props.onReduxUpdate("UPDATE_VIEWSTAT", getViewStat(classID))
+        // }
+
+        this.props.onReduxUpdate("SAVE_CREDS", {userName : name, password : pwd})
         this.props.onReduxUpdate("SHOW_LOGIN", false)
         this.props.onReduxUpdate("USER_LOGGING")
         this.props.onReduxUpdate("LOG_BTN_CLICK")
@@ -164,6 +180,7 @@ class LoginBlock extends React.Component {
         console.log("clearError", this.props.user)
         this.props.onReduxUpdate("LOG_BTN_UNCLICK")
         this.props.onStopLogging()
+        this.props.onStopLoading()
         this.props.user.loginmsg.length && this.props.onClearErrorMsg()
         // this.setState({buttonClicked : false})
         // this.buttonClicked = false
@@ -206,7 +223,9 @@ class LoginBlock extends React.Component {
         const {logging, loginmsg, logBtnClicked} = this.props.user
         const {showFooter, showKeyboard, footerHeight, theme, themeColor, online} = this.props.interface
         const {userID, token, langLibrary} = this.props.userSetup
-        console.log("LOGIN_RENDER", footerHeight)
+        const {userName, password, email} = this.props.saveddata
+
+        console.log("LOGIN_RENDER")
         // const showModal = this.showLogin&&logBtnClicked&&(!loginmsg.length)
         // return <View></View>
 
@@ -334,19 +353,10 @@ class LoginBlock extends React.Component {
                         <Input
                                style={{fontSize : RFPercentage(3), paddingLeft : 10, paddingRight : 0, color : theme.primaryTextColor, fontWeight : "600", borderWidth: 3, borderColor : theme.primaryBorderColor, borderRadius : 30}}
                                value={this.state.username.length?this.state.username:""}
-                               onChangeText={text => this.onChangeText('username', text)}
+                               onChangeText={text =>this.onChangeText('username', text)}
                                onBlur={()=>console.log("Input:username:blur")}
                         />
                     </Item>
-
-                    {/*<Item floatingLabel>*/}
-                            {/*<Label>Пароль</Label>*/}
-                            {/*<Input secureTextEntry={true}*/}
-                                   {/*value={this.state.password}*/}
-                                   {/*ref={component => this._pwdLogin = component}*/}
-                                   {/*onChangeText={val => this.onChangeText('password', val)}/>*/}
-                    {/*</Item>*/}
-
                     <Item rounded style={{marginLeft : 60, marginTop : 10, marginRight : 60, borderColor: 'transparent'}}>
                         <Input
                             style={{fontSize : RFPercentage(3), paddingLeft : 10, paddingRight : 0, color : theme.primaryTextColor, fontWeight : "600", borderWidth: 3, borderColor : theme.primaryBorderColor, borderRadius : 30}}
@@ -355,8 +365,16 @@ class LoginBlock extends React.Component {
                             onChangeText={text => this.onChangeText('password', text)}
                         />
                     </Item>
+                    {/*<Item floatingLabel>*/}
+                            {/*<Label>Пароль</Label>*/}
+                            {/*<Input secureTextEntry={true}*/}
+                                   {/*value={this.state.password}*/}
+                                   {/*ref={component => this._pwdLogin = component}*/}
+                                   {/*onChangeText={val => this.onChangeText('password', val)}/>*/}
+                    {/*</Item>*/}
 
                     {/*<TouchableOpacity onPress={()=>{this.setState({checkSave:!this.state.checkSave})}}>*/}
+                    {Platform.OS !== 'ios'?
                     <Item style={{ marginLeft : 60, marginTop : 10, marginBottom : 5, borderColor : 'transparent'}}>
                        <View>
                             <CheckBox checked={this.state.checkSave} onPress={()=>{this.saveCredentials(!this.state.checkSave)}} color={theme.primaryDarkColor}/>
@@ -364,13 +382,13 @@ class LoginBlock extends React.Component {
                         <View style={{ marginLeft : 20}}>
                             <Text style={{color : theme.primaryDarkColor}}>{langLibrary===undefined?'':langLibrary.mobSaveCheckBox===undefined?'':langLibrary.mobSaveCheckBox}</Text>
                         </View>
-                    </Item>
+                    </Item>:null}
 
                     {userID ?   <Button style={{  marginLeft : 60, marginTop : 5, marginRight : 60, borderRadius : 30,
                                                 justifyContent: "center",
                                                 alignItems: "center",
                                                 color : theme.primaryDarkColor, backgroundColor : theme.secondaryLightColor}}
-                                        onPress={()=>{this.props.onReduxUpdate("UPDATE_KEYBOARD_SHOW", false); this.props.onUserLoggingOut(token, langLibrary, theme, themeColor)}}>
+                                        onPress={()=>{this.props.onReduxUpdate("INIT_STATDATA"); this.props.onReduxUpdate("UPDATE_KEYBOARD_SHOW", false); this.props.onUserLoggingOut(token, langLibrary, theme, themeColor)}}>
                                     <View style={{ justifyContent: "center", alignItems: "center" }}>
                                         <Text style={{fontSize : RFPercentage(3), color : theme.primaryDarkColor, width : "100%", fontWeight : "800"}}>{langLibrary===undefined?'':langLibrary.mobExit===undefined?'':langLibrary.mobExit.toUpperCase()}</Text>
                                     </View>

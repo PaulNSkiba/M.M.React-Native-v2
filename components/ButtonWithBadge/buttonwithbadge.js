@@ -18,26 +18,26 @@ class ButtonWithBadge extends Component {
     }
     render () {
         const {localChatMessages, userID, marks, classNews} = this.props.userSetup
-        const {chatID, markID, newsID, buildsID} = this.props.stat
+        const {chatID, markID, newsID, buildsID, newsCnt, buildsCnt, chatCnt, markCnt} = this.props.stat
         const {showFooter, showKeyboard, theme, themeColor, online} = this.props.interface
 
         const windowRatio = Dimensions.get('window').width? Dimensions.get('window').height / Dimensions.get('window').width : 1.9
-        const todayMessages = localChatMessages.filter(item=>(new Date(item.msg_date).toLocaleDateString())===(new Date().toLocaleDateString())).length
+        // const todayMessages = localChatMessages.filter(item=>(new Date(item.msg_date).toLocaleDateString())===(new Date().toLocaleDateString())).length
 
-        let unreadMsgsCount = 0
-        if (this.props.kind==='chat') {
-            // const {chatID} = this.props.stat
-            unreadMsgsCount = localChatMessages.filter(item => (item.id > chatID && item.user_id !== userID)).length
-        }
+        // let unreadMsgsCount = 0
+        // if (this.props.kind==='chat') {
+        //     // const {chatID} = this.props.stat
+        //     unreadMsgsCount = localChatMessages.filter(item => (item.id > chatID && item.user_id !== userID)).length
+        // }
         // let unreadMarksCount = 0
         // if (this.props.kind==='marks') {
         //     unreadMarksCount = this.props.value//marks.filter(item =>(Number(item.id) > markID)).length
         // }
-        let unreadNewsCount = 0, unreadBuildsCount = 0
-        if (this.props.kind==='info') {
-            unreadNewsCount = classNews.filter(item =>(item.is_news===2&&Number(item.id) > newsID)).length
-            unreadBuildsCount = classNews.filter(item =>(item.is_news===1&&Number(item.id) > buildsID)).length
-        }
+        // let unreadNewsCount = 0, unreadBuildsCount = 0
+        // if (this.props.kind==='info') {
+        //     unreadNewsCount = newsCnt //classNews.filter(item =>(item.is_news===2&&Number(item.id) > newsID)).length
+        //     unreadBuildsCount = buildsCnt //classNews.filter(item =>(item.is_news===1&&Number(item.id) > buildsID)).length
+        // }
         // console.log("renderButtons", newsID, buildsID)
         return (
             <Button style={[{backgroundColor : theme.secondaryColor,
@@ -49,36 +49,36 @@ class ButtonWithBadge extends Component {
                          this.props.setstate({selectedFooter: this.props.stateid, showLogin: false, isSpinner : false})
                     }
                     }>
-                {(this.props.kind==='chat'&&this.props.value)?
-                    <Badge value={this.props.value}
+                {(this.props.kind==='chat'&&chatCnt)?
+                    <Badge value={chatCnt}
                            status={this.props.badgestatus}
                            textStyle={{color : theme.primaryTextColor}}
                            badgeStyle={{backgroundColor : theme.primaryColor }}
                            containerStyle={{ position: 'absolute', top: -8, right: 2 }}>
                     </Badge>:null}
-                {(this.props.kind==='homework'&&(this.props.value))?
-                    <Badge value={this.props.value?this.props.value:todayMessages}
+                {(this.props.kind==='homework'&&this.props.value)?
+                    <Badge value={this.props.value?this.props.value:0}
                            status={this.props.badgestatus}
                            textStyle={{color : theme.errorColor}}
                            badgeStyle={{backgroundColor : theme.primaryColor }}
                            containerStyle={{ position: 'absolute', top: -8, right: 2 }}>
                     </Badge>:null}
-                {(this.props.kind==='marks'&&this.props.value)?
-                    <Badge value={this.props.value}
+                {(this.props.kind==='marks'&&markCnt)?
+                    <Badge value={markCnt}
                            status={this.props.badgestatus}
                            textStyle={{color : theme.primaryTextColor}}
                            badgeStyle={{backgroundColor : theme.primaryColor }}
                            containerStyle={{ position: 'absolute', top: -8, right: 2 }}>
                     </Badge>:null}
-                {(this.props.kind==='info'&&unreadNewsCount)?
-                    <Badge value={unreadNewsCount}
+                {(this.props.kind==='info'&&newsCnt)?
+                    <Badge value={newsCnt}
                            status={this.props.badgestatus}
                            textStyle={{color : theme.primaryTextColor}}
                            badgeStyle={{backgroundColor : theme.primaryColor }}
                            containerStyle={{ position: 'absolute', top: -8, right: 0 }}>
                     </Badge>:null}
-                {(this.props.kind==='info'&&unreadBuildsCount)?
-                    <Badge value={unreadBuildsCount}
+                {(this.props.kind==='info'&&buildsCnt)?
+                    <Badge value={buildsCnt}
                            status={this.props.badgestatus}
                            textStyle={{color : theme.primaryTextColor}}
                            badgeStyle={{backgroundColor : theme.primaryColor }}

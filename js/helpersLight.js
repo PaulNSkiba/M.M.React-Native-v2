@@ -3,6 +3,7 @@
  */
 import store from '../store/configureStore'
 import axios from 'axios';
+import {Platform} from 'react-native'
 import {AUTH_URL, API_URL, BASE_HOST, WEBSOCKETPORT, LOCALPUSHERPWD} from '../config/config'
 import Echo from 'laravel-echo'
 import Pusher from 'pusher-js/react-native'
@@ -23,6 +24,7 @@ export const addDay=(strDate, intNum)=>{
 
 export const setStorageData = async (key, value) => {
     try {
+        if (Platform.OS !== 'ios')
         await AsyncStorage.setItem(key, JSON.stringify(value))
         // await SInfo.setItem(key, value, {})
     } catch (e) {
@@ -32,11 +34,15 @@ export const setStorageData = async (key, value) => {
 }
 export const getStorageData = async (key) => {
     try {
-        const value = await AsyncStorage.getItem(key)
-        // const value = await SInfo.getItem(key, {})
-        if(value !== null) {
-            return JSON.parse(value)
-        }
+        // if (Platform.OS !== 'ios') {
+            const value = await AsyncStorage.getItem(key)
+            // const value = await SInfo.getItem(key, {})
+            if (value !== null) {
+                return JSON.parse(value)
+            }
+            // else
+            //     return null
+        // }
     } catch(e) {
         console.log("StorageGet:Error", e)
     }
@@ -553,7 +559,7 @@ export async function hasAPIConnection() {
         return false
     }
 }
-export async function getViewStat(classID){
+export function getViewStat(classID){
     // await setStorageData(`${classID}chatID`,"0")
     // await setStorageData(`${classID}tagID`,"0")
     // setStorageData(`${classID}markID`,"0")
@@ -563,35 +569,208 @@ export async function getViewStat(classID){
     // setStorageData(`${classID}budgetID`,"0")
     // setStorageData(`${classID}statID`,"0")
 
-    const chatID = await getStorageData(`${classID}chatID`)
-    const tagID = await getStorageData(`${classID}tagID`)
-    const markID = await getStorageData(`${classID}markID`)
-    const newsID = await getStorageData(`${classID}newsID`)
-    const buildsID = await getStorageData(`${classID}buildsID`)
-    const QandAID = await getStorageData(`${classID}QandAID`)
-    const budgetID = await getStorageData(`${classID}budgetID`)
-    const statID = await getStorageData(`${classID}statID`)
-    const chats = await getStorageData(`${classID}chats`)
-    const tags = await getStorageData(`${classID}tags`)
-    const marks = await getStorageData(`${classID}marks`)
-    const news = await getStorageData(`${classID}news`)
-    const builds = await getStorageData(`${classID}builds`)
-    const QandAs = await getStorageData(`${classID}QandAs`)
+    getStorageData(`${classID}labels`)
+        .then(labels=> {
+            let obj = {}
+            try {
+                obj = JSON.parse(labels)
+            }
+            catch (res) {
+                obj = {}
+            }
+            let chatID = 0, tagID = 0, markID = 0, newsID = 0, buildsID = 0, QandAID = 0, budgetID = 0,
+                statID = 0, chats = [], tags = [], marks = [], news = [], builds = [], QandAs = []
 
-    // console.log("getViewStat", chatID, tagID, markID, newsID, buildsID)
-    // console.log("getViewStat2", Number(Number.isNaN(Number(chatID))?0:chatID===null?0:chatID),
-    //                             Number(Number.isNaN(Number(tagID))?0:tagID===null?0:tagID),
-    //                             Number(Number.isNaN(Number(markID))?0:markID===null?0:markID),
-    //                             Number(Number.isNaN(Number(newsID))?0:newsID===null?0:newsID),
-    //                             Number(Number.isNaN(Number(buildsID))?0:buildsID===null?0:buildsID))
-    return {    chatID : Number(Number.isNaN(Number(chatID))?0:chatID===null?0:chatID),
-                tagID : Number(Number.isNaN(Number(tagID))?0:tagID===null?0:tagID),
-                markID : Number(Number.isNaN(Number(markID))?0:markID===null?0:markID),
-                newsID : Number(Number.isNaN(Number(newsID))?0:newsID===null?0:newsID),
-                buildsID : Number(Number.isNaN(Number(buildsID))?0:buildsID===null?0:buildsID),
-                QandAID : Number(Number.isNaN(Number(QandAID))?0:QandAID===null?0:QandAID),
-        chats : chats, tags : tags, marks : marks, news : news,
-        builds : builds, QandAs : QandAs}
+            console.log("LABELS", labels, Object.keys(obj).length)
+            if (Object.keys(obj).length) {
+                chatID = obj.chatID
+                tagID = obj.tagID
+                markID = obj.markID
+                newsID = obj.newsID
+                buildsID = obj.buildsID
+                QandAID = obj.QandAID
+                budgetID = obj.budgetID
+                statID = obj.statID
+                chats = obj.chats
+                tags = obj.tags
+                marks = obj.marks
+                news = obj.news
+                builds = obj.builds
+                QandAs = obj.QandAs
+            }
+            // else {
+            //     const chatID = 0
+            //     const tagID = 0
+            //     const markID = 0
+            //     const newsID = 0
+            //     const buildsID = 0
+            //     const QandAID = 0
+            //     const budgetID = 0
+            //     const statID = 0
+            //     const chats = []
+            //     const tags = []
+            //     const marks = []
+            //     const news = []
+            //     const builds = []
+            //     const QandAs = []
+            //  }
+
+            // Promise
+            //     .all(getStorageData(`${classID}chatID`),
+            // getStorageData(`${classID}tagID`),
+            // getStorageData(`${classID}markID`),
+            // getStorageData(`${classID}newsID`),
+            // getStorageData(`${classID}buildsID`),
+            // getStorageData(`${classID}QandAID`),
+            // getStorageData(`${classID}budgetID`),
+            // getStorageData(`${classID}statID`),
+            // getStorageData(`${classID}chats`),
+            // getStorageData(`${classID}tags`),
+            // getStorageData(`${classID}marks`),
+            // getStorageData(`${classID}news`),
+            // getStorageData(`${classID}builds`),
+            // getStorageData(`${classID}QandAs`))
+            //     .then(res=>console.log("GetStatData", res))
+
+            // const chatID = getStorageData(`${classID}chatID`)
+            // const tagID = getStorageData(`${classID}tagID`)
+            // const markID = getStorageData(`${classID}markID`)
+            // const newsID = getStorageData(`${classID}newsID`)
+            // const buildsID = getStorageData(`${classID}buildsID`)
+            // const QandAID = getStorageData(`${classID}QandAID`)
+            // const budgetID = getStorageData(`${classID}budgetID`)
+            // const statID = getStorageData(`${classID}statID`)
+            // const chats = getStorageData(`${classID}chats`)
+            // const tags = getStorageData(`${classID}tags`)
+            // const marks = getStorageData(`${classID}marks`)
+            // const news = getStorageData(`${classID}news`)
+            // const builds = getStorageData(`${classID}builds`)
+            // const QandAs = getStorageData(`${classID}QandAs`)
+
+            // console.log("getViewStat", chatID, tagID, markID, newsID, buildsID)
+
+            console.log("getViewStat2", Number(Number.isNaN(Number(chatID)) ? 0 : chatID === null ? 0 : chatID),
+                Number(Number.isNaN(Number(tagID)) ? 0 : tagID === null ? 0 : tagID),
+                Number(Number.isNaN(Number(markID)) ? 0 : markID === null ? 0 : markID),
+                Number(Number.isNaN(Number(newsID)) ? 0 : newsID === null ? 0 : newsID),
+                Number(Number.isNaN(Number(buildsID)) ? 0 : buildsID === null ? 0 : buildsID))
+
+            return {
+                chatID: Number(Number.isNaN(Number(chatID)) ? 0 : chatID === null ? 0 : chatID),
+                tagID: Number(Number.isNaN(Number(tagID)) ? 0 : tagID === null ? 0 : tagID),
+                markID: Number(Number.isNaN(Number(markID)) ? 0 : markID === null ? 0 : markID),
+                newsID: Number(Number.isNaN(Number(newsID)) ? 0 : newsID === null ? 0 : newsID),
+                buildsID: Number(Number.isNaN(Number(buildsID)) ? 0 : buildsID === null ? 0 : buildsID),
+                QandAID: Number(Number.isNaN(Number(QandAID)) ? 0 : QandAID === null ? 0 : QandAID),
+                chats: chats, tags: tags, marks: marks, news: news,
+                builds: builds, QandAs: QandAs, gotStats : true
+            }
+        })
+    .catch(res=>{
+            const chatID = 0
+            const tagID = 0
+            const markID = 0
+            const newsID = 0
+            const buildsID = 0
+            const QandAID = 0
+            const budgetID = 0
+            const statID = 0
+            const chats = []
+            const tags = []
+            const marks = []
+            const news = []
+            const builds = []
+            const QandAs = []
+        return {
+            chatID: Number(Number.isNaN(Number(chatID)) ? 0 : chatID === null ? 0 : chatID),
+            tagID: Number(Number.isNaN(Number(tagID)) ? 0 : tagID === null ? 0 : tagID),
+            markID: Number(Number.isNaN(Number(markID)) ? 0 : markID === null ? 0 : markID),
+            newsID: Number(Number.isNaN(Number(newsID)) ? 0 : newsID === null ? 0 : newsID),
+            buildsID: Number(Number.isNaN(Number(buildsID)) ? 0 : buildsID === null ? 0 : buildsID),
+            QandAID: Number(Number.isNaN(Number(QandAID)) ? 0 : QandAID === null ? 0 : QandAID),
+            chats: chats, tags: tags, marks: marks, news: news,
+            builds: builds, QandAs: QandAs
+        }
+    })
+}
+
+export function getViewStatStart(classID){
+    return new Promise((resolve, reject) => {
+        getStorageData(`${classID}labels`)
+            .then(labels => {
+                let obj = {}
+                try {
+                    obj = JSON.parse(labels)
+                }
+                catch (res) {
+                    obj = {}
+                }
+                let chatID = 0, tagID = 0, markID = 0, newsID = 0, buildsID = 0, QandAID = 0, budgetID = 0,
+                    statID = 0, chats = [], tags = [], marks = [], news = [], builds = [], QandAs = []
+
+                console.log("LABELS", labels, Object.keys(obj).length)
+                if (Object.keys(obj).length) {
+                    chatID = obj.chatID
+                    tagID = obj.tagID
+                    markID = obj.markID
+                    newsID = obj.newsID
+                    buildsID = obj.buildsID
+                    QandAID = obj.QandAID
+                    budgetID = obj.budgetID
+                    statID = obj.statID
+                    chats = obj.chats
+                    tags = obj.tags
+                    marks = obj.marks
+                    news = obj.news
+                    builds = obj.builds
+                    QandAs = obj.QandAs
+                }
+
+                console.log("getViewStat2", Number(Number.isNaN(Number(chatID)) ? 0 : chatID === null ? 0 : chatID),
+                    Number(Number.isNaN(Number(tagID)) ? 0 : tagID === null ? 0 : tagID),
+                    Number(Number.isNaN(Number(markID)) ? 0 : markID === null ? 0 : markID),
+                    Number(Number.isNaN(Number(newsID)) ? 0 : newsID === null ? 0 : newsID),
+                    Number(Number.isNaN(Number(buildsID)) ? 0 : buildsID === null ? 0 : buildsID))
+
+                resolve ( {
+                    chatID: Number(Number.isNaN(Number(chatID)) ? 0 : chatID === null ? 0 : chatID),
+                    tagID: Number(Number.isNaN(Number(tagID)) ? 0 : tagID === null ? 0 : tagID),
+                    markID: Number(Number.isNaN(Number(markID)) ? 0 : markID === null ? 0 : markID),
+                    newsID: Number(Number.isNaN(Number(newsID)) ? 0 : newsID === null ? 0 : newsID),
+                    buildsID: Number(Number.isNaN(Number(buildsID)) ? 0 : buildsID === null ? 0 : buildsID),
+                    QandAID: Number(Number.isNaN(Number(QandAID)) ? 0 : QandAID === null ? 0 : QandAID),
+                    chats: chats, tags: tags, marks: marks, news: news, builds: builds, QandAs: QandAs, gotStats: true,
+                    chatCnt : 0, tagCnt : 0, markCnt : 0, newsCnt : 0, buildsCnt : 0, QandACnt : 0
+                })
+            })
+            .catch(res => {
+                const chatID = 0
+                const tagID = 0
+                const markID = 0
+                const newsID = 0
+                const buildsID = 0
+                const QandAID = 0
+                const budgetID = 0
+                const statID = 0
+                const chats = []
+                const tags = []
+                const marks = []
+                const news = []
+                const builds = []
+                const QandAs = []
+                reject( {
+                    chatID: Number(Number.isNaN(Number(chatID)) ? 0 : chatID === null ? 0 : chatID),
+                    tagID: Number(Number.isNaN(Number(tagID)) ? 0 : tagID === null ? 0 : tagID),
+                    markID: Number(Number.isNaN(Number(markID)) ? 0 : markID === null ? 0 : markID),
+                    newsID: Number(Number.isNaN(Number(newsID)) ? 0 : newsID === null ? 0 : newsID),
+                    buildsID: Number(Number.isNaN(Number(buildsID)) ? 0 : buildsID === null ? 0 : buildsID),
+                    QandAID: Number(Number.isNaN(Number(QandAID)) ? 0 : QandAID === null ? 0 : QandAID),
+                    chats: chats, tags: tags, marks: marks, news: news, builds: builds, QandAs: QandAs,
+                    chatCnt : 0, tagCnt : 0, markCnt : 0, newsCnt : 0, buildsCnt : 0, QandACnt : 0
+                })
+            })
+
+    })
 }
 export async function getLangAsyncFunc(lang){
     let langObj = {}

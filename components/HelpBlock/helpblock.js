@@ -272,16 +272,18 @@ class HelpBlock extends Component {
             if (i===0) {
                 if (newsID < ID) {
                     stat.newsID = Number(ID)
+                    stat.newsCnt = 0
                     console.log("UPDATE_VIEWSTAT")
-                    setStorageData(`${classID}newsID`, ID.toString())
+                    setStorageData(`${classID}labels`, JSON.stringify(stat))
                     this.props.onReduxUpdate("UPDATE_VIEWSTAT", stat)
                 }
             }
             if (i===1) {
                 if (buildsID < ID) {
                     stat.buildsID = Number(ID)
+                    stat.buildsCnt = 0
                     console.log("UPDATE_VIEWSTAT")
-                    setStorageData(`${classID}buildsID`, ID.toString())
+                    setStorageData(`${classID}labels`, JSON.stringify(stat))
                     this.props.onReduxUpdate("UPDATE_VIEWSTAT", stat)
                 }
             }

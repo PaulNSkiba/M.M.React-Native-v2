@@ -217,7 +217,7 @@ class MarksBlock extends Component {
     // }
     setActiveTab=i=>{
         // console.log("ACTIVE_TAB", i, this.state.dayPages[i]);
-        const {classID} = this.props.userSetup
+        const {classID, marks} = this.props.userSetup
         let {stat} = this.props
         const ID = this.state.dayPages[i].markID
         console.log("updateReadedID", stat.markID, ID)
@@ -226,9 +226,10 @@ class MarksBlock extends Component {
 
         if (stat.markID < ID) {
             stat.markID = Number(ID)
+            stat.markCnt = marks.filter(item=>(new Date(item.mark_date) >= getNearestSeptFirst())).filter(item =>(Number(item.id) > ID)).length
             console.log("UPDATE_VIEWSTAT")
             this.props.updateState('markID', Number(ID))
-            setStorageData(`${classID}markID`, ID.toString())
+            setStorageData(`${classID}labels`, JSON.stringify(stat))
             this.props.onReduxUpdate("UPDATE_VIEWSTAT", stat)
         }
         this.setState({activeTab:i})

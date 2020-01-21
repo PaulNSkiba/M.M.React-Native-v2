@@ -8,7 +8,7 @@
 import React, {Component} from 'react';
 import {SafeAreaView, StyleSheet, ScrollView, View, Text, StatusBar, TouchableOpacity, Image, Dimensions, AppState, Platform } from 'react-native';
 import {setStorageData, getStorageData, getNextStudyDay, daysList, toYYYYMMDD,
-        themeOptions, hasAPIConnection, axios2, getViewStat, getNearestSeptFirst} from './js/helpersLight'
+        themeOptions, hasAPIConnection, axios2, getViewStat, getViewStatStart, getNearestSeptFirst} from './js/helpersLight'
 import axios from 'axios';
 import {API_URL, AUTH_URL, arrLangs}        from './config/config'
 import { Container, Content, Footer, FooterTab, Spinner, Button } from 'native-base';
@@ -61,6 +61,7 @@ class App extends Component {
             langLibrary : {},
             chatID : this.props.stat.chatID,
             markID : this.props.stat.markID,
+            calcStat : false,
             daysArr : daysList().map(item => { let o = {}; o.label = item.name; o.value = item.id; o.date = item.date; return o; }),
         }
         let {langCode} = this.props.interface
@@ -70,17 +71,13 @@ class App extends Component {
         this.setstate = this.setstate.bind(this)
         this.showDrawer = this.showDrawer.bind(this)
         this.connectivityCheck = this.connectivityCheck.bind(this)
-        this.firstSeptember = getNearestSeptFirst()
-        this.thisYearMarks = this.props.userSetup.marks.filter(item=>(new Date(item.mark_date) >= getNearestSeptFirst()))
+        // this.firstSeptember = getNearestSeptFirst()
+        this.thisYearMarks = [] //this.props.userSetup.marks.filter(item=>(new Date(item.mark_date) >= getNearestSeptFirst()))
+        this.renewStat = this.renewStat.bind(this)
     }
     componentWillMount(){
         (async ()=> {
             let {langCode} = this.props.interface
-            const {classID} = this.props.userSetup
-            if (classID > 0) {
-                console.log("GETSTAT")
-                this.props.onReduxUpdate("UPDATE_VIEWSTAT", await getViewStat(classID))
-            }
             if (this.props.userSetup.langLibrary===undefined) {
                 this.props.onStartLoading()
                 await this.getLangAsync(langCode && arrLangs.includes(langCode) ? langCode : this.defLang)
@@ -97,7 +94,7 @@ class App extends Component {
         })()
     }
     async componentDidMount() {
-        // console.log("COMPONENT_DID_MOUNT", this.props.userSetup.langLibrary)
+        console.log("COMPONENT_DID_MOUNT", this.props.userSetup)
         if ((Platform.OS === 'ios') || ((Platform.OS === 'android')&&(Platform.Version > 22))) // > 5.1
         {
             MaterialIcons.loadFont()
@@ -110,15 +107,23 @@ class App extends Component {
 
             this.connectivityCheck();
 
-            const dataSaved = JSON.parse(await getStorageData("myMarks.data"))
-            const {email, token} = dataSaved
+            const {classID} = this.props.userSetup
+            // console.log("componentDidMount: App", this.props.userSetup)
+            // if (classID > 0) {
+            //     console.log("GETSTAT")
+            //     // const stat =
+            //     this.props.onReduxUpdate("UPDATE_VIEWSTAT", await getViewStat(classID))
+            // }
+
+            const {email, token} = this.props.saveddata
+//            const dataSaved = JSON.parse(await getStorageData("myMarks.data"))
+//             const {email, token} = dataSaved
 
             this.keyboardDidShowSub = Keyboard.addListener('keyboardDidShow', this.handleKeyboardDidShow);
             this.keyboardDidHideSub = Keyboard.addListener('keyboardDidHide', this.handleKeyboardDidHide);
 
             this.props.onReduxUpdate("UPDATE_TOKEN", token===null?'':token)
             this.setState({userEmail: email, userToken: token===null?'':token})
-
         }
     }
 
@@ -135,9 +140,9 @@ class App extends Component {
         this.keyboardDidShowSub.remove();
         this.keyboardDidHideSub.remove();
     }
-    shouldComponentUpdate(nextProps, nextState) {
-        return true
-    }
+    // shouldComponentUpdate(nextProps, nextState) {
+    //     return true
+    // }
     handleKeyboardDidShow = (event) => {
         const { height: windowHeight } = Dimensions.get('window');
         const keyboardHeight = event.endCoordinates.height;
@@ -219,16 +224,16 @@ class App extends Component {
         const {classID, studentId} = this.props.userSetup
         if (this.state.appState.match(/inactive|background/) && nextAppState === 'active') {
             // console.log('AppState: ', 'App has come to the foreground!');
-            // ToDO: Проверим изменения в перечне данных (на будущее попробуем подгружать новое)...
             if (classID) {
-                // instanceAxios().get(API_URL + `class/getstat/${classID}/${studentId}'/0`)
-                axios2('get', `${API_URL}class/getstat/${classID}/${studentId}/0`)
-                    .then(response => {
-                        // console.log('_handleAppStateChange', response)
-                    })
-                    .catch(response=> {
-                        // console.log("_handleAppStateChange_ERROR", response)
-                    })
+                this.renewStat(classID)
+            //     // instanceAxios().get(API_URL + `class/getstat/${classID}/${studentId}'/0`)
+            //     axios2('get', `${API_URL}class/getstat/${classID}/${studentId}/0`)
+            //         .then(res => {
+            //             // console.log('_handleAppStateChange', response)
+            //         })
+            //         .catch(res=> {
+            //             // console.log("_handleAppStateChange_ERROR", response)
+            //         })
             }
         }
         else {
@@ -360,18 +365,7 @@ class App extends Component {
                 <Button style={{  marginLeft : 60, marginTop : 5, marginRight : 60, borderRadius : 30,
                     justifyContent: "center",
                     alignItems: "center",
-                    color : theme.primaryDarkColor, backgroundColor : theme.secondaryLightColor}} onPress={()=>{
-                            const stat = {
-                            chatID : 0, tagID : 0, markID : 0, newsID : 0, buildsID : 0, QandAID : 0,
-                            budgetID : 0, statID : 0, chats : [], tags : [], marks : [], news : [],
-                            builds : [], QandAs : []
-                        }
-                            this.props.onReduxUpdate("UPDATE_VIEWSTAT", stat)
-                            setStorageData(`${classID}markID`, "0")
-                            setStorageData(`${classID}chatID`, "0")
-                            setStorageData(`${classID}newsID`, "0")
-                            setStorageData(`${classID}buildsID`, "0")
-                        }}>
+                    color : theme.primaryDarkColor, backgroundColor : theme.secondaryLightColor}} onPress={()=>{this.props.onReduxUpdate("INIT_STATDATA")}}>
                     <View style={{ justifyContent: "center", alignItems: "center" }}>
                     <Text style={{fontSize : RFPercentage(3), color : theme.primaryDarkColor, width : "100%", fontWeight : "800"}}>Очистить счётчики</Text>
                     </View>
@@ -379,19 +373,44 @@ class App extends Component {
                 :null}
         </View>
     }
+    renewStat=classID=>{
+        // let {stat} = this.props
+        // stat.gotStats = true
+        // this.props.onReduxUpdate("UPDATE_VIEWSTAT", stat)
+        console.log("renewStat:start")
+        this.setState({calcStat : true})
+        getViewStatStart(classID)
+            .then(res=>{
+                const {marks, localChatMessages, userID, classNews} = this.props.userSetup
+                console.log("renewStat:then", res, marks)
+                // const unreadMsgsCount = localChatMessages.filter(item=>(item.id>chatID&&item.user_id!==userID)).length
+                res.markCnt = marks.filter(item=>(new Date(item.mark_date) >= getNearestSeptFirst())).filter(item =>(Number(item.id) > res.markID)).length
+                res.chatCnt = localChatMessages.filter(item => (item.id > res.chatID && item.user_id !== userID)).length
+                res.newsCnt = classNews.filter(item =>(item.is_news===2&&Number(item.id) > res.newsID)).length
+                res.buildsCnt = classNews.filter(item =>(item.is_news===1&&Number(item.id) > res.buildsID)).length
+
+                this.props.onReduxUpdate("UPDATE_VIEWSTAT", res)
+
+                this.setState({calcStat : false})
+            })
+            .catch(err=>console.log("renewStat:catch", err))
+        // console.log("renewStat", ret)
+        // this.props.onReduxUpdate("UPDATE_VIEWSTAT", ret)
+    }
     render() {
 
         let marksReadCount = 0
-        const {marks, localChatMessages, userID, token, langLibrary} = this.props.userSetup
+        const {marks, localChatMessages, userID, token, langLibrary, classID, classNews} = this.props.userSetup
         const {showFooter, showKeyboard, theme, themeColor, showLogin} = this.props.interface
         const {online, loading} = this.props.tempdata
+        const {markID, markCnt, chatCnt, newsID} = this.props.stat
 
-        const {markID, chatID} = this.state
+        // const {chatID} = this.state
         // const thisYearMarks = marks.filter(item=>(new Date(item.mark_date) >= getNearestSeptFirst()))
 
 
-        const unreadMsgsCount = localChatMessages.filter(item => (item.id > chatID && item.user_id !== userID)).length
-        const unreadMarksCount = this.thisYearMarks.filter(item =>(Number(item.id) > markID)).length
+        // const unreadMsgsCount = localChatMessages.filter(item => (item.id > chatID && item.user_id !== userID)).length
+        // const unreadMarksCount = this.thisYearMarks.filter(item =>(Number(item.id) > markID)).length
 
         console.log("App:render")
 
@@ -410,7 +429,18 @@ class App extends Component {
                 }
             ).length:0)
 
+        if (this.state.selectedFooter===3) {
+            const news = classNews.filter(item =>(item.is_news===2))
+            if (news.length){
+                let stat = this.props.stat
+                stat.newsID = news.slice(-1)[0].id
+                stat.newsCnt = 0
+                this.props.onReduxUpdate("UPDATE_VIEWSTAT", stat)
+            }
+        }
 
+        if (!this.state.calcStat&&classID>0&&!this.props.stat.gotStats) this.renewStat(classID)
+        if (!classID&&this.props.stat.gotStats) this.props.onReduxUpdate("INIT_STATDATA")
 
         return (
                 <Container>
@@ -505,7 +535,7 @@ class App extends Component {
                                     iconname={'message'}
                                     badgestatus={'primary'}
                                     kind={'chat'}
-                                    value={unreadMsgsCount}
+                                    value={chatCnt}
                                     setstate={this.setstate}
                                     stateid={0}/>
 
@@ -531,7 +561,7 @@ class App extends Component {
                                     iconname={'timeline'}
                                     badgestatus={'success'}
                                     kind={'marks'}
-                                    value={unreadMarksCount}
+                                    value={markCnt}
                                     setstate={this.setstate}
                                     stateid={2}/>
 
@@ -544,7 +574,7 @@ class App extends Component {
                                     iconname={'info'}
                                     badgestatus={'warning'}
                                     kind={'info'}
-                                    value={this.props.userSetup.classNews.filter(item=>item.is_news===2).length}
+                                    value={0}
                                     setstate={this.setstate}
                                     stateid={3}/>
 

@@ -44,8 +44,6 @@ export function interfaceReducer(state = initialState, action) {
             return{...state, showLogin: action.payload}
         case 'LANG_CODE' :
             return{...state, langCode: action.payload}
-        case 'UPDATE_ONLINE':
-            return {...state, online : action.payload}
         default :
             return state
     }

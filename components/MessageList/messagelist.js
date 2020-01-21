@@ -363,14 +363,15 @@ class MessageList extends Component {
         console.log("UPDATE", this.state.curMessage)
     }
     updateReadedID=ID=>{
-        const {classID} = this.props.userSetup
+        const {classID, localChatMessages, userID} = this.props.userSetup
         let {stat} = this.props
 
         if (stat.chatID < ID) {
             stat.chatID = ID
+            stat.chatCnt = localChatMessages.filter(item => (item.id > ID && item.user_id !== userID)).length
             // console.log("updateReadedID", ID, stat.chatID, `${classID}chatID`, ID.toString())
             this.props.updateState('chatID', Number(ID))
-            setStorageData(`${classID}chatID`, ID.toString())
+            setStorageData(`${classID}labels`, JSON.stringify(stat))
             this.props.onReduxUpdate("UPDATE_VIEWSTAT", stat)
         }
     }
@@ -539,9 +540,8 @@ class MessageList extends Component {
         const ViewportView = Viewport.Aware(View)
         // console.log("MSG_LIST")
         if (!messages.length) return null
-
         // console.log("MESSAGES", messages, messages.slice(-1), messages.slice(-1)[0], messages.slice(-1)[0].id)
-        // const chatMaxID =
+
         let topMsgID = messages.slice(-1)[0].id
         // Выберем первое непрочитанное чужое сообщение
         const notOwnMsgs = messages.filter(item=>item.id>chatID&&item.user_id!==userID)
@@ -760,9 +760,12 @@ class MessageList extends Component {
                                                                         >
                                             <View key={msg.id}
                                                 style={ownMsg?
-                                                (hw.length?[styles.msgRightSide, {borderWidth : 2, borderColor : theme.primaryMsgColor, backgroundColor : "#D8FBFF"}]:[styles.msgRightSide, styles.homeworkNoBorder, {backgroundColor : "#D8FBFF"}]):
-                                                (hw.length?[styles.msgLeftSide, {borderWidth : 2, borderColor : theme.primaryMsgColor}]:[styles.msgLeftSide, styles.homeworkNoBorder])}>
-                                                <View key={'id'+i} style={[ownMsg?{}:[styles.msgLeftAuthor, {borderColor : theme.primaryColor, backgroundColor : theme.primaryColor}], msg.tagid?styles.authorBorder:'']} >{ownMsg?null:<Text style={{color : theme.primaryTextColor}}>{username}</Text>}</View>
+                                                (hw.length?[styles.msgRightSide, {marginTop: 10, borderWidth : 2, borderColor : theme.primaryMsgColor, backgroundColor : "#D8FBFF"}]:[styles.msgRightSide, styles.homeworkNoBorder, {marginTop: 10, backgroundColor : "#D8FBFF"}]):
+                                                (hw.length?[styles.msgLeftSide, {marginTop: 10, borderWidth : 2, borderColor : theme.primaryMsgColor}]:[styles.msgLeftSide, styles.homeworkNoBorder, {marginTop: 10}])}>
+                                                <View key={'id'+i} style={[ownMsg?{}:[styles.msgLeftAuthor, {borderColor : theme.primaryColor, backgroundColor : theme.primaryColor}], msg.tagid?styles.authorBorder:'']} >
+                                                    {ownMsg?null:<Text style={{color : theme.primaryTextColor}}>{username}
+                                                    </Text>}
+                                                </View>
                                                 {urlMatches.length > 0?(
                                                     <View key={'msgpreview'+i} id={"msg-text-"+i} style={this.state.editKey===i?{visibility:"hidden"}:null} className="msg-text">
                                                         {/*<span*/}

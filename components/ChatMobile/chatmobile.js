@@ -91,7 +91,7 @@ class ChatMobile extends Component {
         this.updateChatState = this.updateChatState.bind(this)
     }
     async componentDidMount(){
-        console.log("componentDidMount:chatmobile")
+        // console.log("componentDidMount:chatmobile")
         let {langLibrary} = this.props.userSetup
         let {langCode} = this.props.interface
         // Print component dimensions to console
@@ -374,7 +374,7 @@ class ChatMobile extends Component {
            axios2('get', `${API_URL}chat/get/${classID}`)
             .then(resp => {
                 this.setState({localChatMessages : resp.data})
-                console.log("getChatMessages : Загружено!", resp.data)
+                // console.log("getChatMessages : Загружено!", resp.data)
                 this.props.onReduxUpdate("UPDATE_HOMEWORK", resp.data.filter(item=>(item.homework_date!==null)))
                 this.props.onReduxUpdate("ADD_CHAT_MESSAGES", resp.data)
                 this.props.onStopLoading()
