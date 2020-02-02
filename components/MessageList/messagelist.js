@@ -74,7 +74,7 @@ class MessageList extends Component {
     }
     componentDidMount(){
         this.getSavedCreds()
-        console.log('componentDidMount: messaglist', this.unreadY, this.props)
+        // console.log('componentDidMount: messaglist', this.unreadY, this.props)
         // if (Number(this.props.stat.chatID)===Number(this.props.localmessages.slice[-1].id))
         //     this._scrollView.scrollToEnd()
         // else {

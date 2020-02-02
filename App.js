@@ -94,7 +94,7 @@ class App extends Component {
         })()
     }
     async componentDidMount() {
-        console.log("COMPONENT_DID_MOUNT", this.props.userSetup)
+        // console.log("COMPONENT_DID_MOUNT", this.props.userSetup)
         if ((Platform.OS === 'ios') || ((Platform.OS === 'android')&&(Platform.Version > 22))) // > 5.1
         {
             MaterialIcons.loadFont()
@@ -382,20 +382,18 @@ class App extends Component {
         getViewStatStart(classID)
             .then(res=>{
                 const {marks, localChatMessages, userID, classNews} = this.props.userSetup
-                console.log("renewStat:then", res, marks)
+                console.log("renewStat:then", res)
                 // const unreadMsgsCount = localChatMessages.filter(item=>(item.id>chatID&&item.user_id!==userID)).length
                 res.markCnt = marks.filter(item=>(new Date(item.mark_date) >= getNearestSeptFirst())).filter(item =>(Number(item.id) > res.markID)).length
                 res.chatCnt = localChatMessages.filter(item => (item.id > res.chatID && item.user_id !== userID)).length
-                res.newsCnt = classNews.filter(item =>(item.is_news===2&&Number(item.id) > res.newsID)).length
-                res.buildsCnt = classNews.filter(item =>(item.is_news===1&&Number(item.id) > res.buildsID)).length
+                res.newsCnt = classNews.filter(item =>(item.is_news===2&&(Number(item.id) > res.newsID))).length
+                res.buildsCnt = classNews.filter(item =>(item.is_news===1&&(Number(item.id) > res.buildsID))).length
 
                 this.props.onReduxUpdate("UPDATE_VIEWSTAT", res)
 
                 this.setState({calcStat : false})
             })
             .catch(err=>console.log("renewStat:catch", err))
-        // console.log("renewStat", ret)
-        // this.props.onReduxUpdate("UPDATE_VIEWSTAT", ret)
     }
     render() {
 
@@ -428,14 +426,16 @@ class App extends Component {
                     return toYYYYMMDD(new Date(item.homework_date)) === toYYYYMMDD(new Date((daysArr[initialDay]).date))
                 }
             ).length:0)
-
+        // Новости обновляются сразу
         if (this.state.selectedFooter===3) {
             const news = classNews.filter(item =>(item.is_news===2))
             if (news.length){
                 let stat = this.props.stat
-                stat.newsID = news.slice(-1)[0].id
+                stat.newsID = news[0].id
                 stat.newsCnt = 0
                 this.props.onReduxUpdate("UPDATE_VIEWSTAT", stat)
+                console.log("STAT_OF_STAT", news, stat)
+                setStorageData(`${classID}labels`, JSON.stringify(stat))
             }
         }
 

@@ -20,7 +20,7 @@ import { API_URL, BASE_HOST, WEBSOCKETPORT, LOCALPUSHERPWD, HOMEWORK_ADD_URL,
         instanceLocator, testToken, chatUserName, arrLangs } from '../../config/config'
 import {dateFromYYYYMMDD, addDay, arrOfWeekDays, dateDiff,
         toYYYYMMDD, instanceAxios, mapStateToProps, prepareMessageToFormat,
-        echoClient, axios2, hasAPIConnection, getLangAsyncFunc} from '../../js/helpersLight'
+        echoClient, axios2, hasAPIConnection, getLangAsyncFunc, getViewStatStart, getNearestSeptFirst} from '../../js/helpersLight'
 import Pusher from 'pusher-js/react-native'
 import Echo from 'laravel-echo'
 import styles from '../../css/styles'
@@ -214,7 +214,7 @@ class ChatMobile extends Component {
     _handleAppStateChange = (nextAppState) => {
         const {classID, studentId, localChatMessages, markscount} = this.props.userSetup
         if (this.state.appState.match(/inactive|background/) && nextAppState === 'active') {
-            // console.log('ChatState: ', 'App has come to the foreground!', this.state.appState, nextAppState);
+            console.log('ChatState: ', 'App has come to the foreground!', this.state.appState, nextAppState);
             // ToDO: Вначале проверим, вернулись ли мы в онлайн, если да, то запрос
             let {offlineMsgs} = this.props.userSetup
             hasAPIConnection()
@@ -245,20 +245,23 @@ class ChatMobile extends Component {
 
             if (classID) {
                 instanceAxios().get(API_URL + `class/getstat/${classID}/${studentId}'/0`)
-                    .then(response => {
+                    .then(res => {
                         // homeworks: 13
                         // marks: 0
                         // msgs: 250
                         // news: 3
                         // ToDO: News исправим позже
                         const today = toYYYYMMDD(new Date())
-                        const homeworks_count = localChatMessages.filter(item=>(item.homework_date!==null&&(toYYYYMMDD(new Date(item.homework_date))>=today)))
-                        if ((response.data.msgs!==localChatMessages.slice(-1).id)||(markscount!==response.data.marks)||(homeworks_count!==response.data.homeworks)) {
+                        const {msgs, marks, homeworks} = res.data
+                        const homeworks_count = localChatMessages.filter(item=>(item.homework_date!==null&&(toYYYYMMDD(new Date(item.homework_date))>=today))).length
+                        console.log("OFF_LINE_UPDATE", msgs, localChatMessages.slice(-1)[0].id, markscount, marks, homeworks_count, homeworks)
+                        if ((res.data.msgs!==localChatMessages.slice(-1)[0].id)||(markscount!==marks)||(homeworks_count!==homeworks)) {
+                            console.log('UPDATE_OFFLINE')
                             instanceAxios().get(API_URL + `class/getstat/${classID}/${studentId}'/1`)
-                                .then(response => {
-                                    const msgs = response.data.msgs
+                                .then(res => {
+                                    const msgs = res.data.msgs
                                     let arr = this.state.localChatMessages
-                                    // console.log("GetStatMsgs", msgs)
+                                    // console.log("GetStatMsgs", res.data.marks)
                                     if (msgs.length) {
                                         msgs.forEach(msgitem=>{
                                             let isinmsg = false
@@ -279,9 +282,10 @@ class ChatMobile extends Component {
                                     }
                                     this.setState({localChatMessages : arr})
                                     // console.log("Загружено по оффлайну!")
-                                    this.props.onReduxUpdate("UPDATE_HOMEWORK", response.data.msgs.filter(item=>(item.homework_date!==null)))
-                                    this.props.onReduxUpdate("ADD_CHAT_MESSAGES", response.data.msgs)
-                                    this.props.onReduxUpdate("ADD_MARKS", response.data.marks)
+                                    this.props.onReduxUpdate("UPDATE_HOMEWORK", res.data.msgs.filter(item=>(item.homework_date!==null)))
+                                    this.props.onReduxUpdate("ADD_CHAT_MESSAGES", res.data.msgs)
+                                    this.props.onReduxUpdate("ADD_MARKS", res.data.marks)
+                                    this.renewStat(classID)
                                 })
                                 .catch(response=> {
                                     console.log("NewData_ERROR", response)
@@ -298,7 +302,25 @@ class ChatMobile extends Component {
         }
         this.setState({appState: nextAppState});
     };
+    renewStat=classID=>{
+        console.log("renewStat2:start")
+        this.setState({calcStat : true})
+        getViewStatStart(classID)
+            .then(res=>{
+                const {marks, localChatMessages, userID, classNews} = this.props.userSetup
+                console.log("renewStat2:then", res)
+                // const unreadMsgsCount = localChatMessages.filter(item=>(item.id>chatID&&item.user_id!==userID)).length
+                res.markCnt = marks.filter(item=>(new Date(item.mark_date) >= getNearestSeptFirst())).filter(item =>(Number(item.id) > res.markID)).length
+                res.chatCnt = localChatMessages.filter(item => (item.id > res.chatID && item.user_id !== userID)).length
+                res.newsCnt = classNews.filter(item =>(item.is_news===2&&Number(item.id) > res.newsID)).length
+                res.buildsCnt = classNews.filter(item =>(item.is_news===1&&Number(item.id) > res.buildsID)).length
 
+                this.props.onReduxUpdate("UPDATE_VIEWSTAT", res)
+
+                this.setState({calcStat : false})
+            })
+            .catch(err=>console.log("renewStat:catch", err))
+    }
     handleConnectivityChange = isConnected => {
         const {classID, studentId, localChatMessages, markscount} = this.props.userSetup
         if ((this.state.isConnected!==isConnected)&&isConnected) {
@@ -529,6 +551,15 @@ class ChatMobile extends Component {
                     const homeworks = arrChat.filter(item=>(item.homework_date!==null)).filter(item=>toYYYYMMDD(new Date(item.homework_date))===toYYYYMMDD(addDay((new Date()), 1)))
 
                     this.props.forceupdate(todayMessages.length, homeworks.length)
+                })
+                .listen('NewsMessage', (e) => {
+                    let {classNews} = this.props.userSetup
+                    classNews.unshift(e.message)
+                    this.props.onReduxUpdate('UPDATE_NEWS', classNews)
+                    let {stat} = this.props
+                    stat.newsCnt++
+                    this.props.onReduxUpdate("UPDATE_VIEWSTAT", stat)
+                    console.log("NewsMessage-SSL")
                 })
                 .listenForWhisper('typing', (e) => {
                     if (!this.state.typingUsers.has(e.name)) {

@@ -207,7 +207,7 @@ export function userSetupReducer(state = initialState, action) {
             return{...state, localChatMessages: action.payload}
         }
         case "ADD_MARKS" : {
-            return{...state, marks: action.payload}
+            return{...state, marks: action.payload, markscount : action.payload.length}
         }
         case "NEED_RENEW" : {
             return{...state, needRenew: action.payload}

@@ -5,6 +5,7 @@ import React, { Component } from 'react'
 import {    StyleSheet, Text, View, Image, ScrollView,
             TouchableHighlight, Modal, Radio, TouchableOpacity, FlatList, Dimensions } from 'react-native';
 import {    Container, TabHeading, Tabs, Tab, ScrollableTab, Spinner} from 'native-base';
+import { Badge, Icon } from 'react-native-elements'
 import RadioForm from 'react-native-radio-form';
 import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, addDay,
         toYYYYMMDD, daysList, toLocalDate, dateFromTimestamp,
@@ -32,13 +33,6 @@ class MarksBlock extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            // messages : this.props.messages,
-            // editKey: -1,
-            // modalVisible : false,
-            // checkSchedule : true,
-            // selSubject : {value : 0},
-            // selDate : this.getNextStudyDay(daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;}))[1],
-            // currentHomeworkID : 0,
             curPage : -1,
             dayPages : null,
             subjPages : [],
@@ -54,20 +48,25 @@ class MarksBlock extends Component {
             widthArr: [100, 60, 60, 60, 60, 60],
             isSpinner : false,
             activeTab : 0,
+            markscnt : this.props.userSetup.markscount,
         };
         this.markDaySteps = 6
         this.getTableGrids = this.getTableGrids.bind(this)
-        // this.onMessageDblClick = this.onMessageDblClick.bind(this)
-        // this.onSaveMsgClick=this.onSaveMsgClick.bind(this)
-        // this.onCancelMsgClick=this.onCancelMsgClick.bind(this)
-        // this.onDelMsgClick=this.onDelMsgClick.bind(this)
-        // this.onLongPressMessage=this.onLongPressMessage.bind(this)
     }
     async componentDidMount(){
         await this.getTableGrids()
-        // this.setActiveTab(0)
         this.props.onStopLoading()
     }
+    // shouldComponentUpdate(nextProps, nextState) {
+    //     if (this.state.markscnt!==this.props.userSetup.markscount) {
+    //         console.log("Обновить оценки:", this.state.markscnt, this.props.userSetup.markscount)
+    //         return true
+    //     }
+    //     else {
+    //         console.log("НЕ обновлять оценки:", this.state.markscnt, this.props.userSetup.markscount)
+    //         return false
+    //     }
+    // }
     onSelectDay=item=>{
         this.setState({selDate : item})
         // console.log(item.value)
@@ -92,7 +91,8 @@ class MarksBlock extends Component {
         console.log("MARKS_ARRAY", toYYYYMMDD(getNearestSeptFirst()))
         marks = marks.filter(item=>(new Date(item.mark_date))>=(new Date(firstSept)))
         if (marks.length) {
-            let markID = marks[marks.length - 1].id
+            let markID = 0 //marks[marks.length - 1].id
+            let markcnt = 0
             for (let i = marks.length - 1; i >= 0; i--) {
                 // console.log(marks[i])
                 if (!daysMap.has(marks[i].mark_date)) {
@@ -102,21 +102,24 @@ class MarksBlock extends Component {
                         curItem.unshift(marks[i].mark_date)
                     }
                     else {
-                        dayPages.unshift({i : periodNum, arr : curItem, markID : markID})
+                        dayPages.unshift({i : periodNum, arr : curItem, markID : markID, cnt : markcnt})
                         periodNum++
                         curItem = []
                         cnt = 0
                         cnt++
-                        markID = marks[i].id
+                        markcnt = 0
+                        markID = 0//marks[i].id
                         // if ((dayPages.length === 5)) break;
                         curItem.unshift(marks[i].mark_date)
                     }
                 }
+                markcnt++
+                markID = markID > marks[i].id?markID:marks[i].id
             }
             if (curItem.length) {
-                dayPages.unshift({i : periodNum, arr : curItem, markID : markID})
+                dayPages.unshift({i : periodNum, arr : curItem, markID : markID, cnt : markcnt})
             }
-            // console.log("Mark_Periods0", dayPages, subjPages)
+            console.log("Mark_Periods0", dayPages, subjPages)
             // Теперь выберем предметы для периода
             for (let i = dayPages.length - 1; i >= 0; i--) {
                 subjMap = new Map();
@@ -243,7 +246,7 @@ class MarksBlock extends Component {
         const initialDay = this.getNextStudyDay(daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;}))[0];
         let viewSize = Number(Number(Dimensions.get("window").height) - 2 *(headerHeight + footerHeight))
             viewSize = Math.floor(viewSize / 40) * 40
-        // console.log("MARKS_RENDER", Dimensions.get("window").height, viewSize, viewSize / 40)
+        console.log("MARKS_RENDER")
         let {marks, stats3} = this.props.userSetup, mark = "", subjmarks = ""
         {/*<Container>*/}
         // style={styles.modalView}
@@ -252,7 +255,17 @@ class MarksBlock extends Component {
                     {(this.state.dayPages!==null)&&this.state.dayPages.length?
                     <Tabs renderTabBar={()=> <ScrollableTab />}  onChangeTab={({ i, ref, from }) => this.setActiveTab(i)}>
                         {this.state.dayPages.map((rootItem, key) =>
-                            <Tab key={"tab" + key} heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor, fontSize: RFPercentage(1.5)}}>{toLocalDate(new Date(rootItem.arr.slice(-1)), "UA", false, false)}</Text>
+                            <Tab key={"tab" + key} heading={<TabHeading style={{backgroundColor : theme.primaryColor}}>
+                                <Text style={{color: theme.primaryTextColor, fontSize: RFPercentage(1.5)}}>
+                                {toLocalDate(new Date(rootItem.arr.slice(-1)), "UA", false, false)}
+                                </Text>
+                                {Number(this.props.stat.markID)<Number(rootItem.markID)?
+                                    <Badge value={rootItem.cnt}
+                                           textStyle={{color : theme.primaryTextColor, fontSize : RFPercentage(1.5)}}
+                                           badgeStyle={{backgroundColor : theme.primaryDarkColor }}
+                                           containerStyle={{ position: 'absolute', top: 0, right: 5 }}>
+                                    </Badge>
+                                    :null}
                             </TabHeading>}>
                                 <View>
                                     <View style={globalStyles.head}>
