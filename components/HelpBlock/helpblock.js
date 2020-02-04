@@ -263,9 +263,9 @@ class HelpBlock extends Component {
         const unreadBuildsCount = classNews.filter(item =>(item.is_news===1&&Number(item.id) > buildsID)).length
         let ID = 0
         console.log("updateReadedID", classNews)
-        if (i===0&&unreadNewsCount)
+        if (i===0&&unreadNewsCount&&classNews.filter(item =>(item.is_news===2&&Number(item.id) > newsID)).length)
             ID = classNews.filter(item =>(item.is_news===2&&Number(item.id) > newsID))[0].id
-        if (i===1&&unreadBuildsCount)
+        if (i===1&&unreadBuildsCount&&classNews.filter(item =>(item.is_news===1&&Number(item.id) > newsID)).length)
             ID = classNews.filter(item =>(item.is_news===1&&Number(item.id) > newsID))[0].id
 
         if (ID) {

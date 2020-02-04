@@ -48,6 +48,7 @@ class MarksBlock extends Component {
             widthArr: [100, 60, 60, 60, 60, 60],
             isSpinner : false,
             activeTab : 0,
+            initialPage: 0,
             markscnt : this.props.userSetup.markscount,
         };
         this.markDaySteps = 6
@@ -55,18 +56,12 @@ class MarksBlock extends Component {
     }
     async componentDidMount(){
         await this.getTableGrids()
+        setTimeout(() => {
+            this.setState({ activeTab: this.state.dayPages.length?this.state.dayPages.length-1:0 });
+        }, 0);
         this.props.onStopLoading()
     }
-    // shouldComponentUpdate(nextProps, nextState) {
-    //     if (this.state.markscnt!==this.props.userSetup.markscount) {
-    //         console.log("Обновить оценки:", this.state.markscnt, this.props.userSetup.markscount)
-    //         return true
-    //     }
-    //     else {
-    //         console.log("НЕ обновлять оценки:", this.state.markscnt, this.props.userSetup.markscount)
-    //         return false
-    //     }
-    // }
+
     onSelectDay=item=>{
         this.setState({selDate : item})
         // console.log(item.value)
@@ -219,13 +214,14 @@ class MarksBlock extends Component {
     //     }
     // }
     setActiveTab=i=>{
-        // console.log("ACTIVE_TAB", i, this.state.dayPages[i]);
+        console.log("ACTIVE_TAB", i, this.state.dayPages[i]);
         const {classID, marks} = this.props.userSetup
         let {stat} = this.props
         const ID = this.state.dayPages[i].markID
         console.log("updateReadedID", stat.markID, ID)
         // stat.markID = Number(ID)
         // this.props.onReduxUpdate("UPDATE_VIEWSTAT", stat)
+        this.setState({activeTab : i})
 
         if (stat.markID < ID) {
             stat.markID = Number(ID)
@@ -253,7 +249,11 @@ class MarksBlock extends Component {
          return (
                 <Container>
                     {(this.state.dayPages!==null)&&this.state.dayPages.length?
-                    <Tabs renderTabBar={()=> <ScrollableTab />}  onChangeTab={({ i, ref, from }) => this.setActiveTab(i)}>
+                    <Tabs renderTabBar={()=> <ScrollableTab />}
+                          onChangeTab={({ i, ref, from }) => this.setActiveTab(i)}
+                          initialPage={this.state.initialPage}
+                          page={this.state.activeTab}
+                    >
                         {this.state.dayPages.map((rootItem, key) =>
                             <Tab key={"tab" + key} heading={<TabHeading style={{backgroundColor : theme.primaryColor}}>
                                 <Text style={{color: theme.primaryTextColor, fontSize: RFPercentage(1.5)}}>

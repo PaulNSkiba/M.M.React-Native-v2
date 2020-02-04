@@ -322,7 +322,7 @@ class ChatMobile extends Component {
             .catch(err=>console.log("renewStat:catch", err))
     }
     handleConnectivityChange = isConnected => {
-        const {classID, studentId, localChatMessages, markscount} = this.props.userSetup
+        const {classID, studentId, localChatMessages, markscount, classNews} = this.props.userSetup
         if ((this.state.isConnected!==isConnected)&&isConnected) {
             if (classID) {
                 instanceAxios().get(API_URL + `class/getstat/${classID}/${studentId}'/0`)
@@ -335,7 +335,7 @@ class ChatMobile extends Component {
                         // ToDO: News исправим позже
                         const today = toYYYYMMDD(new Date())
                         const homeworks_count = localChatMessages.filter(item=>(item.homework_date!==null&&(toYYYYMMDD(new Date(item.homework_date))>=today)))
-                        if ((response.data.msgs!==localChatMessages.slice(-1).id)||(markscount!==response.data.marks)||(homeworks_count!==response.data.homeworks)) {
+                        if ((response.data.msgs!==localChatMessages.slice(-1).id)||(markscount!==response.data.marks)||(homeworks_count!==response.data.homeworks)||(classNews.length!==response.data.news)) {
                             instanceAxios().get(API_URL + `class/getstat/${classID}/${studentId}'/1`)
                                 .then(response => {
                                      // this.props.onReduxUpdate("UPDATE_HOMEWORK", response.data.msgs.filter(item=>(item.homework_date!==null)))
@@ -365,6 +365,7 @@ class ChatMobile extends Component {
                                     console.log("Загружено по оффлайну!")
                                     this.props.onReduxUpdate("UPDATE_HOMEWORK", response.data.msgs.filter(item=>(item.homework_date!==null)))
                                     this.props.onReduxUpdate("ADD_CHAT_MESSAGES", response.data.msgs)
+                                    this.props.onReduxUpdate('UPDATE_NEWS', response.data.news)
                                     this.props.onReduxUpdate("ADD_MARKS", response.data.marks)
                                 })
                                 .catch(response=> {
