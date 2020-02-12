@@ -41,7 +41,7 @@ import {
 } from 'native-base';
 import RadioForm from 'react-native-radio-form';
 import { toLocalDate, dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, addDay, toYYYYMMDD, daysList,
-        instanceAxios, getSubjFieldName} from '../../js/helpersLight'
+        instanceAxios, getSubjFieldName, arrOfWeekDaysLocal} from '../../js/helpersLight'
 import {SingleImage, wrapperZoomImages, ImageInWraper} from 'react-native-zoom-lightbox';
 import SingleImageZoomViewer from 'react-native-single-image-zoom-viewer'
 import ImageViewer from 'react-native-image-zoom-viewer';
@@ -54,6 +54,7 @@ import AccordionCustom from '../AccordionCustom/accordioncustom'
 import {PermissionsAndroid} from 'react-native';
 import styles from '../../css/styles'
 import { RFPercentage, RFValue } from "react-native-responsive-fontsize";
+import CalendarPicker from 'react-native-calendar-picker';
 
 //
 // READ_CALENDAR: 'android.permission.READ_CALENDAR'
@@ -92,6 +93,7 @@ async function requestSDPermission() {
                 buttonNeutral: 'Ask Me Later',
                 buttonNegative: 'Cancel',
                 buttonPositive: 'OK',
+                classWorkDate : new Date(),
             },
         );
         if (granted === PermissionsAndroid.RESULTS.GRANTED) {
@@ -202,7 +204,7 @@ class HomeworkBlock extends Component {
                             }
 
                             return (
-                                <View key={key} id={"msg-" + msg.id} style={{marginTop: 10}}>
+                                <View key={key} id={"msg-" + msg.id} style={{marginTop: 5}}>
                                     <View key={msg.id}
                                         // style={(hw.length ? [styles.msgRightSide, styles.homeworkBorder] : [styles.msgRightSide, styles.homeworkNoBorder])}
                                           style={
@@ -236,7 +238,7 @@ class HomeworkBlock extends Component {
                                                 </TouchableOpacity>
                                                 <View key={'msg' + i} id={"msg-text-" + i}
                                                       style={[styles.msgText,
-                                                          {flex: 3, marginLeft: 20, marginTop: 10}]}>
+                                                          {flex: 3, marginLeft: 20, marginTop: 5}]}>
                                                     <Text>{msg.text}</Text>
                                                 </View>
                                             </View>
@@ -267,7 +269,7 @@ class HomeworkBlock extends Component {
                         let isImage = false
 
                         return (
-                            <View key={key} id={"msg-" + msg.id} style={{marginTop: 10}}>
+                            <View key={key} id={"msg-" + msg.id} style={{marginTop: 5}}>
                                 <View key={msg.id}
                                       style={
                                           [styles.msgRightSide, {
@@ -457,9 +459,10 @@ class HomeworkBlock extends Component {
             return   <View key={key} style={{flex: 1}}>
                         <View style={{flex: 7, marginBottom: 5}}>
                             {/*{tt.length?<View style={{marginLeft : 10, marginRight : 10}}><Text style={{color :theme.primaryDarkColor, fontSize : RFPercentage(2)}}>{tt.map((item,key)=>(`${item.position}.${item.subj_name_ua}${key<tt.length?',':''}`))}</Text></View>:null}*/}
-                            {homework.length ? <ScrollView>
-                            {homework.length ? this.getHomeworkItems(homework, tt) : null}
-                            </ScrollView> : null}
+                            {/*{homework.length ? <ScrollView>*/}
+                            {/*{homework.length ? this.getHomeworkItems(homework, tt) : null}*/}
+                            {this.getHomeworkItems(homework, tt)}
+                            {/* </ScrollView> : null} */}
                         </View>
                     </View>
         })
@@ -510,9 +513,13 @@ class HomeworkBlock extends Component {
         }
         return chatTags
     }
+    onDateChange=onClassWorkDate=>{
+
+    }
+
     render() {
         const {langLibrary, localChatMessages} = this.props.userSetup
-        const {theme} = this.props.interface
+        const {theme, headerHeight, footerHeight} = this.props.interface
         const {daysArr, initialDay, chatTags, homeworkItems, tagItems} = this.state
 
         const homeworkorig = localChatMessages.filter(item=>(item.homework_date!==null))
@@ -593,10 +600,26 @@ class HomeworkBlock extends Component {
                         <Container>
                             <Tabs>
                                 <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{langLibrary.mobTasks.toUpperCase()}</Text></TabHeading>}>
-                                    <AccordionCustom data={daysArr}  data2={homeworkItems} usersetup={this.props.userSetup} ishomework={true} index={index}/>
+                                    <View style={{height : Dimensions.get('window').height - headerHeight - footerHeight - 20}}>
+                                        <AccordionCustom data={daysArr}  data2={homeworkItems} usersetup={this.props.userSetup} ishomework={true} index={index}/>
+                                    </View>
+                                </Tab>
+                                <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{langLibrary.mobInClass!==undefined?langLibrary.mobInClass.toUpperCase():"В классе"}</Text></TabHeading>}>
+                                    <View style={{height : Dimensions.get('window').height - headerHeight - footerHeight - 20}}>
+                                        {/*<AccordionCustom data={daysArr}  data2={homeworkItems} usersetup={this.props.userSetup} ishomework={true} index={index}/>*/}
+                                        <CalendarPicker
+                                            weekdays={arrOfWeekDaysLocal}
+                                            months={["Янв","Фев","Мар","Апр","Май","Июн","Июл","Авг","Сен","Окт","Ноя","Дек"]}
+                                            previousTitle={"Предыдущий"}
+                                            nextTitle={"Следующий"}
+                                            onDateChange={this.onDateChange}
+                                        />
+                                    </View>
                                 </Tab>
                                 <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{langLibrary.mobTags.toUpperCase()}<Icon style={{fontSize: 15, color: theme.primaryTextColor}} name="medical"/></Text></TabHeading>}>
-                                    <AccordionCustom data={chatTags} data2={tagItems} usersetup={this.props.userSetup} ishomework={true}/>
+                                    <View style={{height : Dimensions.get('window').height - headerHeight - footerHeight - 20}}>
+                                        <AccordionCustom data={chatTags} data2={tagItems} usersetup={this.props.userSetup} ishomework={true}/>
+                                    </View>
                                 </Tab>
                             </Tabs>
                         </Container>

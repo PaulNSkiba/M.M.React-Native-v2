@@ -19,13 +19,13 @@ export const userLoggedIn = (email, pwd, provider, provider_id, langLibrary, the
         // console.log('USER_LOGGIN', LOGINUSER_URL, JSON.stringify(data))
         // document.body.style.cursor = 'progress';
         dispatch ({type: 'USER_LOGGING'})
-        instanceAxios().post(LOGINUSER_URL, JSON.stringify(data), null)
+        instanceAxios().post(`${LOGINUSER_URL}/1`, JSON.stringify(data), null)
             .then(res => {
                 // console.log('USER_LOGGEDIN.1', response.data);
                 switch (res.data.loggedin) {
                     case true :
                     // alert('USER_LOGGEDIN.1')
-                        console.log('USER_LOGGIN', res.data.user.name, res.data.user.id, res.data)
+                        console.log('USER_LOGGIN') // , res.data.user.name, res.data.user.id, res.data
                         dispatch({type: 'SHOW_LOGIN',  payload : false})
                         dispatch ({type: 'USER_LOGGEDIN', payload: {data : res.data, langLibrary : langLibrary, theme : theme, themeColor : themeColor}});
                         dispatch({type: 'ADD_CHAT_MESSAGES', payload: res.data.chatrows});
@@ -124,7 +124,7 @@ export const userLoggedInByToken = (email, token, kind, langLibrary, theme, them
 export const userLoggedOut = (token, langLibrary, theme, themeColor) => {
     return dispatch => {
 
-        console.log("userLoggedOut", langLibrary, theme, themeColor)
+        console.log("userLoggedOut")
             // document.body.style.cursor = 'progress';
         AsyncStorage.removeItem("myMarks.data");
         AsyncStorage.removeItem("userSetup")

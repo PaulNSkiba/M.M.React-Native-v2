@@ -33,6 +33,8 @@ target 'MyMv2' do
 
   pod 'react-native-sensitive-info', :path => '../node_modules/react-native-sensitive-info'
 
+  pod 'RNSVG', :path => '../node_modules/react-native-svg'
+
   target 'MyMv2Tests' do
     inherit! :search_paths
     # Pods for testing

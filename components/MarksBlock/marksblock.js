@@ -57,7 +57,7 @@ class MarksBlock extends Component {
     async componentDidMount(){
         await this.getTableGrids()
         setTimeout(() => {
-            this.setState({ activeTab: this.state.dayPages.length?this.state.dayPages.length-1:0 });
+            this.setState({ activeTab: this.state.initialPage });
         }, 0);
         this.props.onStopLoading()
     }
@@ -82,6 +82,7 @@ class MarksBlock extends Component {
         let {langCode} = this.props.interface
         let dayPages = [], curItem = [], cnt = 0, periodNum = 0, subjPages = []
         let daysMap = new Map(), subjMap = new Map();
+        const {markID} = this.props.stat
         const firstSept = getNearestSeptFirst()
         console.log("MARKS_ARRAY", toYYYYMMDD(getNearestSeptFirst()))
         marks = marks.filter(item=>(new Date(item.mark_date))>=(new Date(firstSept)))
@@ -90,11 +91,11 @@ class MarksBlock extends Component {
             let markcnt = 0
             for (let i = marks.length - 1; i >= 0; i--) {
                 // console.log(marks[i])
-                if (!daysMap.has(marks[i].mark_date)) {
-                    daysMap.set(marks[i].mark_date)
+                if (!daysMap.has(marks[i].position?marks[i].mark_date+"."+marks[i].position:marks[i].mark_date)) {
+                    daysMap.set(marks[i].position?marks[i].mark_date+"."+marks[i].position:marks[i].mark_date)
                     if ((cnt + 1) < (this.markDaySteps + 1)) {
                         cnt++
-                        curItem.unshift(marks[i].mark_date)
+                        curItem.unshift(marks[i].position?marks[i].mark_date+"."+marks[i].position:marks[i].mark_date)
                     }
                     else {
                         dayPages.unshift({i : periodNum, arr : curItem, markID : markID, cnt : markcnt})
@@ -105,7 +106,7 @@ class MarksBlock extends Component {
                         markcnt = 0
                         markID = 0//marks[i].id
                         // if ((dayPages.length === 5)) break;
-                        curItem.unshift(marks[i].mark_date)
+                        curItem.unshift(marks[i].position?marks[i].mark_date+"."+marks[i].position:marks[i].mark_date)
                     }
                 }
                 markcnt++
@@ -145,6 +146,16 @@ class MarksBlock extends Component {
             // console.log("subjPages!!!", subjPages, subjects)
             if (curItem.length) {
                 subjPages.unshift({i : subjPages.length, arr : curItem})
+            }
+        }
+        for (let i=0; i<dayPages.length; i++){
+            console.log("dayPages", dayPages[i].markID, markID,)
+            if (dayPages[i].markID > markID) {
+                this.setState({initialPage : i})
+                break;
+            }
+            else {
+                this.setState({initialPage : i})
             }
         }
         this.setState({dayPages, subjPages, curPage : (dayPages.length-1), isSpinner : false})
@@ -234,7 +245,7 @@ class MarksBlock extends Component {
         this.setState({activeTab:i})
     }
     render () {
-        const {langLibrary} = this.props.userSetup
+        const {langLibrary, marks, stats3} = this.props.userSetup
         const {tempdata, online} = this.props.tempdata
         let {langCode} = this.props.interface
         const {headerHeight, footerHeight, showFooter, showKeyboard, theme, themeColor} = this.props.interface
@@ -243,7 +254,7 @@ class MarksBlock extends Component {
         let viewSize = Number(Number(Dimensions.get("window").height) - 2 *(headerHeight + footerHeight))
             viewSize = Math.floor(viewSize / 40) * 40
         console.log("MARKS_RENDER")
-        let {marks, stats3} = this.props.userSetup, mark = "", subjmarks = ""
+        let mark = "", subjmarks = ""
         {/*<Container>*/}
         // style={styles.modalView}
          return (
@@ -277,7 +288,7 @@ class MarksBlock extends Component {
                                         </View>
                                         {  rootItem.arr.map((item, key) =>
                                             <View key={"header"+key}>
-                                                <Text style={[globalStyles.headerCell, {backgroundColor : theme.primaryLightColor, borderColor : theme.primaryDarkColor}]}>{toLocalDate(new Date(item), "UA", false, true)}</Text>
+                                                <Text style={[globalStyles.headerCell, {backgroundColor : theme.primaryLightColor, borderColor : theme.primaryDarkColor}]}>{toLocalDate(new Date(item.slice(-2)===".1"?item.slice(0, -2):item), "UA", false, true)}</Text>
                                             </View>
                                         )
                                         }
@@ -299,7 +310,7 @@ class MarksBlock extends Component {
                                                         rootItem.arr.map((dateItem, key2) => {
                                                                 {
                                                                     mark = subjmarks.filter(item => {
-                                                                        return ((item.subj_key === subjItem.subj_key) && (item.mark_date === dateItem))
+                                                                        return ((item.subj_key === subjItem.subj_key) && (toYYYYMMDD(new Date(item.mark_date)) === toYYYYMMDD(new Date(dateItem.slice(-2)===".1"?dateItem.slice(0, -2):dateItem)))&& item.position===(dateItem.slice(-2)===".1"?1:0))
                                                                     })
                                                                 }
                                                                 return <View key={"cellBodyMarks" + key2 + '.1@' + subjItem.subj_key + '@'+rootItem.arr.slice(-1)}>

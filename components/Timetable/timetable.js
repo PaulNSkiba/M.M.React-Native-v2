@@ -11,7 +11,8 @@ import {
 } from 'native-base';
 import {Avatar, Badge, Icon, withBadge} from 'react-native-elements'
 import {bindActionCreators} from 'redux';
-import {instanceAxios, mapStateToProps, addMonths, toYYYYMMDD, dateFromTimestamp, arrOfWeekDaysLocal} from '../../js/helpersLight'
+import {instanceAxios, mapStateToProps, addMonths, toYYYYMMDD, dateFromTimestamp,
+        arrOfWeekDaysLocal, getSubjFieldName} from '../../js/helpersLight'
 import {LOGINUSER_URL, version, API_URL} from '../../config/config'
 import {userLoggedIn, userLoggedInByToken, userLoggedOut} from '../../actions/userAuthActions'
 import LogginByToken from '../../components/LoggingByToken/loggingbytoken'
@@ -21,12 +22,15 @@ import Logo from '../../img/LogoMyMsmall.png'
 import OfflineNotice from '../OfflineNotice/offlinenotice'
 import AccordionCustom from '../AccordionCustom/accordioncustom'
 
+
 class Timetable extends Component {
     constructor(props) {
         super(props);
         this.state = {
             daysArr : this.getDaysArr(),
             dayItems : this.getDayItems(),
+            subjArr : this.getSubjArr(),
+            subjItems : this.getSubjItems(),
         }
         this.onExit = this.onExit.bind(this)
     }
@@ -42,11 +46,13 @@ class Timetable extends Component {
     }
     getDaysArr=()=>{
         // console.log("getChatTagsObj")
-        const   {timetable} = this.props.userSetup
+        const   {timetable, langLibrary} = this.props.userSetup
         let     daysArr = []
-        for (let i = 0; i < arrOfWeekDaysLocal.length; i++){
+        const arrOfWeekDaysLocalLang = [langLibrary.wdMonday, langLibrary.wdTuesday, langLibrary.wdWednesday,
+            langLibrary.wdThursday, langLibrary.wdFriday, langLibrary.wdSaturday, langLibrary.wdSunday]
+        for (let i = 0; i < arrOfWeekDaysLocalLang.length; i++){
                 let newObj = {};
-                newObj.label = `${arrOfWeekDaysLocal[i]}`;
+                newObj.label = `${arrOfWeekDaysLocalLang[i]}`;
                 newObj.value = i;
                 const tt =  timetable.filter(item=>item!==null).filter(item=>item.weekday===i)
                 let cnt = 0
@@ -56,13 +62,34 @@ class Timetable extends Component {
         }
         return daysArr
     }
-    getDayItems=()=>{
-        const   {timetable} = this.props.userSetup
-        const {theme} = this.props.interface
-        let     daysArr = []
-        for (let i = 0; i < arrOfWeekDaysLocal.length; i++){
+    getSubjArr=()=>{
+        // console.log("getChatTagsObj")
+        const   {timetable, langLibrary, selectedSubjects} = this.props.userSetup
+        let {langCode} = this.props.interface
+        let     subjArr = []
+        // const arrOfWeekDaysLocalLang = [langLibrary.wdMonday, langLibrary.wdTuesday, langLibrary.wdWednesday,
+        //     langLibrary.wdThursday, langLibrary.wdFriday, langLibrary.wdSaturday, langLibrary.wdSunday]
+        for (let i = 0; i < selectedSubjects.length; i++){
             let newObj = {};
-            newObj.label = `${arrOfWeekDaysLocal[i]}`;
+            newObj.label = `${selectedSubjects[i][getSubjFieldName(langCode)]}`;
+            newObj.value = i;
+            const tt = timetable.filter(item=>item!==null).filter(item=>item.subj_key===selectedSubjects[i].subj_key)
+            // let cnt = tt.length
+            // tt.forEach(item=>cnt=cnt+(item===null?0:(item!==null&&item.position.length===1?1:2)))
+            newObj.count = tt.length
+            subjArr.push(newObj);
+        }
+        return subjArr
+    }
+    getDayItems=()=>{
+        const   {timetable, langLibrary} = this.props.userSetup
+        const {theme} = this.props.interface
+        const arrOfWeekDaysLocalLang = [langLibrary.wdMonday, langLibrary.wdTuesday, langLibrary.wdWednesday,
+            langLibrary.wdThursday, langLibrary.wdFriday, langLibrary.wdSaturday, langLibrary.wdSunday]
+        let     daysArr = []
+        for (let i = 0; i < arrOfWeekDaysLocalLang.length; i++){
+            let newObj = {};
+            newObj.label = `${arrOfWeekDaysLocalLang[i]}`;
             newObj.value = i;
             const tt =  timetable.filter(item=>item!==null).filter(item=>item.weekday===i)
             let cnt = 0
@@ -88,23 +115,82 @@ class Timetable extends Component {
             </View>
         })
     }
+    getSubjItems=()=>{
+        const   {timetable, langLibrary, selectedSubjects} = this.props.userSetup
+        const {theme, langCode} = this.props.interface
+        const arrOfWeekDaysLocalLang = [langLibrary.wdMonday, langLibrary.wdTuesday, langLibrary.wdWednesday,
+            langLibrary.wdThursday, langLibrary.wdFriday, langLibrary.wdSaturday, langLibrary.wdSunday]
+        let     subjArr = []
+        for (let i = 0; i < selectedSubjects.length; i++){
+            let newObj = {};
+            newObj.label = `${selectedSubjects[i][getSubjFieldName(langCode)]}`;
+            newObj.value = i;
+            newObj.subj_key = selectedSubjects[i].subj_key;
+            const tt = timetable.filter(item=>item!==null).filter(item=>item.subj_key===selectedSubjects[i].subj_key)
+            // let cnt = tt.length
+            // tt.forEach(item=>cnt=cnt+(item===null?0:(item!==null&&item.position.length===1?1:2)))
+            newObj.count = tt.length
+            subjArr.push(newObj);
+        }
+
+        return subjArr.map((itemDay, key)=>{
+            const subjs = timetable.length?(timetable.filter(item=>item!==null).filter(item=>itemDay.subj_key===item.subj_key)):[]
+            // console.log("getDayItems", subjs, timetable, itemDay.weekday)
+            return   <View key={key} style={{flex: 1}}>
+                <View style={{flex: 7, marginBottom: 5, leftMargin : 10, rightMargin : 10}}>
+                    {subjs.length ? <ScrollView>
+                        {subjs.length?subjs.map((itemSubj, key)=>
+                            <Item key={key}>
+                                <Left><Text style={{color : "#565656", paddingLeft : 10}}>{itemSubj.position}</Text></Left>
+                                <Body><Text style={{color : theme.primaryDarkColor}}>{arrOfWeekDaysLocalLang[itemSubj.weekday]}</Text></Body>
+                            </Item>
+                        ):null}
+                    </ScrollView> : null}
+                </View>
+            </View>
+        })
+    }
+    setActiveTab=i=>{
+
+    }
     render() {
-        const {daysArr, dayItems} = this.state
+        const {daysArr, dayItems, subjArr, subjItems} = this.state
         const {headerHeight, footerHeight, showFooter, showKeyboard, theme, themeColor} = this.props.interface
+        const {langLibrary} = this.props.userSetup
         const {online} = this.props.tempdata
-        console.log("TIMETABLE")
+        console.log("TIMETABLE", this.props.userSetup)
         return (
             <View style={styles.modalView}>
-                <View style={{height : headerHeight, backgroundColor : theme.primaryLightColor}}>
-                </View>
-                <View style={{height: (Dimensions.get('window').height - 100 - headerHeight), width : Dimensions.get('window').width}}>
-                    <AccordionCustom data={daysArr} data2={dayItems} ishomework={true}/>
+                <View style={{height: (Dimensions.get('window').height - 100)}}>
+                <Tabs onChangeTab={({ i, ref, from }) => this.setActiveTab(i)}>
+                    <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{langLibrary.mobByWeekDays.toUpperCase()}</Text></TabHeading>}
+                         onPress={()=>console.log("Tab1_Clicked")}>
+                        <View style={[styles.modalView, {backgroundColor : theme.primaryLightColor, height : Dimensions.get('window').height}]}>
+                            {/*<View style={{height : headerHeight, backgroundColor : theme.primaryLightColor}}>*/}
+                            {/*</View>*/}
+                            <View style={{height: (Dimensions.get('window').height - 100 - headerHeight), width : Dimensions.get('window').width}}>
+                                <AccordionCustom data={daysArr} data2={dayItems} ishomework={true}/>
+                            </View>
+                        </View>
+                    </Tab>
+                    <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{langLibrary.mobBySubjects.toUpperCase()}</Text></TabHeading>}
+                         onPress={()=>console.log("Tab2_Clicked")}>
+                        <View style={[styles.modalView, {backgroundColor : theme.primaryLightColor, height : Dimensions.get('window').height}]}>
+                            {/*<View style={{height : headerHeight, backgroundColor : theme.primaryLightColor}}>*/}
+                            {/*</View>*/}
+                            <View style={{height: (Dimensions.get('window').height - 100 - headerHeight), width : Dimensions.get('window').width}}>
+                                <AccordionCustom data={subjArr} data2={subjItems} ishomework={true}/>
+                            </View>
+                        </View>
+                    </Tab>
+                </Tabs>
                 </View>
                 <View style={{flex: 1}}>
                     <Footer style={styles.header}>
                         <FooterTab style={styles.header}>
-                            <Button style={[styles.btnClose, {width : "100%"}]} vertical onPress={()=>this.onExit()}>
-                                <Text style={{color : theme.primaryTextColor}}>ВЫХОД</Text>
+                            <Button style={[styles.btnClose, {width : "100%"}]} vertical
+                                    onPress={() => this.onExit()}>
+                                <Text style={{color : theme.primaryTextColor}}>{langLibrary.mobCancel.toUpperCase()}</Text>
                             </Button>
                         </FooterTab>
                     </Footer>

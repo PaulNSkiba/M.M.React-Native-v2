@@ -62,10 +62,10 @@ export function userSetupReducer(state = initialState, action) {
     // ToDO: При отсутствтии настроек проверить на undefined
     switch (action.type) {
         case 'INIT_STATE':
-            console.log("JUST_LOGGEDIN", action.payload, themeOptions)
+            console.log("INIT_STATE")
             return {...state, initialState}
         case 'USER_LOGGEDIN' : {
-            console.log("JUST_LOGGEDIN", action.payload, themeOptions)
+            console.log("USER_LOGGEDIN")
             let {   token, subj_count, subjects_list,
                     selected_subjects, selected_subj, students, marks,
                     mark_dates, best_lines, avg_lines, avg_marks, addUserToken,

@@ -38,6 +38,7 @@ class ChatBlock extends React.Component {
                             btnclose={() => { this.setState({displayChat: !this.state.displayChat}) }}
                             display={this.state.displayChat} newmessage={this.newChatMessage}
                             updateState={this.props.updateState}
+                            inputenabled={this.props.inputenabled}
                         />
                 :<LoginBlock updateState={this.props.updateState}/>}
             </View>

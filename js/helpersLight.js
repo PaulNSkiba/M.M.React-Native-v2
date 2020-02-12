@@ -325,7 +325,7 @@ export const themeOptions = {
         primaryDarkColor : '#002f6c',
         primaryBorderColor : '#609EF7',
         secondaryColor : '#d4d4d4',
-        secondaryLightColor : '#ffffff',
+        secondaryLightColor : '#EEEEEE',
         secondaryDarkColor : '#b1b1b1',
         primaryTextColor : '#ffffff',
         secondaryTextColor : '#000000',
@@ -397,7 +397,7 @@ export const themeOptions = {
         primaryDarkColor : '#425c59',
         primaryBorderColor : '#425c59',
         secondaryColor : '#ffcea3',
-        secondaryLightColor : '#ffffff',
+        secondaryLightColor : '#ffeec6',
         secondaryDarkColor : '#555c5a',
         primaryTextColor : '#ffffff',
         secondaryTextColor : '#000000',
@@ -696,6 +696,7 @@ export function getViewStat(classID){
 
 export function getViewStatStart(classID){
     return new Promise((resolve, reject) => {
+        // console.log("LABELS:start", (new Date()).toLocaleTimeString())
         getStorageData(`${classID}labels`)
             .then(labels => {
                 let obj = {}
@@ -708,7 +709,7 @@ export function getViewStatStart(classID){
                 let chatID = 0, tagID = 0, markID = 0, newsID = 0, buildsID = 0, QandAID = 0, budgetID = 0,
                     statID = 0, chats = [], tags = [], marks = [], news = [], builds = [], QandAs = []
 
-                console.log("LABELS", labels, Object.keys(obj).length)
+                // console.log("LABELS:end", (new Date()).toLocaleTimeString())
                 if (Object.keys(obj).length) {
                     chatID = obj.chatID
                     tagID = obj.tagID

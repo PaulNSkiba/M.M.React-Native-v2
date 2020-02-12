@@ -27,6 +27,7 @@ import styles from '../../css/styles'
 import Socketio from 'socket.io-client'
 import { Smile } from 'react-feather';
 
+
 // import addMsg from '../../img/addMsg.svg'
 // import { Picker, emojiIndex } from 'emoji-mart';
 
@@ -72,7 +73,10 @@ class ChatMobile extends Component {
             shift: new Animated.Value(0),
             viewHeight : Dimensions.get('window').height,
             keyboardHeight : 0,
-            isLastMsg : 0,
+            isLastMsg : false,
+            chatID : 0,
+            showUserList : false,
+            isChatConnected : false,
         }
         this.Echo = null
         this.now = new Date()
@@ -91,8 +95,9 @@ class ChatMobile extends Component {
         this.updateChatState = this.updateChatState.bind(this)
     }
     async componentDidMount(){
-        // console.log("componentDidMount:chatmobile")
-        let {langLibrary} = this.props.userSetup
+        // console.log("ComponentDidMount:start", (new Date()).toLocaleTimeString())
+
+        let {langLibrary, classID} = this.props.userSetup
         let {langCode} = this.props.interface
         // Print component dimensions to console
         // console.log("chatMobile", langLibrary)
@@ -115,8 +120,11 @@ class ChatMobile extends Component {
             this.initNetPusher()
         }
 
+        // console.log("initChat:start", (new Date()).toLocaleTimeString())
+
         await this.initChatMessages()
 
+        // console.log("initChat:end", (new Date()).toLocaleTimeString())
         // if (this.typingTimer) clearTimeout(this.typingTimer)
         this.typingTimer = setInterval(()=>{
             // console.log("setInterval-tag")
@@ -135,6 +143,9 @@ class ChatMobile extends Component {
             }
         }, 2000)
 
+        this.renewStat(classID)
+
+        // console.log("ComponentDidMount:end", (new Date()).toLocaleTimeString())
     }
     componentWillUnmount() {
         if (this.typingTimer) clearInterval(this.typingTimer)
@@ -149,7 +160,7 @@ class ChatMobile extends Component {
         if (nextProps.userSetup.userID&&this.Echo===null) {
             if (this.props.isnew) {
                 console.log("shouldUpdateEcho", nextProps.userSetup.userID, this.Echo)
-                this.initLocalPusher()
+                if (!this.state.isChatConnected) this.initLocalPusher()
             }
             else {
                 this.initNetPusher()
@@ -167,7 +178,7 @@ class ChatMobile extends Component {
         // console.log(`*** event: ${JSON.stringify(event.nativeEvent)}`);
     }
     getTags=async ()=>{
-        await instanceAxios().get(`${API_URL}chat/tags/${this.props.userSetup.classID}`)
+        axios2('get',`${API_URL}chat/tags/${this.props.userSetup.classID}`)
             .then(res=>this.props.onReduxUpdate("CHAT_TAGS", res.data))
             .catch(res=>console.log("tagError"))
     }
@@ -255,6 +266,7 @@ class ChatMobile extends Component {
                         const {msgs, marks, homeworks} = res.data
                         const homeworks_count = localChatMessages.filter(item=>(item.homework_date!==null&&(toYYYYMMDD(new Date(item.homework_date))>=today))).length
                         console.log("OFF_LINE_UPDATE", msgs, localChatMessages.slice(-1)[0].id, markscount, marks, homeworks_count, homeworks)
+
                         if ((res.data.msgs!==localChatMessages.slice(-1)[0].id)||(markscount!==marks)||(homeworks_count!==homeworks)) {
                             console.log('UPDATE_OFFLINE')
                             instanceAxios().get(API_URL + `class/getstat/${classID}/${studentId}'/1`)
@@ -317,7 +329,7 @@ class ChatMobile extends Component {
 
                 this.props.onReduxUpdate("UPDATE_VIEWSTAT", res)
 
-                this.setState({calcStat : false})
+                this.setState({calcStat : false, chatID : res.chatID})
             })
             .catch(err=>console.log("renewStat:catch", err))
     }
@@ -391,10 +403,9 @@ class ChatMobile extends Component {
     toggleEmojiPicker=()=>{
         this.setState({            showEmojiPicker: !this.state.showEmojiPicker,        });
     }
-    getChatMessages=classID=>{
-        console.log('getChatMessages', classID)
+    getChatMessages=async classID=>{
         // instanceAxios().get(API_URL +`chat/get/${classID}`, [], null)
-           axios2('get', `${API_URL}chat/get/${classID}`)
+           await axios2('get', `${API_URL}chat/get/${classID}`)
             .then(resp => {
                 this.setState({localChatMessages : resp.data})
                 // console.log("getChatMessages : Загружено!", resp.data)
@@ -433,7 +444,28 @@ class ChatMobile extends Component {
 
         echo.connector.pusher.logToConsole = true
         echo.connector.pusher.log = (msg) => {console.log(msg);};
+
         echo.connect()
+//        Connection:
+
+        echo.connector.pusher.connection.bind('connected', () => {
+            //your code
+            console.log('Chat connected')
+            this.setState({isChatConnected : true})
+        });
+
+//        Disconnection:
+        echo.connector.pusher.connection.bind('disconnected', () => {
+            //your code
+            console.log('Chat disconnected')
+            this.setState({isChatConnected : false})
+        });
+//        Reconnection:
+//         echo.connector.socket.on('reconnecting', (attemptNumber) => {
+//             //your code
+//             console.log(`%cSocket reconnecting attempt ${attemptNumber}`, 'color:orange; font-weight:700;');
+//         });
+
         let channelName = 'class.'+this.props.userSetup.classID
 
         // this.setState({Echo: echo})
@@ -480,7 +512,7 @@ class ChatMobile extends Component {
                         localChatMessages: arrChat,
                         messages: [...arrChat, msg],
                         messagesNew: this.state.messagesNew.filter(item => !(item.uniqid === JSON.parse(msg).uniqid)),
-                        isLastMsg : msgorig.id,
+                        isLastMsg : true,
                     })
                     const todayMessages = arrChat.filter(item=>(new Date(item.msg_date).toLocaleDateString())===(new Date().toLocaleDateString()))
                     const homeworks = arrChat.filter(item=>(item.homework_date!==null)).filter(item=>toYYYYMMDD(new Date(item.homework_date))===toYYYYMMDD(addDay((new Date()), 1)))
@@ -530,7 +562,7 @@ class ChatMobile extends Component {
                     // console.log("FILTER-NOT-SSL", this.state.localChatMessages)
                     arrChat = localChat.map(
                         item => {
-                            console.log("254", item)
+                            // console.log("254", item)
                             if (item.id === e.message.id) {
 
                                 return e.message
@@ -577,7 +609,8 @@ class ChatMobile extends Component {
                 })
                 .joining((user) => {
                     console.log("USERS.JOIN", this.state.users, user)
-                    this.setState({users : [...this.state.users, user]})
+                    const arr = this.state.users.filter(item=>item !== user)
+                    this.setState({users : [...arr, user]})
                })
                 .leaving((person) => {
                     // this.users = this.users.filter(item=>item !== person);
@@ -596,7 +629,7 @@ class ChatMobile extends Component {
                     newArr = arr.map(
                     item=>
                     {
-                        console.log("298", item)
+                        // console.log("298", item)
 
                         if (this.state.messagesNew.includes(item.uniqid)) {
                             // Для своих новых
@@ -750,7 +783,7 @@ class ChatMobile extends Component {
             objForState.msg_date = dateFromYYYYMMDD(toYYYYMMDD(new Date()))
             console.log("addMessage", objForState)
             if (this.props.isnew) {
-                this.setState({messages: [...this.state.messages, objForState]})
+                this.setState({messages: [...this.state.messages, objForState], isLastMsg : true})
             }
             this.sendMessage(obj, 0, false)
         }
@@ -1025,26 +1058,44 @@ class ChatMobile extends Component {
     updateChatState = (stateKey, stateValue) => {
         this.setState({[stateKey]: stateValue});
     }
+    loadMessages=onDate=>{
+        this.props.onStartLoading()
+        const {classID, token} = this.props.userSetup
+        axios2('get', `${API_URL}chat/getbyperiod/${classID}/${toYYYYMMDD(onDate)}/${toYYYYMMDD(new Date())}`)
+            .then(resp => {
+                this.setState({localChatMessages : resp.data})
+                console.log("getChatMessages : Загружено!", `${API_URL}chat/getbyperiod/${classID}/${toYYYYMMDD(onDate)}/${toYYYYMMDD(new Date())}`)
+                this.props.onReduxUpdate("UPDATE_HOMEWORK", resp.data.filter(item=>(item.homework_date!==null)))
+                this.props.onReduxUpdate("ADD_CHAT_MESSAGES", resp.data)
+                this.props.onStopLoading()
+            })
+            .catch(error => {
+                console.log('getChatMessagesError', `${API_URL}chat/getbyperiod/${classID}/${toYYYYMMDD(onDate)}/${toYYYYMMDD(new Date())}`, error)
+                this.props.onStopLoading()
+            })
+        this.props.onReduxUpdate("USER_LOGGEDIN_DONE")
+    }
     render() {
         let { showEmojiPicker, shift, localChatMessages } = this.state
-        const {langLibrary, offlineMsgs } = this.props.userSetup
-        const {theme} = this.props.interface
+        const {langLibrary, offlineMsgs, classID } = this.props.userSetup
+        const {theme, footerHeight, headerHeight} = this.props.interface
         const {loading} = this.props.tempdata
 
         const offlineMsgsLocal = offlineMsgs.filter(item=>(!localChatMessages.filter(itemChat=>itemChat.uniqid===item.uniqid).length))
-        // console.log("CHATMOBILE")
+
         if (offlineMsgsLocal.length){
             localChatMessages = localChatMessages.concat(offlineMsgsLocal)
         }
-        // { transform: [{translateY: shift}]} ,
-        // console.log("RENDER_CHAT")
+        console.log("CHATMOBILE", this.props.inputenabled)
+
+        const msgBlockHeight = this.state.viewHeight - footerHeight - headerHeight - 20 - 70 - 25
         return (
             <View
                 ref={component => this._animatedView = component}
                 collapsable={false}
                 onLayout={(event) => {this.measureView(event)}}
                 style={[this.props.hidden?styles.hidden:styles.chatContainerNew, {height: this.state.viewHeight}]}>
-                <View style={{flex : 7, height: this.state.viewHeight - 70}}>
+                <View style={{height: msgBlockHeight}}>
                      {showEmojiPicker ? (
                      <View className="picker-background">
                          <Picker set="emojione"
@@ -1091,22 +1142,40 @@ class ChatMobile extends Component {
                                         isshortmsg={this.state.isServiceChat||!this.state.servicePlus}
                                         classID={this.props.classID}
                                         addmsgs={this.state.addMsgs}
+                                        loadmessages={this.loadMessages}
                                         sendmessage={this.sendMessage} isnew={this.props.isnew}
                                         addhomework={this.addHomeWork}
                                         updateState={this.props.updateState}
                                         lastmsg={this.state.isLastMsg}
                                         updateChatState={this.updateChatState}
-                                        tags={this.state.tags}/>
+                                        tags={this.state.tags}
+                                        // bottommsg={localChatMessages.length?this.state.chatID===localChatMessages.slice(-1)[0].id:false}
+                                    />
                     </View>
-                    <View style={styles.whoTyping}>
-                        {/*<Text>{this.state.typingUsers.size > 0?"Сообщение набира" + ((this.state.typingUsers.size===1?"е":"ю") + "т: ") + Array.from(this.state.typingUsers.keys()).join(', '):""}</Text>*/}
-                        <Icon size={18} color={theme.primaryDarkColor} style={[{alighSelf : "flex-start"}]} name='person'/>
-                        <Text style={{color : theme.primaryDarkColor, fontSize : 12}} >{this.state.users.length?`[${this.state.users.length}]:`:null}</Text>
-                        <Text style={{color : theme.primaryDarkColor, fontSize : 12}}>{this.state.typingUsers.size > 0?
-                            ` ... ${Array.from(this.state.typingUsers.keys()).length>2?(Array.from(this.state.typingUsers.keys()).length + " человека"):Array.from(this.state.typingUsers.keys()).join(', ')} ... `:null}</Text>
-                    </View>
+
                 </View>
-                <View style={[styles.addMsgContainer, {bottom : Platform.OS==="ios"?this.state.keyboardHeight:0}]}>
+                {/* height = 20*/}
+                <TouchableWithoutFeedback onPress={()=>this.setState({showUserList : !this.state.showUserList})}>
+
+                <View style={styles.whoTyping}>
+                            <Icon size={18} color={theme.primaryDarkColor} style={[{alighSelf : "flex-start"}]} name='person'/>
+                            {this.state.showUserList&&this.state.users.length?<View
+                                style={{zIndex : 50, position : "absolute", left : 10, bottom : 30, borderRadius : 5, backgroundColor : theme.primaryLightColor, borderWidth : .5, borderColor : theme.primaryDarkColor}}
+                                onPress={()=>{this.setState({showUserList : false}), console.log("onUserPress")}}>
+                                {this.state.users.map((item,key)=>
+                                    <View key={key} style={{marginLeft : 5, marginRight : 5}}>
+                                        <Text style={{color : theme.primaryDarkColor}}>{item}</Text>
+                                    </View>
+                                )}
+                            </View>:null}
+                            <Text style={{color : theme.primaryDarkColor, fontSize : 12}} >{this.state.users.length?`[${this.state.users.length}]:`:null}</Text>
+                            <Text style={{color : theme.primaryDarkColor, fontSize : 12}}>{this.state.typingUsers.size > 0?
+                                ` ... ${Array.from(this.state.typingUsers.keys()).length>2?(Array.from(this.state.typingUsers.keys()).length + " человека"):Array.from(this.state.typingUsers.keys()).join(', ')} ... `:null}</Text>
+                </View>
+                </TouchableWithoutFeedback>
+
+                {/* height = 50 + 20 = 70*/}
+                <View style={[styles.addMsgContainer, {display: "flex", flex : 1, bottom : (Platform.OS==="ios"?this.state.keyboardHeight:0)}]}>
                             {/*<Button*/}
                                 {/*type="button"*/}
                                 {/*className="toggle-emoji"*/}
@@ -1115,19 +1184,15 @@ class ChatMobile extends Component {
                                 {/*<Smile />*/}
                             {/*</Button>*/}
                             <View style={{flex: 7.5}}>
-                                <Textarea style={styles.msgAddTextarea}
-                                          onKeyPress={this._handleKeyDown}
+                                {this.props.inputenabled?<Textarea style={styles.msgAddTextarea}
+                                          onKeyPress={this.props.inputenabled?this._handleKeyDown:null}
                                           onChangeText={text=>this.onChangeText('curMessage', text)}
-                                          onFocus={()=>{this.props.onReduxUpdate('UPDATE_FOOTER_SHOW', true);}}
-                                          // this.props.setstate({showFooter : false})
-
-                                          onBlur={()=>{this.props.onReduxUpdate('UPDATE_FOOTER_SHOW', true);}}
-                                          // this.props.setstate({showFooter : true})
-
+                                          onFocus={()=>{this.props.inputenabled?this.props.onReduxUpdate('UPDATE_FOOTER_SHOW', true):null}}
+                                          onBlur={()=>{this.props.inputenabled?this.props.onReduxUpdate('UPDATE_FOOTER_SHOW', true):null}}
                                           placeholder={langLibrary===undefined?'':(langLibrary.mobMsgHint===undefined?'':langLibrary.mobMsgHint)}  type="text"
                                           ref={component => this._textarea = component}
                                           value={this.state.curMessage}
-                                />
+                                />:null}
                             </View>
                             <View style={styles.btnAddMessage}>
                                 <Icon
@@ -1136,12 +1201,10 @@ class ChatMobile extends Component {
                                     type='antdesign'
                                     color={theme.primaryDarkColor}
                                     size={40}
-                                    onPress={this.addMessage} />
+                                    onPress={this.props.inputenabled?this.addMessage:null} />
                             </View>
                 </View>
-
             </View>
-
         )
     }
 }

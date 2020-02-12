@@ -76,7 +76,7 @@ class HelpBlock extends Component {
         this.keyboardDidHideSub.remove();
     }
     measureView(event: Object) {
-        console.log(`*** event: ${JSON.stringify(event.nativeEvent)}`);
+        // console.log(`*** event: ${JSON.stringify(event.nativeEvent)}`);
         // you'll get something like this here:
         // {"target":1105,"layout":{"y":0,"width":256,"x":32,"height":54.5}}
     }
@@ -262,18 +262,20 @@ class HelpBlock extends Component {
         const unreadNewsCount = classNews.filter(item =>(item.is_news===2&&Number(item.id) > newsID)).length
         const unreadBuildsCount = classNews.filter(item =>(item.is_news===1&&Number(item.id) > buildsID)).length
         let ID = 0
-        console.log("updateReadedID", classNews)
+
         if (i===0&&unreadNewsCount&&classNews.filter(item =>(item.is_news===2&&Number(item.id) > newsID)).length)
             ID = classNews.filter(item =>(item.is_news===2&&Number(item.id) > newsID))[0].id
-        if (i===1&&unreadBuildsCount&&classNews.filter(item =>(item.is_news===1&&Number(item.id) > newsID)).length)
-            ID = classNews.filter(item =>(item.is_news===1&&Number(item.id) > newsID))[0].id
+        if (i===1&&unreadBuildsCount&&classNews.filter(item =>(item.is_news===1&&Number(item.id) > buildsID)).length)
+            ID = classNews.filter(item =>(item.is_news===1&&Number(item.id) > buildsID))[0].id
+
+        console.log("updateReadedID", ID, newsID, unreadNewsCount, classNews)
 
         if (ID) {
             if (i===0) {
                 if (newsID < ID) {
                     stat.newsID = Number(ID)
                     stat.newsCnt = 0
-                    console.log("UPDATE_VIEWSTAT")
+                    console.log("UPDATE_VIEWSTAT: news")
                     setStorageData(`${classID}labels`, JSON.stringify(stat))
                     this.props.onReduxUpdate("UPDATE_VIEWSTAT", stat)
                 }
@@ -282,7 +284,7 @@ class HelpBlock extends Component {
                 if (buildsID < ID) {
                     stat.buildsID = Number(ID)
                     stat.buildsCnt = 0
-                    console.log("UPDATE_VIEWSTAT")
+                    console.log("UPDATE_VIEWSTAT: builds")
                     setStorageData(`${classID}labels`, JSON.stringify(stat))
                     this.props.onReduxUpdate("UPDATE_VIEWSTAT", stat)
                 }
@@ -295,8 +297,8 @@ class HelpBlock extends Component {
         // const daysArr = daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;})
         const {newsArr, updatesArr, updates, news} = this.state
         const {langLibrary, classNews, userID} = this.props.userSetup
-        const {theme} = this.props.interface
-        console.log("HelpBlock", this.state.viewHeight)
+        const {theme, headerHeight, footerHeight} = this.props.interface
+        // console.log("HelpBlock", this.state.viewHeight)
         let unreadNewsCount = 0, unreadBuildsCount = 0
         if (this.props.kind==='info') {
             let {newsID, buildsID} = this.props.stat
@@ -304,57 +306,26 @@ class HelpBlock extends Component {
             unreadBuildsCount = classNews.filter(item =>(item.is_news===1&&Number(item.id) > buildsID)).length
             // console.log("button", this.props.kind, markID, unreadMarksCount, marks)
         }
+        const msgBlockHeight = Dimensions.get('window').height - (this.state.keyboardHeight?1:2)*footerHeight - headerHeight - 70 - 20 - this.state.keyboardHeight
         return (
             <View >
                  <Tabs onChangeTab={({ i, ref, from }) => this.setActiveTab(i)} style={this.state.activeTab===2?{height:this.state.viewHeight}:null}>
                          <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{langLibrary.mobNews.toUpperCase()}</Text></TabHeading>}
-                                onPress={()=>console.log("Tab1_Clicked")}
-                              >
+                                onPress={()=>console.log("Tab1_Clicked")}>
                              <View style={styles.homeworkSubjectList}>
                                  <Container style={{flex: 1, width : "100%", flexDirection: 'column', position: "relative"}}>
-                                     <AccordionCustom data={newsArr}  data2={news} usersetup={this.props.userSetup} ishomework={true} index={0}/>
+                                     <View style={{height : Dimensions.get('window').height - headerHeight - 2*footerHeight}}>
+                                        <AccordionCustom data={newsArr}  data2={news} usersetup={this.props.userSetup} ishomework={true} index={0}/>
+                                     </View>
                                  </Container>
                              </View>
                         </Tab>
                         <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{langLibrary.mobBuilds.toUpperCase()}</Text></TabHeading>}>
                             <View style={styles.homeworkSubjectList}>
                                 <Container style={{flex: 1, width : "100%", flexDirection: 'column', position: "relative"}}>
-                                    <AccordionCustom data={updatesArr}  data2={updates} usersetup={this.props.userSetup} ishomework={true} index={0}/>
-
-                                    {/*<View style={{flex: 3, borderWidth : 1, borderColor : "#4472C4"}}>*/}
-                                        {/*<ScrollView>*/}
-                                            {/*{this.state.updates.map((item, i)=>*/}
-                                            {/*<Card key={i}>*/}
-                                                {/*<CardItem>*/}
-                                                        {/*<TouchableOpacity*/}
-                                                            {/*onPress={() => console.log('onPressUpdates')}>*/}
-                                                            {/*<Body style={{*/}
-                                                                {/*paddingLeft: 5,*/}
-                                                                {/*paddingRight: 5,*/}
-                                                                {/*display : "flex",*/}
-                                                                {/*alignItems: "flex-start",*/}
-                                                                {/*justifyContent: "center",*/}
-                                                            {/*}}>*/}
-                                                            {/*<Text style={{fontWeight : "700", color : "#4472C4"}}>{item.msg_header}</Text>*/}
-                                                              {/*{item.question.split("\n").map((item, key)=> {*/}
-                                                                    {/*return <Text key={key}>{item}</Text>*/}
-                                                                {/*}*/}
-                                                            {/*)}*/}
-                                                            {/*</Body>*/}
-                                                        {/*</TouchableOpacity>*/}
-                                                    {/*<Right style={{ position : "absolute", right : 5, top : 2}}>*/}
-                                                        {/*<Text style={{fontSize: RFPercentage(1.4), color : "#4472C4"}} note>{item.build_number!==null?item.build_number:null}</Text>*/}
-                                                    {/*</Right>*/}
-                                                    {/*<Right style={{ position : "absolute", right : 5, bottom : 2}}>*/}
-                                                        {/*<Text style={{fontSize: RFPercentage(1.4), color : "#4472C4"}} note>{toLocalDate(dateFromTimestamp(item.created_at), "UA", true, false)}</Text>*/}
-                                                    {/*</Right>*/}
-                                                {/*</CardItem>*/}
-                                            {/*</Card>)}*/}
-                                            {/*</ScrollView>*/}
-                                    {/*</View>*/}
-                                    {/*<View style={{flex: 1}}>*/}
-
-                                    {/*</View>*/}
+                                    <View style={{height : Dimensions.get('window').height - headerHeight - 2*footerHeight - 20}}>
+                                        <AccordionCustom data={updatesArr}  data2={updates} usersetup={this.props.userSetup} ishomework={true} index={0}/>
+                                    </View>
                                 </Container>
                             </View>
                         </Tab>
@@ -370,7 +341,7 @@ class HelpBlock extends Component {
                                         style={{position: "absolute", flex: 1, alignSelf: 'center', marginTop: 240, zIndex: 100}}>
                                         <Spinner color={theme.secondaryColor}/>
                                     </View> : null}
-                                            <View style={{flex : 7}}>
+                                            <View style={{height : msgBlockHeight}}>
                                                 <ScrollView>
                                                 {/*<Text>Блок вопросов</Text>*/}
                                                     {this.props.userSetup.classNews.filter(item=>item.is_news===null).map((item, i)=>
@@ -401,8 +372,7 @@ class HelpBlock extends Component {
                                                     </Card>)}
                                                 </ScrollView>
                                             </View>
-                                    {/*, {flex: 4}*/}
-                                            <View style={[styles.addMsgContainer, {bottom : Platform.OS==="ios"?this.state.keyboardHeight:0},{flex: this.state.keyboardShowed? 5: 3.5}]}>
+                                            <View style={[styles.addMsgContainer, {display: "flex", flex : 1, bottom : Platform.OS==="ios"?this.state.keyboardHeight:0}]}>
                                                 <View>
                                                     <Dialog
                                                         visible={this.state.showMsg}
@@ -425,13 +395,13 @@ class HelpBlock extends Component {
                                                     <View className={styles.isNewsCheckbox}>
                                                         <CheckBox style={{marginTop : 20}}
                                                                   checked={this.state.isNews}
-                                                                  onPress={()=>{this.setState({isNews:!this.state.isNews})}} color="#4472C4"/>
+                                                                  onPress={()=>{this.setState({isNews:!this.state.isNews})}} color={theme.primaryDarkColor}/>
                                                         <Body>
-                                                        <Text style={{ color : "#4472C4", fontSize: RFPercentage(2)}}> News</Text>
+                                                        <Text style={{ color : theme.primaryDarkColor, fontSize: RFPercentage(2)}}> News</Text>
                                                         </Body>
                                                     </View>
                                                     :null}
-                                                <View style={{flex: 7}}>
+                                                <View style={{flex : 6.5}}>
                                                                 <Textarea
                                                                     style={styles.msgAddTextarea}
                                                                     ref={component => this._textarea = component}
@@ -455,7 +425,7 @@ class HelpBlock extends Component {
                                                     <Icon
                                                         name='rightcircle'
                                                         type='antdesign'
-                                                        color='#898989'
+                                                        color={theme.primaryDarkColor}
                                                         size={40}
                                                         onPress={()=>{this.setState({isSpinner : true}); this.addQuestionToService()}} />
                                                 </View>

@@ -1,8 +1,9 @@
 /**
  * Created by Paul on 27.08.2019.
  */
-import { SafeAreaView,  StyleSheet,  ScrollView,  View,  Text,  StatusBar,} from 'react-native';
+import { SafeAreaView,  StyleSheet,  ScrollView,  View,  Text,  StatusBar, Dimensions} from 'react-native';
 import { LearnMoreLinks,  Colors,  DebugInstructions,  ReloadInstructions,} from 'react-native/Libraries/NewAppScreen';
+
 export default styles = StyleSheet.create({
     chatContainerNew : {
         flex : 1,
@@ -23,7 +24,7 @@ export default styles = StyleSheet.create({
         height : "100%",
     },
     messageListContainer : {
-        flex : 5,
+        // flex : 5,
     },
     servicePlus : {
         position : "absolute",
@@ -70,16 +71,13 @@ export default styles = StyleSheet.create({
         height : 80,
     },
     addMsgContainer : {
+        // flex : 1,
         position : "relative",
         backgroundColor: "#e9e9e9",
         flexDirection : "row",
         justifyContent : "space-between",
-        // alignItems : "center",
-        // flex : 1,
         width : "100%",
         height : 70,
-        // bottom : 0,
-        // paddingRight : 10,
      },
     msgAddTextarea : {
         // position : "absolute"
@@ -174,6 +172,7 @@ export default styles = StyleSheet.create({
 
     },
     whoTyping : {
+        position : "relative",
         display : "flex",
         flexDirection : "row",
         justifyContent : "flex-start",
@@ -520,17 +519,29 @@ export default styles = StyleSheet.create({
         marginRight : "30%",
         // borderWidth : 1,
         // borderColor : "rgba(64, 155, 230, 0.16)",
-        borderRadius: 10,
-        fontWeight : "800",
-        color : '#707070',
+        // borderRadius: 10,
+        // fontWeight : "900",
+        // color : '#707070',
+    },
+    mymMsgAddSeparator : {
+        // backgroundColor : "rgba(64, 155, 230, 0.16)",
+        padding : 5,
+        marginLeft : "10%",
+        marginRight : "10%",
+        margin : 5,
+        // borderWidth : 1,
+        // borderColor : "rgba(64, 155, 230, 0.16)",
+        // borderRadius: 10,
+        // fontWeight : "900",
+        // color : '#707070',
     },
     mymMsgDateSeparatorText : {
         // color: "#7DA8E6",
         textAlign: "center",
         // fontWeight: "600",
-        fontWeight : "900",
-        fontSize : 16,
-        color : '#707070',
+        // fontWeight : "900",
+        // fontSize : 16,
+        // color : '#707070',
     },
     cameraBlock : {
         // borderWidth : 2,
@@ -604,6 +615,33 @@ export default styles = StyleSheet.create({
         paddingBottom : 4,
         paddingLeft : 8,
         paddingRight : 8,
-    }
+    },
+    subView: {
+        position: "absolute",
+        bottom: 50,
+        left: 0,
+        right: 0,
+        backgroundColor: "#FFFFFF",
+        height: 75,
+        zIndex : 50,
+    },
+    avSheet: {
+        position: "absolute",
+        top: Dimensions.get("window").height,
+        left: 0,
+        right: 0,
+        height: "100%",
+        justifyContent: "flex-end",
+    },
+    avPopup: {
+        backgroundColor: "#FFF",
+        marginHorizontal: 10,
+        borderTopLeftRadius: 5,
+        borderTopRightRadius: 5,
+        minHeight: 80,
+        alignItems: "center",
+        justifyContent: "center",
+        bottom : 50,
+    },
 
  });

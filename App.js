@@ -6,7 +6,9 @@
  * @flow
  */
 import React, {Component} from 'react';
-import {SafeAreaView, StyleSheet, ScrollView, View, Text, StatusBar, TouchableOpacity, Image, Dimensions, AppState, Platform } from 'react-native';
+import {SafeAreaView, StyleSheet, ScrollView, View, Text, StatusBar,
+        TouchableOpacity, TouchableWithoutFeedback, Image, Dimensions,
+        AppState, Platform, Animated } from 'react-native';
 import {setStorageData, getStorageData, getNextStudyDay, daysList, toYYYYMMDD,
         themeOptions, hasAPIConnection, axios2, getViewStat, getViewStatStart, getNearestSeptFirst} from './js/helpersLight'
 import axios from 'axios';
@@ -31,9 +33,18 @@ import Foundation from 'react-native-vector-icons/Foundation'
 import FlagUK from './img/united-kingdom-flag-square-icon-32.png'
 import FlagRU from './img/russia-flag-square-icon-32.png'
 import FlagUA from './img/ukraine-flag-square-icon-32.png'
+import Modal from "react-native-modal";
+
+// import * as Animatable from 'react-native-animatable';
+// import BottomDrawer from 'rn-bottom-drawer';
+// import SlidingUpPanel from 'rn-sliding-up-panel';
 // import { checkInternetConnection, offlineActionCreators } from 'react-native-offline';
 // import {AsyncStorage} from 'react-native';
 // import {AsyncStorage} from '@react-native-community/async-storage';
+
+// const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
+
+
 
 class App extends Component {
     constructor(props) {
@@ -62,6 +73,9 @@ class App extends Component {
             chatID : this.props.stat.chatID,
             markID : this.props.stat.markID,
             calcStat : false,
+            bounceValue: new Animated.Value(100),  //This is the initial position of the subview
+            isHidden : true,
+            animation: new Animated.Value(0),
             daysArr : daysList().map(item => { let o = {}; o.label = item.name; o.value = item.id; o.date = item.date; return o; }),
         }
         let {langCode} = this.props.interface
@@ -74,23 +88,41 @@ class App extends Component {
         // this.firstSeptember = getNearestSeptFirst()
         this.thisYearMarks = [] //this.props.userSetup.marks.filter(item=>(new Date(item.mark_date) >= getNearestSeptFirst()))
         this.renewStat = this.renewStat.bind(this)
+        // this.isHidden = true
     }
+    // handleOpen = () => {
+    //     Animated.timing(this.state.animation, {
+    //         toValue: 1,
+    //         duration: 300,
+    //         useNativeDriver: true,
+    //     }).start();
+    // };
+    // handleClose = () => {
+    //     console.log("handleClose")
+    //     Animated.timing(this.state.animation, {
+    //         toValue: 0,
+    //         duration: 200,
+    //         useNativeDriver: true,
+    //     }).start();
+    // };
     componentWillMount(){
         (async ()=> {
-            let {langCode} = this.props.interface
-            if (this.props.userSetup.langLibrary===undefined) {
+            const {langCode} = this.props.interface
+            const {classID, langLibrary} = this.props.userSetup
+            const {gotStats} = this.props.stat
+            if (langLibrary===undefined) {
                 this.props.onStartLoading()
                 await this.getLangAsync(langCode && arrLangs.includes(langCode) ? langCode : this.defLang)
                 this.props.onStopLoading()
             }
             else {
-                if (!Object.keys(this.props.userSetup.langLibrary).length) {
+                if (!Object.keys(langLibrary).length) {
                     this.props.onStartLoading()
                     await this.getLangAsync(langCode && arrLangs.includes(langCode) ? langCode : this.defLang)
                     this.props.onStopLoading()
                 }
             }
-
+            // if (!this.state.calcStat&&classID>0&&!gotStats)
         })()
     }
     async componentDidMount() {
@@ -108,6 +140,10 @@ class App extends Component {
             this.connectivityCheck();
 
             const {classID} = this.props.userSetup
+
+            // console.log("COMPONENT_DID_MOUNT", classID)
+            // this.renewStat(classID)
+
             // console.log("componentDidMount: App", this.props.userSetup)
             // if (classID > 0) {
             //     console.log("GETSTAT")
@@ -140,9 +176,27 @@ class App extends Component {
         this.keyboardDidShowSub.remove();
         this.keyboardDidHideSub.remove();
     }
-    // shouldComponentUpdate(nextProps, nextState) {
-    //     return true
-    // }
+    _toggleSubview() {
+        // this.setState({
+        //     buttonText: !isHidden ? "Show Subview" : "Hide Subview"
+        // });
+        let toValue = 100;
+        if(this.state.isHidden)
+            toValue = 0;
+
+        //This will animate the transalteY of the subview between 0 & 100 depending on its current state
+        //100 comes from the style below, which is the height of the subview.
+        Animated.spring(
+            this.state.bounceValue,
+            {
+                toValue: toValue,
+                velocity: 3,
+                // tension: 2,
+                // friction: 8,
+            }
+        ).start();
+        this.setState({isHidden : !this.state.isHidden})
+    }
     handleKeyboardDidShow = (event) => {
         const { height: windowHeight } = Dimensions.get('window');
         const keyboardHeight = event.endCoordinates.height;
@@ -226,14 +280,6 @@ class App extends Component {
             // console.log('AppState: ', 'App has come to the foreground!');
             if (classID) {
                 this.renewStat(classID)
-            //     // instanceAxios().get(API_URL + `class/getstat/${classID}/${studentId}'/0`)
-            //     axios2('get', `${API_URL}class/getstat/${classID}/${studentId}/0`)
-            //         .then(res => {
-            //             // console.log('_handleAppStateChange', response)
-            //         })
-            //         .catch(res=> {
-            //             // console.log("_handleAppStateChange_ERROR", response)
-            //         })
             }
         }
         else {
@@ -274,7 +320,9 @@ class App extends Component {
         }
     }
     setstate = (obj) => {
+        console.log("setstate")
         this.setState(obj)
+        this.setState({isHidden : true})
         this.props.onReduxUpdate("UPDATE_PAGE", obj.selectedFooter)
         obj.selectedFooter?this.props.onReduxUpdate("SHOW_LOGIN", false):null
 
@@ -302,7 +350,8 @@ class App extends Component {
         const {langLibrary, userName, classID} = this.props.userSetup
         const {showFooter, showKeyboard, theme, themeColor} = this.props.interface
         const {online} = this.props.tempdata
-        const colorOptions = Object.keys(themeOptions);
+        const colorOptions = Object.keys(themeOptions)
+        let {stat} = this.props
 
         // console.log("renderDrawer")
         return <View style={{
@@ -365,7 +414,12 @@ class App extends Component {
                 <Button style={{  marginLeft : 60, marginTop : 5, marginRight : 60, borderRadius : 30,
                     justifyContent: "center",
                     alignItems: "center",
-                    color : theme.primaryDarkColor, backgroundColor : theme.secondaryLightColor}} onPress={()=>{this.props.onReduxUpdate("INIT_STATDATA")}}>
+                    color : theme.primaryDarkColor, backgroundColor : theme.secondaryLightColor}} onPress={()=>{
+                        this.props.onReduxUpdate("INIT_STATDATA")
+                        stat.chatID = 0
+                        stat.markID = 0
+                        setStorageData(`${classID}labels`, JSON.stringify(stat))
+                    }}>
                     <View style={{ justifyContent: "center", alignItems: "center" }}>
                     <Text style={{fontSize : RFPercentage(3), color : theme.primaryDarkColor, width : "100%", fontWeight : "800"}}>Очистить счётчики</Text>
                     </View>
@@ -377,7 +431,7 @@ class App extends Component {
         // let {stat} = this.props
         // stat.gotStats = true
         // this.props.onReduxUpdate("UPDATE_VIEWSTAT", stat)
-        console.log("renewStat:start")
+        console.log("renewStat:start", classID)
         this.setState({calcStat : true})
         getViewStatStart(classID)
             .then(res=>{
@@ -395,28 +449,40 @@ class App extends Component {
             })
             .catch(err=>console.log("renewStat:catch", err))
     }
+    onLongPress=i=>{
+        const {footerHeight} = this.props.interface
+        if (i===0) {
+           // this._toggleSubview()
+           //  if (!this.state.isHidden)
+           //      this._panel.show(footerHeight + 75)
+           //  else
+           //      this._panel.hide()
+           //  if (this.state.isHidden)
+           //      this.handleOpen()
+           //  else
+           //      this.handleClose()
+
+            this.setState({isHidden : !this.state.isHidden})
+            // this.handledView.transitionTo({ bottom : 150 })
+        }
+    }
+    // renderContent = () => {
+    //     return (
+    //         <View style={{height : 100, width : 200}}>
+    //             <Text>Get directions to your location</Text>
+    //         </View>
+    //     )
+    // }
     render() {
 
         let marksReadCount = 0
         const {marks, localChatMessages, userID, token, langLibrary, classID, classNews} = this.props.userSetup
-        const {showFooter, showKeyboard, theme, themeColor, showLogin} = this.props.interface
+        const {showFooter, showKeyboard, theme, themeColor, showLogin, footerHeight} = this.props.interface
         const {online, loading} = this.props.tempdata
         const {markID, markCnt, chatCnt, newsID} = this.props.stat
 
-        // const {chatID} = this.state
-        // const thisYearMarks = marks.filter(item=>(new Date(item.mark_date) >= getNearestSeptFirst()))
-
-
-        // const unreadMsgsCount = localChatMessages.filter(item => (item.id > chatID && item.user_id !== userID)).length
-        // const unreadMarksCount = this.thisYearMarks.filter(item =>(Number(item.id) > markID)).length
-
-        console.log("App:render")
-
+        // console.log("App:render")
         const hwarray = localChatMessages.filter(item=>(item.homework_date!==null))
-
-        // let unreadMsgsCount = this.state.msgs
-        // const unreadMsgsCount = localChatMessages.filter(item=>(item.id>chatID&&item.user_id!==userID)).length
-
         let {daysArr, initialDay} = this.state
         initialDay = initialDay?initialDay: getNextStudyDay(daysArr)[0]
 
@@ -434,12 +500,43 @@ class App extends Component {
                 stat.newsID = news[0].id
                 stat.newsCnt = 0
                 this.props.onReduxUpdate("UPDATE_VIEWSTAT", stat)
-                console.log("STAT_OF_STAT", news, stat)
+                // console.log("STAT_OF_STAT", news, stat)
                 setStorageData(`${classID}labels`, JSON.stringify(stat))
             }
         }
 
-        if (!this.state.calcStat&&classID>0&&!this.props.stat.gotStats) this.renewStat(classID)
+        const screenHeight = Dimensions.get("window").height;
+        const backdrop = {
+            transform: [
+                {
+                    translateY: this.state.animation.interpolate({
+                        inputRange: [0, 0.01],
+                        outputRange: [screenHeight, 0],
+                        extrapolate: "clamp",
+                    }),
+                },
+            ],
+            opacity: this.state.animation.interpolate({
+                inputRange: [0.01, 0.5],
+                outputRange: [0, 1],
+                extrapolate: "clamp",
+            }),
+        };
+        const slideUp = {
+            transform: [
+                {
+                    translateY: this.state.animation.interpolate({
+                        inputRange: [0.01, 1],
+                        outputRange: [0, -1 * screenHeight],
+                        extrapolate: "clamp",
+                    }),
+                },
+            ],
+        };
+
+        // if (!this.state.calcStat&&classID>0&&!this.props.stat.gotStats) this.renewStat(classID)
+        const buttonWidth = Dimensions.get('window').width/6
+
         if (!classID&&this.props.stat.gotStats) this.props.onReduxUpdate("INIT_STATDATA")
 
         return (
@@ -478,6 +575,7 @@ class App extends Component {
                                    updateState={this.updateState}
                                    forceupdate={this.fireRender}
                                    setstate={this.setstate}
+                                   inputenabled={true}
                         />
                         {this.state.selectedFooter === 1 ?
                             <View style={styles.absoluteView}>
@@ -522,9 +620,8 @@ class App extends Component {
                     </Container>
                     </Drawer>
                     {showFooter ?
-                        <View
-                            onLayout={(event) =>this.measureView(event)}>
-                        <Footer style={{elevation: 0, borderWidth : .5, borderColor : theme.secondaryColor}}>
+                        <View style={{position : "relative"}} onLayout={(event) =>this.measureView(event)}>
+                        <Footer style={{elevation: 0, borderWidth : .5, borderColor : theme.secondaryColor, zIndex : 51}}>
                             <FooterTab style={{elevation: 0, borderWidth : .5, borderColor : theme.secondaryColor}}>
                                 <ButtonWithBadge
                                     enabled={this.state.selectedFooter === 0}
@@ -537,8 +634,9 @@ class App extends Component {
                                     kind={'chat'}
                                     value={chatCnt}
                                     setstate={this.setstate}
-                                    stateid={0}/>
-
+                                    stateid={0}
+                                    longpress={this.onLongPress}
+                                />
                                 <ButtonWithBadge
                                     enabled={this.state.selectedFooter === 1}
                                     disabled={this.state.showLogin} //  || (this.props.userSetup.userID === 0)
@@ -550,8 +648,9 @@ class App extends Component {
                                     kind={'homework'}
                                     value={homework}
                                     setstate={this.setstate}
-                                    stateid={1}/>
-
+                                    stateid={1}
+                                    longpress={this.onLongPress}
+                                />
                                 <ButtonWithBadge
                                     enabled={this.state.selectedFooter === 2}
                                     disabled={this.state.showLogin} //  || (this.props.userSetup.userID === 0)
@@ -563,8 +662,9 @@ class App extends Component {
                                     kind={'marks'}
                                     value={markCnt}
                                     setstate={this.setstate}
-                                    stateid={2}/>
-
+                                    stateid={2}
+                                    longpress={this.onLongPress}
+                                />
                                 <ButtonWithBadge
                                     enabled={this.state.selectedFooter === 3}
                                     disabled={this.state.showLogin} //  || (this.props.userSetup.userID === 0)
@@ -576,8 +676,9 @@ class App extends Component {
                                     kind={'info'}
                                     value={0}
                                     setstate={this.setstate}
-                                    stateid={3}/>
-
+                                    stateid={3}
+                                    longpress={this.onLongPress}
+                                />
                                 <ButtonWithBadge
                                     enabled={this.state.selectedFooter === 4}
                                     disabled={this.state.showLogin} //  || (this.props.userSetup.userID === 0)
@@ -589,8 +690,9 @@ class App extends Component {
                                     kind={''}
                                     value={0}
                                     setstate={this.setstate}
-                                    stateid={4}/>
-
+                                    stateid={4}
+                                    longpress={this.onLongPress}
+                                />
                                 <ButtonWithBadge
                                     enabled={this.state.selectedFooter === 5}
                                     disabled={this.state.showLogin} //  || (this.props.userSetup.userID === 0)
@@ -602,9 +704,180 @@ class App extends Component {
                                     kind={''}
                                     value={0}
                                     setstate={this.setstate}
-                                    stateid={5}/>
+                                    stateid={5}
+                                    longpress={this.onLongPress}
+                                />
                             </FooterTab>
-                        </Footer></View> : null}
+                        </Footer>
+
+                                <Modal
+                                    isVisible={!this.state.isHidden}
+                                    backdropOpacity={0.1}
+                                    style={{position : "absolute", height : 65, margin : 0,
+                                            padding : 0, bottom : footerHeight + 5,
+                                            width : buttonWidth * 4,
+                                            marginLeft : 5, marginRight : 5,
+                                            // borderWidth : .5, borderColor : theme.primaryDarkColor, borderRadius : 10,
+                                            backgroundColor : theme.secondaryColor}}
+                                    onBackdropPress={() => this.setState({ isHidden : true })}>
+                                    <TouchableWithoutFeedback  onPress={()=>this.setState({isHidden : true})}>
+                                        <View style={{  height : 60,
+                                                        // borderWidth : .5, borderColor : theme.primaryDarkColor, borderRadius : 10,
+                                                        backgroundColor : theme.secondaryColor,
+                                                        bottom : 0, margin : 0,
+                                                        flex : 1,
+                                                        justifyContent : "space-between",
+                                                        flexDirection : "row",
+                                                        alignItems : "center",
+                                            }}>
+                                            <ButtonWithBadge
+                                                enabled={this.state.selectedFooter === 0}
+                                                disabled={this.state.showLogin} //  || (this.props.userSetup.userID === 0)
+                                                onpress={this.setstate} // this.props.userSetup.userID?this.setstate:null
+                                                name={langLibrary===undefined?'':langLibrary.mobChat===undefined?'ДЗ чат':'ДЗ чат'}
+                                                icontype={'material'}
+                                                iconname={'message'}
+                                                badgestatus={'primary'}
+                                                kind={'chat'}
+                                                value={chatCnt}
+                                                setstate={this.setstate}
+                                                stateid={0}
+                                                longpress={null}
+                                            />
+                                            <ButtonWithBadge
+                                                enabled={false}
+                                                disabled={this.state.showLogin} //  || (this.props.userSetup.userID === 0)
+                                                onpress={this.setstate} // this.props.userSetup.userID?this.setstate:null
+                                                name={langLibrary===undefined?'':langLibrary.mobChat===undefined?'Родители':'Родители'}
+                                                icontype={'material'}
+                                                iconname={'message'}
+                                                badgestatus={'primary'}
+                                                kind={'chat'}
+                                                value={chatCnt}
+                                                setstate={this.setstate}
+                                                stateid={0}
+                                                longpress={null}
+                                            />
+                                            <ButtonWithBadge
+                                                enabled={false}
+                                                disabled={this.state.showLogin} //  || (this.props.userSetup.userID === 0)
+                                                onpress={this.setstate} // this.props.userSetup.userID?this.setstate:null
+                                                name={langLibrary===undefined?'':langLibrary.mobChat===undefined?'+Учитель':'+Учитель'}
+                                                icontype={'material'}
+                                                iconname={'message'}
+                                                badgestatus={'primary'}
+                                                kind={'chat'}
+                                                value={chatCnt}
+                                                setstate={this.setstate}
+                                                stateid={0}
+                                                longpress={null}
+                                            />
+                                            <ButtonWithBadge
+                                                enabled={false}
+                                                disabled={this.state.showLogin} //  || (this.props.userSetup.userID === 0)
+                                                onpress={this.setstate} // this.props.userSetup.userID?this.setstate:null
+                                                name={langLibrary===undefined?'':langLibrary.mobChat===undefined?'Workflow':'Workflow'}
+                                                icontype={'material'}
+                                                iconname={'message'}
+                                                badgestatus={'primary'}
+                                                kind={'chat'}
+                                                value={chatCnt}
+                                                setstate={this.setstate}
+                                                stateid={0}
+                                                longpress={null}
+                                            />
+                                        </View>
+                                    </TouchableWithoutFeedback>
+                                </Modal>
+                            {/*<TouchableWithoutFeedback onPress={() =>{this.handledView.transitionTo({ bottom : 100 })}}>*/}
+                                {/*<Animatable.View style={{position : "absolute", backgroundColor : theme.primaryLightColor,*/}
+                                                            {/*width : 100, height : 100, bottom : 100}}*/}
+                                                 {/*ref={ref => this.handledView = ref}><Text>Handled view!</Text></Animatable.View>*/}
+                            {/*</TouchableWithoutFeedback>*/}
+
+                            {/*<View style={[styles.avSheet]}>*/}
+                                {/*<Animated.View style={[styles.avPopup, slideUp]}>*/}
+                                    {/*<TouchableOpacity onPress={this.handleClose}>*/}
+                                        {/*<Text>Close</Text>*/}
+                                    {/*</TouchableOpacity>*/}
+                                {/*</Animated.View>*/}
+                            {/*</View>*/}
+                            {/*<BottomDrawer*/}
+                                {/*containerHeight={200}*/}
+                                {/*offset={footerHeight+100}*/}
+                                {/*downDisplay={200}*/}
+                            {/*>*/}
+                                {/*{this.renderContent()}*/}
+                            {/*</BottomDrawer>*/}
+                            {/*<SlidingUpPanel ref={c => this._panel = c}*/}
+                                    {/*// draggableRange={{top: this.state.isHidden?footerHeight + 75:(footerHeight + 75 + 75), bottom: footerHeight}}*/}
+                                    {/*// height={this.state.isHidden?footerHeight:(footerHeight + 75)}*/}
+                                    {/*// allowDragging={false}*/}
+                                    {/*// friction={5}*/}
+                                    {/*// showBackdrop={false}*/}
+                                    {/*// visible={!this.state.isHidden}*/}
+                                {/*>*/}
+                                {/*<View style={{*/}
+                                    {/*flex: 1,*/}
+                                    {/*backgroundColor: theme.primaryLightColor,*/}
+                                    {/*alignItems: 'center',*/}
+                                    {/*justifyContent: 'center',*/}
+                                    {/*height : 250,*/}
+                                    {/*width : 200}}>*/}
+                                    {/*<Text>Here is the content inside panel</Text>*/}
+                                    {/*<Button title='Hide' onPress={() => {this._panel.hide(), this.setState({isHidden : true})}} />*/}
+                                {/*</View>*/}
+                            {/*</SlidingUpPanel>*/}
+                            {/*<TouchableOpacity*/}
+                                {/*onPress={()=>{*/}
+                                    {/*console.log("ONPRESS333!!!")*/}
+                                    {/*this._toggleSubview()*/}
+                                {/*}}*/}
+                            {/*>*/}
+                            {/*<View style={{height : 100, width : 100, zIndex : 100, borderWidth : 2, borderColor :"#000", position : "absolute"}}>*/}
+                                {/*<Text>TEST</Text>*/}
+                            {/*</View>*/}
+                            {/*</TouchableOpacity>*/}
+
+                            {/*<AnimatedTouchable*/}
+                                {/*style={[styles.subView,*/}
+                                {/*{transform: [{translateY: this.state.bounceValue}]}]}*/}
+                                {/*onPress={()=>{console.log("AnimatedView")}}>*/}
+                                {/*<TouchableWithoutFeedback*/}
+                                    {/*style={{*/}
+                                    {/*width : Dimensions.get('window').width, height : 75,*/}
+                                    {/*borderWidth : 2, borderColor : "#000",*/}
+                                    {/*backgroundColor : theme.primaryLightColor}}*/}
+                                    {/*onPress={()=>{*/}
+                                    {/*console.log("ONPRESS!!!")*/}
+                                    {/*this._toggleSubview()*/}
+                                    {/*}}*/}
+                                    {/*>*/}
+                                    {/*<Text></Text>*/}
+                                {/*</TouchableWithoutFeedback>*/}
+                            {/*</AnimatedTouchable>*/}
+
+                            {/*<Animated.View*/}
+                                    {/*pointerEvents={this.props.visible ? 'auto' : 'none'}*/}
+                                    {/*accessibilityViewIsModal*/}
+                                    {/*accessibilityLiveRegion="polite"*/}
+                                    {/*style={[styles.subView,*/}
+                                        {/*{transform: [{translateY: this.state.bounceValue}]}]}*/}
+                            {/*>*/}
+                                {/*<TouchableWithoutFeedback*/}
+                                    {/*style={{*/}
+                                        {/*width : Dimensions.get('window').width, height : 75,*/}
+                                        {/*borderWidth : 2, borderColor : "#000",*/}
+                                        {/*backgroundColor : theme.primaryLightColor}}*/}
+                                    {/*onPress={()=>{*/}
+                                        {/*console.log("ONPRESS!!!")*/}
+                                        {/*this._toggleSubview()*/}
+                                    {/*}}*/}
+                                {/*>*/}
+                                {/*</TouchableWithoutFeedback>*/}
+                            {/*</Animated.View>*/}
+
+                        </View> : null}
 
                 </Container>
         )

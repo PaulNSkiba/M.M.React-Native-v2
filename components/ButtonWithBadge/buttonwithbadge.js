@@ -2,13 +2,15 @@
  * Created by Paul on 12.09.2019.
  */
 import React, {Fragment, Component} from 'react';
-import { SafeAreaView,  StyleSheet,  ScrollView,  View,  Text,  StatusBar, Dimensions} from 'react-native';
+import { SafeAreaView,  StyleSheet,  ScrollView,  View,  Text,  StatusBar,
+         Dimensions, TouchableWithoutFeedback, TouchableOpacity } from 'react-native';
 import { Badge, Icon } from 'react-native-elements'
 import { mapStateToProps, addDay, toYYYYMMDD } from '../../js/helpersLight'
 import { Button } from 'native-base';
 import styles from '../../css/styles'
 import {connect} from 'react-redux';
 import { RFPercentage, RFValue } from "react-native-responsive-fontsize";
+
 
 class ButtonWithBadge extends Component {
     constructor(props) {
@@ -19,9 +21,10 @@ class ButtonWithBadge extends Component {
     render () {
         const {localChatMessages, userID, marks, classNews} = this.props.userSetup
         const {chatID, markID, newsID, buildsID, newsCnt, buildsCnt, chatCnt, markCnt} = this.props.stat
-        const {showFooter, showKeyboard, theme, themeColor, online} = this.props.interface
+        const {showFooter, showKeyboard, theme, themeColor, online, footerHeight} = this.props.interface
 
         const windowRatio = Dimensions.get('window').width? Dimensions.get('window').height / Dimensions.get('window').width : 1.9
+        const buttonWidth = Dimensions.get('window').width/6
         // const todayMessages = localChatMessages.filter(item=>(new Date(item.msg_date).toLocaleDateString())===(new Date().toLocaleDateString())).length
 
         // let unreadMsgsCount = 0
@@ -39,16 +42,37 @@ class ButtonWithBadge extends Component {
         //     unreadBuildsCount = buildsCnt //classNews.filter(item =>(item.is_news===1&&Number(item.id) > buildsID)).length
         // }
         // console.log("renderButtons", newsID, buildsID)
+
+        // onPress={()=> {
+        //     this.props.setstate({selectedFooter: this.props.stateid, showLogin: false, isSpinner : false})
+        // }}
         return (
-            <Button style={[{backgroundColor : theme.secondaryColor,
+            <TouchableOpacity   key={0} id={"msgarea-"+0}
+                                        delayLongPress={500}
+                                        onLongPress={()=>{this.props.longpress!==null?this.props.longpress(this.props.stateid):null}}
+                                        onPress={()=> {
+                                            this.props.setstate({selectedFooter: this.props.stateid, showLogin: false, isSpinner : false})
+                                            }}
+                                        activeOpacity={.9}
+                                        style={{zIndex : 10}}
+            >
+            <View style={[{
+                backgroundColor : theme.secondaryColor,
                 borderWidth : 2,
-                borderColor : theme.secondaryColor}, this.props.enabled?{color : theme.secondaryDarkColor}:{ color : theme.secondaryLightColor}]}
+                borderColor : theme.secondaryColor,
+                height : footerHeight,
+                width : buttonWidth,
+                display : "flex",
+                alignItems : "center",
+                justifyContent : "center",
+                },
+                this.props.enabled?{color : theme.secondaryDarkColor}:{ color : theme.secondaryLightColor}
+
+                ]}
                     badge vertical
                     active={this.props.enabled&&(!this.props.disabled)}
-                    onPress={()=> {
-                         this.props.setstate({selectedFooter: this.props.stateid, showLogin: false, isSpinner : false})
-                    }
-                    }>
+
+                    >
                 {(this.props.kind==='chat'&&chatCnt)?
                     <Badge value={chatCnt}
                            status={this.props.badgestatus}
@@ -89,12 +113,13 @@ class ButtonWithBadge extends Component {
                            {/*status={this.props.badgestatus}*/}
                            {/*containerStyle={{ position: 'absolute', top: -8, right: 2 }}>*/}
                     {/*</Badge>:null}*/}
-                <Icon color={!this.props.enabled?theme.secondaryLightColor:theme.primaryDarkColor} active type={this.props.icontype} name={this.props.iconname} inverse />
+                {this.props.iconname!==null?<Icon color={!this.props.enabled?theme.secondaryLightColor:theme.primaryDarkColor} active type={this.props.icontype} name={this.props.iconname} inverse />:null}
                 <Text style={{color :!this.props.enabled?theme.secondaryLightColor:theme.primaryDarkColor,
                     fontSize: (windowRatio < 1.8?RFPercentage(1.5):RFPercentage(1.6))}}>
                     {this.props.name}
                 </Text>
-            </Button>)
+            </View>
+            </TouchableOpacity>)
     }
 }
 const mapDispatchToProps = dispatch => {

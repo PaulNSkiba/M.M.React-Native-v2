@@ -223,6 +223,7 @@ android {
 }
 
 dependencies {
+    implementation project(':react-native-svg')
     implementation project(':react-native-sensitive-info')
 	//compile project(':react-native-video')
 	//mplementation "androidx.appcompat:appcompat:1.0.0"
