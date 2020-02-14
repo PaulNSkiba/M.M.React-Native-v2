@@ -481,7 +481,7 @@ class App extends Component {
         const {online, loading} = this.props.tempdata
         const {markID, markCnt, chatCnt, newsID} = this.props.stat
 
-        // console.log("App:render")
+        // console.log("App:render", token)
         const hwarray = localChatMessages.filter(item=>(item.homework_date!==null))
         let {daysArr, initialDay} = this.state
         initialDay = initialDay?initialDay: getNextStudyDay(daysArr)[0]
@@ -715,9 +715,10 @@ class App extends Component {
                                     backdropOpacity={0.1}
                                     style={{position : "absolute", height : 65, margin : 0,
                                             padding : 0, bottom : footerHeight + 5,
-                                            width : buttonWidth * 4,
+                                            width : buttonWidth * 5,
                                             marginLeft : 5, marginRight : 5,
-                                            // borderWidth : .5, borderColor : theme.primaryDarkColor, borderRadius : 10,
+                                            // borderWidth : .5, borderColor : theme.primaryDarkColor,
+                                            borderRadius : 8,
                                             backgroundColor : theme.secondaryColor}}
                                     onBackdropPress={() => this.setState({ isHidden : true })}>
                                     <TouchableWithoutFeedback  onPress={()=>this.setState({isHidden : true})}>
@@ -729,12 +730,13 @@ class App extends Component {
                                                         justifyContent : "space-between",
                                                         flexDirection : "row",
                                                         alignItems : "center",
+                                                        borderRadius : 8,
                                             }}>
                                             <ButtonWithBadge
                                                 enabled={this.state.selectedFooter === 0}
                                                 disabled={this.state.showLogin} //  || (this.props.userSetup.userID === 0)
                                                 onpress={this.setstate} // this.props.userSetup.userID?this.setstate:null
-                                                name={langLibrary===undefined?'':langLibrary.mobChat===undefined?'ДЗ чат':'ДЗ чат'}
+                                                name={langLibrary===undefined?'':langLibrary.mobChat===undefined?'ДЗ':'ДЗ'}
                                                 icontype={'material'}
                                                 iconname={'message'}
                                                 badgestatus={'primary'}
@@ -763,6 +765,20 @@ class App extends Component {
                                                 disabled={this.state.showLogin} //  || (this.props.userSetup.userID === 0)
                                                 onpress={this.setstate} // this.props.userSetup.userID?this.setstate:null
                                                 name={langLibrary===undefined?'':langLibrary.mobChat===undefined?'+Учитель':'+Учитель'}
+                                                icontype={'material'}
+                                                iconname={'message'}
+                                                badgestatus={'primary'}
+                                                kind={'chat'}
+                                                value={chatCnt}
+                                                setstate={this.setstate}
+                                                stateid={0}
+                                                longpress={null}
+                                            />
+                                            <ButtonWithBadge
+                                                enabled={false}
+                                                disabled={this.state.showLogin} //  || (this.props.userSetup.userID === 0)
+                                                onpress={this.setstate} // this.props.userSetup.userID?this.setstate:null
+                                                name={langLibrary===undefined?'':langLibrary.mobChat===undefined?'Личные':'Личные'}
                                                 icontype={'material'}
                                                 iconname={'message'}
                                                 badgestatus={'primary'}

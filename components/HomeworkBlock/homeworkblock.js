@@ -2,46 +2,14 @@
  * Created by Paul on 10.09.2019.
  */
 import React, {Component} from 'react'
-import {
-    StyleSheet,
-    Text,
-    View,
-    Image,
-    ScrollView,
-    TouchableHighlight,
-    Modal,
-    Radio,
-    TouchableOpacity,
-    Dimensions
-} from 'react-native';
-import {
-    Container,
-    Header,
-    Left,
-    Body,
-    Right,
-    Button,
-    Icon,
-    Title,
-    Content,
-    Footer,
-    FooterTab,
-    TabHeading,
-    Tabs,
-    Tab,
-    Badge,
-    Form,
-    Item,
-    Input,
-    Label,
-    Textarea,
-    CheckBox,
-    ListItem,
-    Spinner
-} from 'native-base';
+import { StyleSheet, ScrollView, Text, View, Image,
+    TouchableHighlight, Modal,Radio, TouchableOpacity, Dimensions } from 'react-native';
+import { Container, Header, Left, Body, Right, Button,
+    Icon, Title, Content, Footer, FooterTab, TabHeading, Tabs,
+    Tab, Badge, Form, Item, Input, Label, Textarea, CheckBox, ListItem, Spinner } from 'native-base';
 import RadioForm from 'react-native-radio-form';
 import { toLocalDate, dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, addDay, toYYYYMMDD, daysList,
-        instanceAxios, getSubjFieldName, arrOfWeekDaysLocal} from '../../js/helpersLight'
+        instanceAxios, getSubjFieldName, arrOfWeekDaysLocal, axios2} from '../../js/helpersLight'
 import {SingleImage, wrapperZoomImages, ImageInWraper} from 'react-native-zoom-lightbox';
 import SingleImageZoomViewer from 'react-native-single-image-zoom-viewer'
 import ImageViewer from 'react-native-image-zoom-viewer';
@@ -55,6 +23,7 @@ import {PermissionsAndroid} from 'react-native';
 import styles from '../../css/styles'
 import { RFPercentage, RFValue } from "react-native-responsive-fontsize";
 import CalendarPicker from 'react-native-calendar-picker';
+// import {ScrollView} from "react-native-af-video-player/components/ScrollView";
 
 //
 // READ_CALENDAR: 'android.permission.READ_CALENDAR'
@@ -125,13 +94,33 @@ class HomeworkBlock extends Component {
             chatTags : this.getChatTagsObj(),
             homeworkItems : this.getHomeWorksForAccordion(),
             tagItems : this.getTagsForAccordion(),
+            classDate : new Date(),
+            classWorks : [],
         };
         this.getHomeworkItems = this.getHomeworkItems.bind(this)
         this.getImage = this.getImage.bind(this)
     }
     componentDidMount() {
         requestSDPermission()
+        this.getClassWorks(new Date())
         this.props.onStopLoading()
+    }
+    getClassWorks=async (onDate)=>{
+        const {classID, token} = this.props.userSetup
+        this.props.onStartLoading()
+        // console.log("getClassWorks", onDate, `${API_URL}chat/getcw/${classID}/${toYYYYMMDD(new Date(onDate))}`, token)
+        await axios2('get', `${API_URL}chat/getcw/${classID}/${toYYYYMMDD(new Date(onDate))}`)
+            .then(response => {
+                console.log('getClassWorks', response.data)
+                this.setState({classWorks : response.data})
+                this.props.onStopLoading()
+            })
+            .catch(response=> {
+                    console.log("AXIOUS_ERROR: getClassWorks", response)
+                    this.setState({classWorks: []})
+                    this.props.onStopLoading()
+                }
+            )
     }
     getDaysArrMap=()=>{
         const homeworkorig = this.props.userSetup.localChatMessages.filter(item=>(item.homework_date!==null))
@@ -197,6 +186,7 @@ class HomeworkBlock extends Component {
                             let hw = msg.hasOwnProperty('hwdate') && (!(msg.hwdate === undefined)) ? msg.subjname : ''
                             let i = key
                             let isImage = false
+                            let username = msg.hasOwnProperty('userID')?msg.userName:msg.senderId
                             // console.log("homeWork", item, msg)
 
                             if (item !== undefined && item.attachment3 !== null && item.attachment3 !== undefined) {
@@ -296,6 +286,7 @@ class HomeworkBlock extends Component {
                     let hw = msg.hasOwnProperty('hwdate') && (!(msg.hwdate === undefined)) ? msg.subjname : ''
                     let i = key
                     let isImage = false
+                    let username = msg.hasOwnProperty('userID')?msg.userName:msg.senderId
                     // console.log("homeWork", item, msg)
 
                     if (item !== undefined && item.attachment3 !== null && item.attachment3 !== undefined) {
@@ -361,6 +352,82 @@ class HomeworkBlock extends Component {
             )
         }
     }
+    getClassWorksItems=()=>{
+        const {theme} = this.props.interface
+        return ( this.state.classWorks.map((item, key) => {
+                let msg = prepareMessageToFormat(item, true)
+                let hw = msg.hasOwnProperty('cwdate') && (!(msg.cwdate === undefined)) ? msg.subjname : ''
+                let i = key
+                let isImage = false
+                let username = msg.hasOwnProperty('userID')?msg.userName:msg.senderId
+                // console.log("homeWork", item, msg)
+                let isClassWork = true
+                if (item !== undefined && item.attachment3 !== null && item.attachment3 !== undefined) {
+                    isImage = true
+                }
+
+                return (
+                    <View key={key} id={"msg-" + msg.id} style={{marginTop: 10}}>
+                        <View key={msg.id}
+                            // style={(hw.length ? [styles.msgRightSide, styles.homeworkBorder] : [styles.msgRightSide, styles.homeworkNoBorder])}
+                              style={
+                                  (hw.length ? [styles.msgRightSide, {
+                                      borderWidth: 2,
+                                      borderColor: theme.primaryMsgColor,
+                                      backgroundColor: "#D8FBFF"
+                                  }] : [styles.msgRightSide, styles.homeworkNoBorder, {backgroundColor: "#D8FBFF"}])}
+                        >
+                            {/*<View key={'id' + i} style={styles.msgRightAuthor}><Text style={styles.msgAuthorText}>{item.student_name ? item.student_name : this.props.userSetup.userName}</Text></View>*/}
+                            <View key={'id' + i} style={[[styles.msgRightAuthor, {
+                                borderColor: theme.primaryColor,
+                                backgroundColor: theme.primaryColor
+                            }], msg.tagid ? styles.authorBorder : '']}>{<Text
+                                style={{color: theme.primaryTextColor}}>{item.student_name ? item.student_name : username}</Text>}</View>
+                            {isImage ?
+                                <View style={{display: "flex", flex: 1, flexDirection: "row"}}>
+                                    <TouchableOpacity onPress={() => {
+                                        this.getImage(msg.id)
+                                    }}>
+                                        <View style={{flex: 1}}>
+                                            <Image
+                                                source={{uri: `data:image/png;base64,${JSON.parse(item.attachment3).base64}`}}
+                                                style={{
+                                                    width: 100, height: 100,
+                                                    // marginBottom : 15,
+                                                    borderRadius: 15,
+                                                    overflow: "hidden", margin: 7
+                                                }}/>
+                                        </View>
+                                    </TouchableOpacity>
+                                    <View key={'msg' + i} id={"msg-text-" + i}
+                                          style={[styles.msgText,
+                                              {flex: 3, marginLeft: 20, marginTop: 10}]}>
+                                        <Text>{msg.text}</Text>
+                                    </View>
+                                </View>
+                                : <View key={'msg' + i} id={"msg-text-" + i} style={styles.msgText}>
+                                    <Text>{msg.text}</Text>
+                                </View>}
+                            <View style={msg.id ? styles.btnAddTimeDone : styles.btnAddTime}>
+                                <Text style={msg.id ? styles.btnAddTimeDone : styles.btnAddTime}>{msg.time}</Text>
+                            </View>
+                            {isClassWork?<View style={{ position : "absolute", right : 3, top : 5, display : "flex", alignItems : "center"}}>
+                                <View><Icon type="Entypo" style={{fontSize: 15, color: theme.primaryMsgColor}} name="open-book"/>
+                                </View>
+                            </View>:null}
+                            {hw.length ?
+                                <View key={'idhw' + i} style={[styles.msgRightIshw, {
+                                    color: theme.primaryTextColor,
+                                    backgroundColor: theme.primaryMsgColor
+                                }]}>
+                                    <Text style={{color: 'white'}}>{hw}</Text>
+                                </View> : null}
+                        </View>
+                    </View>
+                )
+            })
+        )
+}
     getTagItems = arr => {
         const {theme, userName} = this.props.userSetup
         return ( arr.map((item, key) => {
@@ -413,7 +480,7 @@ class HomeworkBlock extends Component {
                                 <Text style={{color: 'white'}}>{hw}</Text>
                             </View> : null}
                             {msg.tagid?<View style={{ position : "absolute", right : 3, top : -7, display : "flex", alignItems : "center"}}>
-                                <View><Icon style={{fontSize: 15, color: theme.primaryMsgColor}} name="medical"/></View>
+                                <View><Icon type="Entypo" style={{fontSize: 15, color: theme.primaryMsgColor}} name="pin"/></View>
                             </View>:null}
                             {/*{msg.tagid?<View style={{ position : "absolute", right : 5, top : -5, display : "flex", alignItems : "center"}}>*/}
                                 {/*<View><Icon style={{fontSize: 20, color: '#4472C4'}} name="bookmark"/></View>*/}
@@ -514,7 +581,9 @@ class HomeworkBlock extends Component {
         return chatTags
     }
     onDateChange=onClassWorkDate=>{
-
+        console.log("onDateChange", onClassWorkDate)
+        this.getClassWorks(new Date(onClassWorkDate))
+        this.setState({classDate: onClassWorkDate})
     }
 
     render() {
@@ -610,13 +679,23 @@ class HomeworkBlock extends Component {
                                         <CalendarPicker
                                             weekdays={arrOfWeekDaysLocal}
                                             months={["Янв","Фев","Мар","Апр","Май","Июн","Июл","Авг","Сен","Окт","Ноя","Дек"]}
-                                            previousTitle={"Предыдущий"}
-                                            nextTitle={"Следующий"}
+                                            previousTitle={"Пред"}
+                                            nextTitle={"След"}
+                                            todayBackgroundColor={theme.primaryDarkColor}
+                                            todayTextStyle={{color : theme.primaryTextColor}}
+                                            selectedDayColor={theme.primaryColor}
                                             onDateChange={this.onDateChange}
+                                            height={250}
                                         />
+                                        <View style={{height : Dimensions.get('window').height - headerHeight - 2*footerHeight - 250}}>
+                                            <ScrollView>
+                                                {this.getClassWorksItems()}
+                                            </ScrollView>
+                                        </View>
                                     </View>
+
                                 </Tab>
-                                <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{langLibrary.mobTags.toUpperCase()}<Icon style={{fontSize: 15, color: theme.primaryTextColor}} name="medical"/></Text></TabHeading>}>
+                                <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{langLibrary.mobTags.toUpperCase()}</Text><Icon type="Entypo" style={{fontSize: 15, color: theme.primaryTextColor, top : 0}} name="pin"/></TabHeading>}>
                                     <View style={{height : Dimensions.get('window').height - headerHeight - footerHeight - 20}}>
                                         <AccordionCustom data={chatTags} data2={tagItems} usersetup={this.props.userSetup} ishomework={true}/>
                                     </View>

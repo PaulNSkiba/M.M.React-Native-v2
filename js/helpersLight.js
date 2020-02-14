@@ -136,6 +136,14 @@ export const prepareMessageToFormat=(msg, returnObject)=>{
             obj.subjid = msg.homework_subj_id
         }
     }
+    if (msg.hasOwnProperty('classwork_date')) {
+        if (!(msg.classwork_date === null)) {
+            obj.cwdate = new Date(msg.classwork_date.length===8?dateFromYYYYMMDD(msg.classwork_date):msg.classwork_date)
+            obj.subjkey = msg.classwork_subj_key
+            obj.subjname = msg.classwork_subj_name
+            obj.subjid = msg.classwork_subj_id
+        }
+    }
     obj.id = msg.id
     //"{"senderId":"my-marks","text":"выучить параграф 12","time":"14:59","userID":209,"userName":"Menen",
     // "hwdate":"2019-07-16T21:00:00.000Z","subjkey":"#lngukr","subjname":"Українська мова"}"
@@ -812,4 +820,27 @@ export const getSubjFieldName=lang=>{
 }
 export const localDateTime=(ondate, countryCode)=>{
   return  toLocalDate((new Date(ondate)), countryCode, false, false) + ' ' +  (new Date(ondate)).toLocaleTimeString().slice(0, 5)
+}
+
+export const prepareImageJSON=(data, data100, classID, userName, userID, studentId, studentName)=>{
+    console.log("prepareImageJSON")
+    // let {classID, userName, userID, studentId, studentName} = this.props.userSetup
+    // let text = this.state.curMessage
+    let obj = {}
+
+    obj.id = 0;
+    obj.class_id = classID;
+    obj.message = "ФОТО";
+    obj.msg_date = toYYYYMMDD(new Date());
+    obj.msg_time = (new Date()).toLocaleTimeString().slice(0, 5);
+    obj.attachment2 = data
+    obj.attachment3 = data100
+    obj.user_id = userID
+    obj.user_name = userName
+    obj.student_id = studentId
+    obj.student_name = studentName
+    obj.uniqid = new Date().getTime() + userName//this.props.userSetup.userName //uniqid()
+
+    // console.log("prepareJSON", obj, JSON.stringify(obj))
+    return JSON.stringify(obj)
 }

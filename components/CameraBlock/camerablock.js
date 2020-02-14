@@ -10,7 +10,7 @@ import { StyleSheet, Text, View, Image, ScrollView,
 import { Avatar, Badge, Icon, withBadge } from 'react-native-elements'
 import {    Container, Header, Left, Body, Right, Button,
     Title, Content, Card, CardItem,  Footer, FooterTab, TabHeading, Tabs, Tab,
-    Form, Item, Input, Label, Textarea, CheckBox, ListItem, Thumbnail, Spinner } from 'native-base';
+    Form, Item, Input, Label, Textarea, CheckBox, ListItem, Thumbnail, Spinner, Toast } from 'native-base';
 import {API_URL} from '../../config/config'
 import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, addDay, toYYYYMMDD, daysList, instanceAxios} from '../../js/helpersLight'
 import { RNCamera } from 'react-native-camera';
@@ -18,7 +18,7 @@ import { connect } from 'react-redux'
 import RNFS from 'react-native-fs';
 import {SingleImage,wrapperZoomImages,ImageInWraper} from 'react-native-zoom-lightbox';
 import ImageResizer from 'react-native-image-resizer';
-import ImgToBase64 from 'react-native-image-base64';
+// import ImgToBase64 from 'react-native-image-base64';
 // import { stylesCamera } from '../../css/camera'
 // import ImageView from 'react-native-image-view';
 // import '../../ChatMobile/chatmobile.css'
@@ -51,11 +51,19 @@ class CameraBlock extends Component {
     sendMessage(text) {
         const id = 0;
         console.log("sendMessage", API_URL + 'chat/add' + (id?`/${id}`:''), text)
-        const {userID} = this.props.userSetup
+        // const {userID} = this.props.userSetup
 
         instanceAxios().post(API_URL + 'chat/add' + (id?`/${id}`:''), text)
             .then(response => {
                 console.log('ADD_MSG', response)
+                // Toast.show({
+                //     text: `Добавлено в чат`,
+                //     buttonText: 'ОК',
+                //     position : 'bottom',
+                //     duration : 3000,
+                //     style : {marginBottom : 100}
+                //     // type : 'success'
+                // })
             })
             .catch(response=> {
                     console.log("AXIOUS_ERROR", response)
@@ -72,6 +80,7 @@ class CameraBlock extends Component {
             const data = await this.camera.takePictureAsync(options);
             console.log("Picture", data)
             let arr = this.state.photoPath
+
             ImageResizer.createResizedImage(data.uri, 240, 240, 'PNG', 100)
                 .then(response => {
                     console.log("ImageResizer", response)
@@ -85,12 +94,22 @@ class CameraBlock extends Component {
                             data100.height = 240
                             data100.width = 240
 
+                            Toast.show({
+                                text: `Снимок сохранён`,
+                                buttonText: 'ОК',
+                                position : 'bottom',
+                                duration : 3000,
+                                style : {marginBottom : 100}
+                                // type : 'success'
+                            })
+
                             arr.push({uri : data.uri, time : (new Date()), data: data, data100: data100})
                             this.setState({photoPath : arr})
                             this.props.onReduxUpdate("PHOTO_PATH", arr)
                             console.log("PHOTO_DATA", data.uri);
                             // doSomethingWith(base64String))
                             this.setState({isSpinner : false})
+
                         })
                         .catch(err => {console.log("ImgToBase64:Err")
                             this.setState({isSpinner : false})
@@ -126,29 +145,13 @@ class CameraBlock extends Component {
         obj.user_name = userName
         obj.student_id = studentId
         obj.student_name = studentName
-        obj.uniqid = new Date().getTime() + this.props.userSetup.userName //uniqid()
+        obj.uniqid = new Date().getTime() + userName//this.props.userSetup.userName //uniqid()
 
         // console.log("prepareJSON", obj, JSON.stringify(obj))
         return JSON.stringify(obj)
     }
     showPreview=(uri)=>{
-        // const images = [
-        //     {
-        //         source: {
-        //             uri: uri,
-        //         },
-        //         title: 'Preview',
-        //         width: "100%",
-        //         height: "100%",
-        //     },
-        // ];
         this.setState({showPreview : true, prevuri: uri})
-        // return <ImageView
-        //     images={images}
-        //     imageIndex={0}
-        //     isVisible={this.state.isImageViewVisible}
-        //     renderFooter={(currentImage) => (<View><Text>My footer</Text></View>)}
-        // />
     }
     render () {
         // const daysArr = daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;})
@@ -248,7 +251,6 @@ class CameraBlock extends Component {
                                             </Card>)
                                     })
                                 }
-
                             </View>
                         </Tab>
                     </Tabs>

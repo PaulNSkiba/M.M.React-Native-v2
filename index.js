@@ -12,6 +12,7 @@ import store, {persistedReducer} from './store/configureStore'
 import {Provider, connect} from 'react-redux';
 import {mapStateToProps, themeOptions } from './js/helpersLight'
 import { persistStore, persistReducer } from "redux-persist";
+import { Root } from "native-base";
 
 // import thunk from 'redux-thunk';
 // import { withNetworkConnectivity, reducer as network, createNetworkMiddleware, networkSaga, ReduxNetworkProvider, NetworkProvider } from "react-native-offline";
@@ -45,7 +46,7 @@ const MyApp = connect(mapStateToProps, mapDispatchToProps)(App)
 //     persistStore(store);
 // sagaMiddleware.run(watcherSaga);
 
-class Root extends Component {
+class RootOfMyApp extends Component {
     constructor(props){
         super(props);
         this.state = {
@@ -67,7 +68,9 @@ class Root extends Component {
             {/*persistor={store}>*/}
             {/*<ReduxNetworkProvider>*/}
             {/*<NetworkProvider>*/}
-            <MyApp />
+            <Root>
+                <MyApp/>
+            </Root>
             {/*</NetworkProvider>*/}
             {/*</ReduxNetworkProvider>*/}
             {/*</PersistGate>*/}
@@ -76,5 +79,5 @@ class Root extends Component {
     }
 }
 
-AppRegistry.registerComponent(appName, () => Root);
+AppRegistry.registerComponent(appName, () => RootOfMyApp);
 

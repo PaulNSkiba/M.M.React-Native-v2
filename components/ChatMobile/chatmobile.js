@@ -10,7 +10,7 @@ import { Icon } from 'react-native-elements'
 import NetInfo from "@react-native-community/netinfo";
 import {    Container, Header, Left, Body, Right, Button,
     Title, Content,  Footer, FooterTab, Badge,
-    Form, Item, Input, Label, Textarea} from 'native-base';
+    Form, Item, Input, Label, Textarea, Toast} from 'native-base';
 import MessageList from '../MessageList/messagelist'
 import { Picker, NimbleEmoji, getEmojiDataFromCustom, Emoji, emojiIndex  } from 'emoji-mart-native'
 import { ChatManager, TokenProvider } from '@pusher/chatkit-client'
@@ -20,13 +20,16 @@ import { API_URL, BASE_HOST, WEBSOCKETPORT, LOCALPUSHERPWD, HOMEWORK_ADD_URL,
         instanceLocator, testToken, chatUserName, arrLangs } from '../../config/config'
 import {dateFromYYYYMMDD, addDay, arrOfWeekDays, dateDiff,
         toYYYYMMDD, instanceAxios, mapStateToProps, prepareMessageToFormat,
-        echoClient, axios2, hasAPIConnection, getLangAsyncFunc, getViewStatStart, getNearestSeptFirst} from '../../js/helpersLight'
+        echoClient, axios2, hasAPIConnection, getLangAsyncFunc, getViewStatStart,
+        prepareImageJSON, getNearestSeptFirst} from '../../js/helpersLight'
 import Pusher from 'pusher-js/react-native'
 import Echo from 'laravel-echo'
 import styles from '../../css/styles'
 import Socketio from 'socket.io-client'
 import { Smile } from 'react-feather';
-
+import DocumentPicker from 'react-native-document-picker';
+import RNFS from 'react-native-fs';
+import ImageResizer from 'react-native-image-resizer';
 
 // import addMsg from '../../img/addMsg.svg'
 // import { Picker, emojiIndex } from 'emoji-mart';
@@ -408,7 +411,7 @@ class ChatMobile extends Component {
            await axios2('get', `${API_URL}chat/get/${classID}`)
             .then(resp => {
                 this.setState({localChatMessages : resp.data})
-                // console.log("getChatMessages : Загружено!", resp.data)
+                console.log("getChatMessages : Загружено!", resp.data)
                 this.props.onReduxUpdate("UPDATE_HOMEWORK", resp.data.filter(item=>(item.homework_date!==null)))
                 this.props.onReduxUpdate("ADD_CHAT_MESSAGES", resp.data)
                 this.props.onStopLoading()
@@ -954,7 +957,7 @@ class ChatMobile extends Component {
                 // console.log('616', id, arrChat, API_URL + 'chat/add' + (id?`/${id}`:''))
                 this.setState({messages: arrChat})
                 // this.props.onReduxUpdate("ADD_CHAT_MESSAGES", arrChat)
-                console.log('816', `${API_URL}chat/add${id?'/'+id:''}`, text)
+                // console.log('816', `${API_URL}chat/add${id?'/'+id:''}`, text)
                 // instanceAxios().post(API_URL + 'chat/add' + (id?`/${id}`:''), text)
                 await axios2('post', `${API_URL}chat/add${id?'/'+id:''}`, text)
                     .then(response => {
@@ -1075,6 +1078,191 @@ class ChatMobile extends Component {
             })
         this.props.onReduxUpdate("USER_LOGGEDIN_DONE")
     }
+    uploadFile=url=>{
+        //let url = "file://whatever/com.bla.bla/file.ext"; //The url you received from the DocumentPicker
+
+// I STRONGLY RECOMMEND ADDING A SMALL SETTIMEOUT before uploading the url you just got.
+        const split = url.split('/');
+        const name = split.pop();
+        const inbox = split.pop();
+        const realPath = `${RNFS.TemporaryDirectoryPath}${inbox}/${name}`;
+
+        console.log("UPLOAD:", url, realPath)
+
+        const uploadBegin = (response) => {
+            const jobId = response.jobId;
+            console.log('UPLOAD HAS BEGUN! JobId: ' + jobId);
+        };
+
+        const uploadProgress = (response) => {
+            const percentage = Math.floor((response.totalBytesSent/response.totalBytesExpectedToSend) * 100);
+            console.log('UPLOAD IS ' + percentage + '% DONE!');
+        };
+
+        RNFS.uploadFiles({
+            toUrl: uploadUrl,
+            files: [{
+                name,
+                filename:name,
+                filepath: realPath,
+            }],
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+            },
+            begin: uploadBegin,
+            beginCallback: uploadBegin, // Don't ask me, only way I made it work as of 1.5.1
+            progressCallback: uploadProgress,
+            progress: uploadProgress
+        })
+            .then((response) => {
+                console.log(response,"<<< Response");
+                if (response.statusCode === 200) { //You might not be getting a statusCode at all. Check
+                    console.log('FILES UPLOADED!');
+                } else {
+                    console.log('SERVER ERROR');
+                }
+            })
+            .catch((err) => {
+                if (err.description) {
+                    switch (err.description) {
+                        case "cancelled":
+                            console.log("Upload cancelled");
+                            break;
+                        case "empty":
+                            console.log("Empty file");
+                            break;
+                        default:
+                            break;
+                        //Unknown
+                    }
+                } else {
+                    //Weird
+                }
+                console.log(err);
+            });
+    }
+    sendMessage(text) {
+        const id = 0;
+        console.log("sendMessage", API_URL + 'chat/add' + (id?`/${id}`:''), text)
+        // const {userID} = this.props.userSetup
+
+        axios2('post',`${API_URL}chat/add` + (id?`/${id}`:''), text)
+            .then(res => {
+                console.log('ADD_MSG', res)
+            })
+            .catch(response=> {
+                    console.log("AXIOUS_ERROR", response)
+                    let {offlineMsgs} = this.props.userSetup
+                    offlineMsgs.push(JSON.parse(text))
+                    this.props.onReduxUpdate("ADD_OFFLINE", offlineMsgs)
+                }
+            )
+    }
+    loadFile=async ()=>{
+        const {classID, userName, userID, studentId, studentName} = this.props.userSetup
+        let cnt = 0
+        // Pick multiple files
+        try {
+            const results = await DocumentPicker.pickMultiple({
+                type: [DocumentPicker.types.images],
+            });
+            this.props.onStartLoading()
+            for (const res of results) {
+                cnt++
+                console.log(
+                    res.uri,
+                    res.type, // mime type
+                    res.name,
+                    res.size
+                );
+                const split = res.uri.split('/');
+                const splittype = res.type.split('/');
+                // image/jpeg
+                console.log("RES.SIZE", res.size, splittype[0], split[0], Platform.OS)
+                let data = {}
+                let data100 = {}
+
+                if (res.size&&splittype[0]==="image") {
+                    console.log("RES.SIZE", split[0], Platform.OS)
+                    if ((Platform.OS === "android" && split[0] === "content:") || (Platform.OS === "ios" && split[0] === "file:")) {
+
+                        // ImageResizer.createResizedImage(res.uri, 960, 540, 'PNG', 100)
+                        //     .then(response => {
+                                // console.log("ImageResizer, response)
+
+                                RNFS.readFile(res.uri, 'base64')
+                                    .then(base64String => {
+                                        data.base64 = base64String
+                                        data.uri = res.uri
+                                        // data.height = 540
+                                        // data.width = 960
+                                        // console.log("READFILE:960", res.uri, base64String)
+                                        ImageResizer.createResizedImage(res.uri, 240, 240, 'PNG', 100)
+                                            .then(response => {
+                                                // console.log("ImageResizer, response)
+
+                                                RNFS.readFile(response.uri, 'base64')
+                                                    .then(base64String => {
+                                                        data100.base64 = base64String
+                                                        data100.uri = response.uri
+                                                        data100.height = 240
+                                                        data100.width = 240
+                                                        // console.log("READFILE:240", res.uri, base64String)
+                                                        console.log("IMG_JSON", data, data100, prepareImageJSON(data, data100,classID, userName, userID, studentId, studentName))
+                                                        // Toast.show({
+                                                        //     text: `Сообщение добавлено: ${cnt} из ${results.length}`,
+                                                        //     buttonText: 'ОК'
+                                                        // })
+                                                        Toast.show({
+                                                            text: `Сообщение добавлено: ${cnt} из ${results.length}`,
+                                                            buttonText: 'ОК',
+                                                            position : 'bottom',
+                                                            duration : 3000,
+                                                            style : {marginBottom : 100}
+                                                            // type : 'success'
+                                                        })
+                                                        this.sendMessage(prepareImageJSON(JSON.stringify(data), JSON.stringify(data100),classID, userName, userID, studentId, studentName))
+                                                        this.props.onStopLoading()
+                                                    })
+                                                    .catch(err => {
+                                                        console.log("readFile0:Err")
+                                                        this.props.onStopLoading()
+                                                        // this.setState({isSpinner : false})
+                                                    });
+                                            })
+                                            .catch(err => {console.log("ImgToBase64:Err")
+                                                this.props.onStopLoading()
+                                                // this.setState({isSpinner : false})
+                                            });
+                                    })
+                                    .catch(err => {
+                                        console.log("readFile1:Err")
+                                        this.props.onStopLoading()
+                                        // this.setState({isSpinner : false})
+                                    });
+                            // })
+                            // .catch(err => {console.log("ImgToBase64:Err")
+                            //     // this.setState({isSpinner : false})
+                            // });
+                    }
+                    else {
+                        if (split[0] === "http:"||split[0] === "https:")
+                            setTimeout(this.uploadFile(res.uri), 500)
+                    }
+                }
+            }
+        }
+        catch (err) {
+            console.log("FILE_ERROR", err)
+            if (DocumentPicker.isCancel(err)) {
+
+                // User cancelled the picker, exit any dialogs or menus and move on
+            } else {
+                throw err;
+            }
+        }
+    }
     render() {
         let { showEmojiPicker, shift, localChatMessages } = this.state
         const {langLibrary, offlineMsgs, classID } = this.props.userSetup
@@ -1086,7 +1274,7 @@ class ChatMobile extends Component {
         if (offlineMsgsLocal.length){
             localChatMessages = localChatMessages.concat(offlineMsgsLocal)
         }
-        console.log("CHATMOBILE", this.props.inputenabled)
+        // console.log("CHATMOBILE", this.props.inputenabled)
 
         const msgBlockHeight = this.state.viewHeight - footerHeight - headerHeight - 20 - 70 - 25
         return (
@@ -1149,13 +1337,12 @@ class ChatMobile extends Component {
                                         lastmsg={this.state.isLastMsg}
                                         updateChatState={this.updateChatState}
                                         tags={this.state.tags}
-                                        // bottommsg={localChatMessages.length?this.state.chatID===localChatMessages.slice(-1)[0].id:false}
                                     />
                     </View>
 
                 </View>
                 {/* height = 20*/}
-                <TouchableWithoutFeedback onPress={()=>this.setState({showUserList : !this.state.showUserList})}>
+                <TouchableWithoutFeedback delayLongPress={500} onLongPress={()=>this.setState({showUserList : !this.state.showUserList})}>
 
                 <View style={styles.whoTyping}>
                             <Icon size={18} color={theme.primaryDarkColor} style={[{alighSelf : "flex-start"}]} name='person'/>
@@ -1183,7 +1370,7 @@ class ChatMobile extends Component {
                             {/*>*/}
                                 {/*<Smile />*/}
                             {/*</Button>*/}
-                            <View style={{flex: 7.5}}>
+                            <View style={{flex: 7.5, position : "relative"}}>
                                 {this.props.inputenabled?<Textarea style={styles.msgAddTextarea}
                                           onKeyPress={this.props.inputenabled?this._handleKeyDown:null}
                                           onChangeText={text=>this.onChangeText('curMessage', text)}
@@ -1193,6 +1380,18 @@ class ChatMobile extends Component {
                                           ref={component => this._textarea = component}
                                           value={this.state.curMessage}
                                 />:null}
+                                <TouchableWithoutFeedback
+                                    onLongPress={()=>this.loadFile()}
+                                >
+                                    <View  style={{right : 10, position : "absolute", zIndex : 50, top : 15}}>
+                                <Icon name={'attach-file'}
+                                      type='Material Icons'
+                                      color={"#565656"}
+                                      size={30}
+                                      style={{transform: [{rotate: '30deg'}]}}
+                                />
+                                    </View>
+                                </TouchableWithoutFeedback>
                             </View>
                             <View style={styles.btnAddMessage}>
                                 <Icon

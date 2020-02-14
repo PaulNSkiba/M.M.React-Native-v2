@@ -230,9 +230,6 @@ class MarksBlock extends Component {
         let {stat} = this.props
         const ID = this.state.dayPages[i].markID
         console.log("updateReadedID", stat.markID, ID)
-        // stat.markID = Number(ID)
-        // this.props.onReduxUpdate("UPDATE_VIEWSTAT", stat)
-        this.setState({activeTab : i})
 
         if (stat.markID < ID) {
             stat.markID = Number(ID)

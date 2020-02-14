@@ -39,6 +39,8 @@ class Budget extends React.Component {
             factInsHeader: [],
             years : [],
             isSpinner: false,
+            activeTab : 0,
+            initialPage : 0,
         }
         this.headArray = [
             {name: "Имя", width: 50, item : {id :-1}},
@@ -51,6 +53,9 @@ class Budget extends React.Component {
 
     componentDidMount() {
         this.initData()
+        setTimeout(() => {
+            this.setState({ activeTab: this.state.initialPage });
+        }, 0);
     }
 
     initData() {
@@ -64,11 +69,16 @@ class Budget extends React.Component {
                     console.log("getpays", res, planIns, planOuts)
                     let years = [...new Set(planIns.map(item=>(new Date(item.paydate).getFullYear())))]
                     year = [...years, (new Date()).getFullYear()]
+                    let curYear = 0
+                    years.forEach((item, key)=>item===(new Date().getFullYear())?curYear=key:null)
+                    console.log("YEARS", years, curYear)
                     this.setState({
                         planIns,
                         planOuts,
                         factInsHeader: this.prepPaymentsHeaderAndRowArray(planIns, this.state.curYear),
                         years,
+                        initialPage : curYear,
+                        activeTab : curYear,
                     })
 
 
@@ -197,13 +207,16 @@ class Budget extends React.Component {
             // console.log("PLANSIN", item, inThisYear, regularNotFinished, endYear)
             return item.sum>0 && (inThisYear|| regularNotFinished)
         }).forEach((item)=>{
-                console.log("cashLeaves", item, leftSum)
+                // console.log("cashLeaves", item, leftSum)
               if (item.issaldo===null)
                   leftSum = leftSum - item.sum
               else
                   leftSum = leftSum + item.sum
         })
         return leftSum
+    }
+    setActiveTab=i=>{
+         this.setState({activeTab:i})
     }
     render = () => {
         // let studList = [
@@ -230,7 +243,7 @@ class Budget extends React.Component {
 
         console.log("Budget")
         const {years} = this.state
-        const {statsBudgetPays, statsBudget} = this.props.userSetup
+        const {langLibrary, statsBudgetPays, statsBudget} = this.props.userSetup
         const {theme} = this.props.interface
         let index = 0
         years.forEach((item, key)=>item===(new Date()).getFullYear()?index=key:null)
@@ -238,13 +251,16 @@ class Budget extends React.Component {
             <View style={styles.modalView}>
                 <View style={{height: (Dimensions.get('window').height - 100)}}>
                     {years.length?
-                    <Tabs initialPage={0} page={0}>
+                    <Tabs initialPage={this.state.initialPage}
+                          page={this.state.activeTab}
+                          onChangeTab={({ i, ref, from }) => this.setActiveTab(i)}
+                        >
                         {this.state.years.map((item, key)=>{
                             const curYear = item
                             console.log("YEAR", curYear)
                             let prcnt = 0, cells = 0, payedcells = 0
                             const factInsHeader = this.prepPaymentsHeaderAndRowArray(this.state.planIns, curYear)
-                            console.log("FACTINSHEADER", factInsHeader)
+                            // console.log("FACTINSHEADER", factInsHeader)
                             // style={styles.tabHeaderWhen}
                           return <Tab key={"year"+key} heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{item}</Text></TabHeading>}>
                                 <Tabs>
@@ -406,7 +422,7 @@ class Budget extends React.Component {
                             <Button style={styles.btnClose} vertical /*active={this.state.selectedFooter===2}*/
                                     onPress={() => this.onExit()}>
                                 {/*<Icon active name="ios-bookmarks" />*/}
-                                <Text style={styles.btnCloseText}>ВЫХОД</Text>
+                                <Text style={styles.btnCloseText}>{langLibrary.mobCancel.toUpperCase()}</Text>
                             </Button>
                         </FooterTab>
                     </Footer>
