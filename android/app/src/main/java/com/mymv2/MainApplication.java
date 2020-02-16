@@ -14,7 +14,8 @@ import br.com.classapp.RNSensitiveInfo.RNSensitiveInfoPackage;
 import com.facebook.react.ReactNativeHost;
 import com.facebook.react.ReactPackage;
 import com.facebook.soloader.SoLoader;
-
+import com.facebook.react.modules.storage.ReactDatabaseSupplier;
+	
 import java.util.List;
 
 public class MainApplication extends MultiDexApplication implements ReactApplication {
@@ -25,8 +26,15 @@ public class MainApplication extends MultiDexApplication implements ReactApplica
       return BuildConfig.DEBUG;
     }
 
+
+
     @Override
     protected List<ReactPackage> getPackages() {
+		
+	// Increase the maximum size of AsyncStorage
+		long size = 100L * 1024L * 1024L; // 100 MB
+		com.facebook.react.modules.storage.ReactDatabaseSupplier.getInstance(getApplicationContext()).setMaximumSize(size);
+ 
       @SuppressWarnings("UnnecessaryLocalVariable")
       List<ReactPackage> packages = new PackageList(this).getPackages();
 	  //packages.add(new ReactVideoPackage());
@@ -50,5 +58,7 @@ public class MainApplication extends MultiDexApplication implements ReactApplica
   public void onCreate() {
     super.onCreate();
     SoLoader.init(this, /* native exopackage */ false);
+	long size = 100L * 1024L * 1024L; // 100 MB 
+    com.facebook.react.modules.storage.ReactDatabaseSupplier.getInstance(getApplicationContext()).setMaximumSize(size);
   }
 }

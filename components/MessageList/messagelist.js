@@ -488,10 +488,20 @@ class MessageList extends Component {
         this.setState({curMessage : text, isEdited : true})
     }
     updateMsg=(id, isDel)=>{
-        if (isDel) return
+        // if (isDel) return
         this.setState({isSpinner : true})
-        let json = `{   "id":${id}, 
+        let json = ""
+        if (!isDel)
+        json = `{   "id":${id}, 
                         "message": ${JSON.stringify(this.state.curMessage)}
+                        }`;
+        else
+        json = `{   "id":${id}, 
+                        "attachment2" : null,
+                        "attachment3" : null,
+                        "attachment4" : null,
+                        "attachment5" : null,
+                        "isdel" : 1
                         }`;
         // instanceAxios().post(`${API_URL}chat/add/${id}`, json)
         axios2('post', `${API_URL}chat/add/${id}`, json)
@@ -509,7 +519,7 @@ class MessageList extends Component {
             })
             .catch(res=>{
                 this.setState({isSpinner : false})
-                console.log("Ошибка записи")
+                console.log("Ошибка записи", res)
             })
 
         console.log("UPDATE", this.state.curMessage)
@@ -576,9 +586,15 @@ class MessageList extends Component {
         }
         let username = msg.hasOwnProperty('userID')?msg.userName:msg.senderId
         let hw = msg.hasOwnProperty('hwdate')&&(!(msg.hwdate===undefined))&&(!(msg.hwdate===null))?msg.subjname+':'+(toLocalDate(msg.hwdate.lenght===8?dateFromYYYYMMDD(msg.hwdate):msg.hwdate, "UA", false, true)):''
-        const isClassWork = msg.hasOwnProperty('cwdate')
+        let isClassWork = msg.hasOwnProperty('cwdate')
         let ownMsg = (username===userName)
-
+        const isDel = (message.isdel===1)
+        if (isDel){
+            isImage = false
+            hw=''
+            isClassWork = false
+            LinkPreview = null
+        }
         // console.log("msg", msg, message)
         const {user_id, msg_date, homework_subj_id, homework_date} = message
 
@@ -679,11 +695,17 @@ class MessageList extends Component {
                                 <View key={'msg'+i} id={"msg-text-"+i}
                                       style={[styles.msgText,
                                           {flex: 3, marginLeft : 20, marginTop : 5}]}>
-                                    <Text style={{color : "#565656"}}>{(msg.tagid&&(dateDiff(new Date(message.msg_date), new Date())>5))?msg.text.slice(0, 30)+'...':msg.text}</Text>
+                                            {isDel?<Icon type="MaterialIcons" style={{fontSize: 20, color: theme.primaryMsgColor}} name="delete-forever"/>:
+                                                <Text style={{color : "#565656"}}>
+                                                    {(msg.tagid&&(dateDiff(new Date(message.msg_date), new Date())>5))?msg.text.slice(0, 30)+'...':msg.text}
+                                                </Text>}
                                 </View>
                             </View>
                             :<View key={'msg'+i} id={"msg-text-"+i} style={styles.msgText}>
-                                <Text style={{color : "#565656"}}>{(msg.tagid&&(dateDiff(new Date(message.msg_date), new Date())>5))?msg.text.slice(0, 30)+'...':msg.text}</Text>
+                                {isDel?<Icon type="MaterialIcons" style={{fontSize: 20, color: theme.primaryMsgColor}} name="delete-forever"/>:
+                                    <Text style={{color : "#565656"}}>
+                                        {(msg.tagid&&(dateDiff(new Date(message.msg_date), new Date())>5))?msg.text.slice(0, 30)+'...':msg.text}
+                                    </Text>}
                             </View>}
 
                         {hw.length?<View key={'idhw'+i} style={!ownMsg?[styles.msgLeftIshw, {color : theme.primaryTextColor, backgroundColor : theme.primaryMsgColor}]:[styles.msgLeftIshw, {color : theme.primaryTextColor, backgroundColor : theme.primaryMsgColor}]}>
@@ -894,7 +916,7 @@ class MessageList extends Component {
         const topMsgID = notOwnMsgs.length?notOwnMsgs[0].id:chatMaxID
         const today = Number((new Date()).getDay() === 0 ? 6 : ((new Date()).getDay() - 1));
 
-        // console.log("TOP_MSG_CALC", chatID, topMsgID, gotStats, messages.length)
+        console.log("TOP_MSG_CALC")
 
         // if (this.state.firstLoading&&this.state.isDone&&gotStats){
         //     this.firstLoaded(chatMaxID)
@@ -1064,12 +1086,14 @@ class MessageList extends Component {
                                             <Text style={this.state.isEdited?styles.updatedMsgText:styles.updateMsgText} >{this.state.isEdited?langLibrary===undefined?'':langLibrary.mobSaveChanges===undefined?'':langLibrary.mobSaveChanges.toUpperCase():langLibrary===undefined?'':langLibrary.mobChangeTextUpper===undefined?'':langLibrary.mobChangeTextUpper.toUpperCase()}</Text>
                                         </View>
                                     </TouchableOpacity>
-                                    <TouchableOpacity style={{marginTop : 200}}
+
+                                    <TouchableOpacity style={{marginTop : 150}}
                                         onPress={()=>this.updateMsg(this.state.currentHomeworkID, true)}>
-                                        <View style={[styles.updateMsg, {backgroundColor : theme.errorColor, color : theme.primaryTextColor}]}>
-                                            <Text style={styles.deleteMsgText}>{langLibrary===undefined?'':langLibrary.mobDeleteMsg===undefined?'':langLibrary.mobDeleteMsg.toUpperCase()}</Text>
+                                        <View style={[styles.updateMsg, {backgroundColor : theme.primaryDarkColor, color : theme.primaryTextColor}]}>
+                                            <Text style={[styles.deleteMsgText, {backgroundColor : theme.primaryDarkColor}]}>{langLibrary===undefined?'':langLibrary.mobDeleteMsg===undefined?'':langLibrary.mobDeleteMsg.toUpperCase()}</Text>
                                         </View>
                                     </TouchableOpacity>
+
                                 </View>
                             </Tab>
                             <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{langLibrary===undefined?'':langLibrary.mobTags===undefined?'':langLibrary.mobTags.toUpperCase()}</Text></TabHeading>}>

@@ -106,10 +106,10 @@ class HeaderBlock extends React.Component {
         // {"target":1105,"layout":{"y":0,"width":256,"x":32,"height":54.5}}
     }
     render(){
-        const {token, userID, markscount, userName, langLibary} = this.props.userSetup
+        const {token, userID, markscount, userName, langLibary, classNumber} = this.props.userSetup
         const {showFooter, showKeyboard, theme, themeColor, showLogin} = this.props.interface
         const {online} = this.props.tempdata
-        // console.log("headerBlock:render")
+        console.log("headerBlock:render", this.props.userSetup)
         return (
             <View
                 onLayout={(event) =>this.measureView(event)}>
@@ -132,7 +132,7 @@ class HeaderBlock extends React.Component {
                         {/*{console.log("QR", `${AUTH_URL}/student/add/${this.props.userSetup.addUserToken}`)}*/}
                         <QRCode innerEyeStyle='square' logo={LogoBlack} ecl={"H"} content={`${AUTH_URL}/student/add/${this.props.userSetup.addUserToken}`}/>
                         <Text style={{marginTop : 40}}>Отсканируйте QR-код, чтобы присоединиться к</Text>
-                        <Text>{this.props.userSetup.classNumber}-й класс, {this.state.geoObj.city}, {this.state.geoObj.country}, {this.state.geoObj.iso_code}</Text>
+                        <Text>{classNumber}-й класс, {this.state.geoObj.city}, {this.state.geoObj.country}, {this.state.geoObj.iso_code}</Text>
                         <TouchableOpacity
                             style={{position: "absolute", top: 10, right: 10, zIndex: 10}}
                             onPress={() => this.setState({showQR: false})}>
@@ -193,7 +193,7 @@ class HeaderBlock extends React.Component {
                         }]}>{version}</Text>
                         <View >
                             <Button transparent disabled={showLogin}>
-                                {userID?<Text style={{color: theme.primaryTextColor, fontWeight: "700"}}>{userName}</Text>:null}
+                                {userID?<Text style={{color: theme.primaryTextColor, fontWeight: "700", fontSize : userName.length > 10?RFPercentage(1.75):RFPercentage(2)}}>{userName}</Text>:null}
                                 <Icon size={36} color={userID ? theme.primaryTextColor : theme.primaryLightColor}
                                       style={styles.menuIcon} name='person'
                                       onPress={ () => {

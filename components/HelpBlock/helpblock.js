@@ -41,9 +41,8 @@ class HelpBlock extends Component {
             // showFooter : true,
             isSpinner : false,
             showMsg : false,
-            viewHeight : Dimensions.get('window').height,
+            height : Dimensions.get('window').height,
             activeTab : 0,
-            keyboardShowed : false,
             keyboardHeight : 0,
             newsArr : this.props.userSetup.classNews.filter(item=>item.is_news===2).map(item => {
                 let newObj = {};
@@ -67,13 +66,12 @@ class HelpBlock extends Component {
         this.keyboardDidShowSub = Keyboard.addListener('keyboardDidShow', this.handleKeyboardDidShow);
         this.keyboardDidHideSub = Keyboard.addListener('keyboardDidHide', this.handleKeyboardDidHide);
         this.session_id = await getStorageData('chatSessionID')
-        // this.setActiveTab(0)
         this.props.onStopLoading()
         // console.log("session_id", this.session_id)
     }
     componentWillUnmount() {
-        this.keyboardDidShowSub.remove();
-        this.keyboardDidHideSub.remove();
+        this.keyboardDidShowSub&&this.keyboardDidShowSub.remove();
+        this.keyboardDidHideSub&&this.keyboardDidHideSub.remove();
     }
     measureView(event: Object) {
         // console.log(`*** event: ${JSON.stringify(event.nativeEvent)}`);
@@ -195,16 +193,16 @@ class HelpBlock extends Component {
         return news.map((itemNews, key)=>{
             // console.log("getNewsForAccordion", itemNews, itemNews.itembody.question)
             // contentContainerStyle={{ flexGrow: 1 }}
-            return   <View key={key} style={{height: 150}}>
-                    <ScrollView>
-                        <Text>{itemNews.itembody.question}</Text>
-                    </ScrollView>
-            </View>
+            return   <View key={key} style={{height: "auto", marginLeft : 10}}>
+                        {/*<ScrollView>*/}
+                            <Text>{itemNews.itembody.question}</Text>
+                        {/*</ScrollView>*/}
+                    </View>
         })
     }
     getUpdateForAccordion=()=>{
         // return []
-        const news = this.props.userSetup.classNews.filter(item=>item.is_news===1).map(item => {
+        const updates = this.props.userSetup.classNews.filter(item=>item.is_news===1).map(item => {
             let newObj = {};
             newObj.label = `${item.msg_header}`;
             newObj.value = item.id;
@@ -213,15 +211,15 @@ class HelpBlock extends Component {
         })
         // По умолчанию выбираем домашку на завтра...
         // console.log("getNewsForAccordion", news)
-        return news.map((itemNews, key)=>{
+        return updates.map((itemNews, key)=>{
             // console.log("getNewsForAccordion", itemNews, itemNews.itembody.question)
-            return   <View key={key} style={{height: 150}}>
-                <ScrollView>
-                        {itemNews.itembody.question.split("\n").map((item, key)=> {
-                            if (item.length) return <Text key={key}>{`${key+1}. ${item}`}</Text>
-                        }
+            return   <View key={key} style={{height: "auto", marginLeft : 10}}>
+                {/*<ScrollView>*/}
+                    {itemNews.itembody.question.split("\n").map((item, key)=> {
+                        if (item.length) return <Text key={key}>{`${key+1}. ${item}`}</Text>
+                    }
                     )}
-                </ScrollView>
+                {/*</ScrollView>*/}
             </View>
         })
     }
@@ -229,30 +227,26 @@ class HelpBlock extends Component {
 
     }
     handleKeyboardDidShow = (event) => {
-        const { height: windowHeight } = Dimensions.get('window');
+        // const { height: windowHeight } = Dimensions.get('window');
         const keyboardHeight = event.endCoordinates.height;
         console.log("keyboardHeight", keyboardHeight)
         // const currentlyFocusedField = TextInputState.currentlyFocusedField();
-        const currentlyFocusedField = this._animatedView;
-        this.setState({viewHeight : (windowHeight - keyboardHeight), keyboardShowed : true, keyboardHeight})
+        // const currentlyFocusedField = this._animatedView;
+        this.setState({keyboardHeight})
+        // this.props.onReduxUpdate("UPDATE_KEYBOARD_SHOW", true)
+        // this.props.onReduxUpdate("UPDATE_KEYBOARD_HEIGHT", keyboardHeight)
+
         console.log("handleKeyboardDidShow")
     }
 
     handleKeyboardDidHide = () => {
-        const { height: windowHeight } = Dimensions.get('window');
-        this.setState({viewHeight : windowHeight, keyboardShowed : false, keyboardHeight : 0})
+        // const { height: windowHeight } = Dimensions.get('window');
+        this.setState({keyboardHeight : 0})
+        // this.props.onReduxUpdate("UPDATE_KEYBOARD_SHOW", false)
+        // this.props.onReduxUpdate("UPDATE_KEYBOARD_HEIGHT", 0)
         console.log("handleKeyboardDidHide")
     }
-    // updateReadedID=(ID, tabID)=>{
-    //     const {classID} = this.props.userSetup
-    //     let {stat} = this.props
-    //     if (stat.markID < ID) {
-    //         stat.markID = ID
-    //         // console.log("updateReadedID", ID, stat.chatID, `${classID}chatID`, ID.toString())
-    //         setStorageData(`${classID}markID`, ID.toString())
-    //         this.props.onReduxUpdate("UPDATE_VIEWSTAT", stat)
-    //     }
-    // }
+
     setActiveTab=i=>{
         // console.log("ACTIVE_TAB", i, this.state.dayPages[i]);
         const {classID, classNews} = this.props.userSetup
@@ -295,10 +289,10 @@ class HelpBlock extends Component {
 
     render () {
         // const daysArr = daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;})
-        const {newsArr, updatesArr, updates, news} = this.state
+        const {newsArr, updatesArr, updates, news, height, keyboardHeight} = this.state
         const {langLibrary, classNews, userID} = this.props.userSetup
         const {theme, headerHeight, footerHeight} = this.props.interface
-        // console.log("HelpBlock", this.state.viewHeight)
+
         let unreadNewsCount = 0, unreadBuildsCount = 0
         if (this.props.kind==='info') {
             let {newsID, buildsID} = this.props.stat
@@ -306,15 +300,15 @@ class HelpBlock extends Component {
             unreadBuildsCount = classNews.filter(item =>(item.is_news===1&&Number(item.id) > buildsID)).length
             // console.log("button", this.props.kind, markID, unreadMarksCount, marks)
         }
-        const msgBlockHeight = Dimensions.get('window').height - (this.state.keyboardHeight?1:2)*footerHeight - headerHeight - 70 - 20 - this.state.keyboardHeight
+        const msgBlockHeight = height - (keyboardHeight?1:2)*footerHeight - headerHeight - 70 - 20 - keyboardHeight
         return (
             <View >
-                 <Tabs onChangeTab={({ i, ref, from }) => this.setActiveTab(i)} style={this.state.activeTab===2?{height:this.state.viewHeight}:null}>
+                 <Tabs onChangeTab={({ i, ref, from }) => this.setActiveTab(i)} style={this.state.activeTab===2?{height: (height - keyboardHeight)}:null}>
                          <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{langLibrary.mobNews.toUpperCase()}</Text></TabHeading>}
                                 onPress={()=>console.log("Tab1_Clicked")}>
                              <View style={styles.homeworkSubjectList}>
                                  <Container style={{flex: 1, width : "100%", flexDirection: 'column', position: "relative"}}>
-                                     <View style={{height : Dimensions.get('window').height - headerHeight - 2*footerHeight}}>
+                                     <View style={{height : Dimensions.get('window').height - headerHeight - 2*footerHeight - 20}}>
                                         <AccordionCustom data={newsArr}  data2={news} usersetup={this.props.userSetup} ishomework={true} index={0}/>
                                      </View>
                                  </Container>
@@ -329,14 +323,14 @@ class HelpBlock extends Component {
                                 </Container>
                             </View>
                         </Tab>
-                        <Tab style={{height:this.state.viewHeight}} heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{langLibrary.mobQandA.toUpperCase()}</Text></TabHeading>}>
+                        <Tab style={{height: (height - keyboardHeight)}} heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{langLibrary.mobQandA.toUpperCase()}</Text></TabHeading>}>
                             {/*<Container style={{width : "100%", flexDirection: 'column', position: "relative"}}>*/}
                                 {/*<View style={[styles.chatContainerNew, {flex: 1}]}>*/}
                                 <View
                                     ref={component => this._animatedView = component}
                                     collapsable={false}
                                     onLayout={(event) => {this.measureView(event)}}
-                                    style={[styles.chatContainerNew, {flex: 1}, {height:this.state.viewHeight}]}>
+                                    style={[styles.chatContainerNew, {flex: 1}, {height: (height - keyboardHeight)}]}>
                                     {this.state.isSpinner ? <View
                                         style={{position: "absolute", flex: 1, alignSelf: 'center', marginTop: 240, zIndex: 100}}>
                                         <Spinner color={theme.secondaryColor}/>
@@ -372,7 +366,7 @@ class HelpBlock extends Component {
                                                     </Card>)}
                                                 </ScrollView>
                                             </View>
-                                            <View style={[styles.addMsgContainer, {display: "flex", flex : 1, bottom : Platform.OS==="ios"?this.state.keyboardHeight:0}]}>
+                                            <View style={[styles.addMsgContainer, {display: "flex", flex : 1, bottom : Platform.OS==="ios"?keyboardHeight:0}]}>
                                                 <View>
                                                     <Dialog
                                                         visible={this.state.showMsg}

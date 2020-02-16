@@ -603,7 +603,7 @@ export default styles = StyleSheet.create({
         justifyContent: "center",
         alignItems : "center",
         textAlign : "center",
-        backgroundColor : "#b40530",
+        // backgroundColor : "#b40530",
         color : "#E0E0E0",
         width : "100%",
         height : "100%",

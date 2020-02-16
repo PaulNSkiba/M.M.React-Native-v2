@@ -55,8 +55,8 @@ class LoginBlock extends React.Component {
         this.props.onReduxUpdate('UPDATE_FOOTER_SHOW', false);
     }
     componentWillUnmount(){
-        this.keyboardDidShowSub.remove();
-        this.keyboardDidHideSub.remove();
+        this.keyboardDidShowSub&&this.keyboardDidShowSub.remove();
+        this.keyboardDidHideSub&&this.keyboardDidHideSub.remove();
         this.props.onReduxUpdate('UPDATE_FOOTER_SHOW', true);
     }
     shouldComponentUpdate(nextProps, nextState) {
@@ -79,19 +79,21 @@ class LoginBlock extends React.Component {
         const { height: windowHeight } = Dimensions.get('window');
         const keyboardHeight = event.endCoordinates.height;
         console.log("keyboardHeight", keyboardHeight)
-        const currentlyFocusedField = this._animatedView;
+        // const currentlyFocusedField = this._animatedView;
 
         this.props.onReduxUpdate("UPDATE_KEYBOARD_SHOW", true)
+        this.props.onReduxUpdate("UPDATE_KEYBOARD_HEIGHT", keyboardHeight)
         // this.setState({viewHeight : (windowHeight - keyboardHeight), keyboardHeight})
 
         console.log("handleKeyboardDidShow")
     }
 
     handleKeyboardDidHide = () => {
-        const { height: windowHeight } = Dimensions.get('window');
+        // const { height: windowHeight } = Dimensions.get('window');
         // this.setState({viewHeight : (windowHeight), keyboardHeight : 0})
 
         this.props.onReduxUpdate("UPDATE_KEYBOARD_SHOW", false)
+        this.props.onReduxUpdate("UPDATE_KEYBOARD_HEIGHT", 0)
         console.log("handleKeyboardDidHide")
 
     }
@@ -226,7 +228,7 @@ class LoginBlock extends React.Component {
         const {userID, token, langLibrary} = this.props.userSetup
         const {userName, password, email} = this.props.saveddata
 
-        // console.log("LOGIN_RENDER")
+        console.log("LOGIN_RENDER", showKeyboard)
         // const showModal = this.showLogin&&logBtnClicked&&(!loginmsg.length)
         // return <View></View>
 

@@ -74,7 +74,7 @@ class ChatMobile extends Component {
             appState : AppState.currentState,
             appStateChanged : false,
             shift: new Animated.Value(0),
-            viewHeight : Dimensions.get('window').height,
+            height : Dimensions.get('window').height,
             keyboardHeight : 0,
             isLastMsg : false,
             chatID : 0,
@@ -155,8 +155,8 @@ class ChatMobile extends Component {
         NetInfo.isConnected.removeEventListener('connectionChange', this.handleConnectivityChange);
         AppState.removeEventListener('change', this._handleAppStateChange);
 
-        this.keyboardDidShowSub.remove();
-        this.keyboardDidHideSub.remove();
+        this.keyboardDidShowSub&&this.keyboardDidShowSub.remove();
+        this.keyboardDidHideSub&&this.keyboardDidHideSub.remove();
     }
     shouldComponentUpdate(nextProps, nextState) {
         // console.log("shouldComponentUpdate:chatMobile")
@@ -190,8 +190,11 @@ class ChatMobile extends Component {
         const keyboardHeight = event.endCoordinates.height;
         console.log("keyboardHeight", keyboardHeight)
         // const currentlyFocusedField = TextInputState.currentlyFocusedField();
-        const currentlyFocusedField = this._animatedView;
-        this.setState({viewHeight : (windowHeight - keyboardHeight), keyboardHeight})
+        // const currentlyFocusedField = this._animatedView;
+        this.setState({keyboardHeight})
+        // this.props.onReduxUpdate("UPDATE_KEYBOARD_SHOW", true)
+        // this.props.onReduxUpdate("UPDATE_KEYBOARD_HEIGHT", keyboardHeight)
+
         console.log("handleKeyboardDidShow")
         // this._animatedView.measure((originX, originY, width, height, pageX, pageY) => {
         //     const fieldHeight = height;
@@ -212,8 +215,11 @@ class ChatMobile extends Component {
         // });
     }
     handleKeyboardDidHide = () => {
-        const { height: windowHeight } = Dimensions.get('window');
-        this.setState({viewHeight : (windowHeight), keyboardHeight : 0})
+        // const { height: windowHeight } = Dimensions.get('window');
+        this.setState({keyboardHeight : 0})
+        this.props.onReduxUpdate("UPDATE_KEYBOARD_SHOW", false)
+        this.props.onReduxUpdate("UPDATE_KEYBOARD_HEIGHT", 0)
+
         console.log("handleKeyboardDidHide")
         // return;
         // Animated.timing(
@@ -1264,10 +1270,10 @@ class ChatMobile extends Component {
         }
     }
     render() {
-        let { showEmojiPicker, shift, localChatMessages } = this.state
+        let { showEmojiPicker, shift, localChatMessages, keyboardHeight, height } = this.state
         const {langLibrary, offlineMsgs, classID } = this.props.userSetup
-        const {theme, footerHeight, headerHeight} = this.props.interface
-        const {loading} = this.props.tempdata
+        const {theme, footerHeight, headerHeight } = this.props.interface
+        // const {loading} = this.props.tempdata
 
         const offlineMsgsLocal = offlineMsgs.filter(item=>(!localChatMessages.filter(itemChat=>itemChat.uniqid===item.uniqid).length))
 
@@ -1276,13 +1282,13 @@ class ChatMobile extends Component {
         }
         // console.log("CHATMOBILE", this.props.inputenabled)
 
-        const msgBlockHeight = this.state.viewHeight - footerHeight - headerHeight - 20 - 70 - 25
+        const msgBlockHeight = height - keyboardHeight - footerHeight - headerHeight - 20 - 70 - 25
         return (
             <View
                 ref={component => this._animatedView = component}
                 collapsable={false}
                 onLayout={(event) => {this.measureView(event)}}
-                style={[this.props.hidden?styles.hidden:styles.chatContainerNew, {height: this.state.viewHeight}]}>
+                style={[this.props.hidden?styles.hidden:styles.chatContainerNew, {height: (height - keyboardHeight)}]}>
                 <View style={{height: msgBlockHeight}}>
                      {showEmojiPicker ? (
                      <View className="picker-background">
@@ -1362,7 +1368,7 @@ class ChatMobile extends Component {
                 </TouchableWithoutFeedback>
 
                 {/* height = 50 + 20 = 70*/}
-                <View style={[styles.addMsgContainer, {display: "flex", flex : 1, bottom : (Platform.OS==="ios"?this.state.keyboardHeight:0)}]}>
+                <View style={[styles.addMsgContainer, {display: "flex", flex : 1, bottom : (Platform.OS==="ios"?keyboardHeight:0)}]}>
                             {/*<Button*/}
                                 {/*type="button"*/}
                                 {/*className="toggle-emoji"*/}

@@ -32,6 +32,8 @@ export function interfaceReducer(state = initialState, action) {
             return {...state, showFooter: action.payload}
         case 'UPDATE_KEYBOARD_SHOW' :
             return {...state, showKeyboard: action.payload}
+        case 'UPDATE_KEYBOARD_HEIGHT' :
+            return {...state, keyboardHeight: action.payload}
         case 'CHANGE_THEME' :
             return{...state, theme : action.payload}
         case 'CHANGE_COLOR' :

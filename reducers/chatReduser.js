@@ -14,10 +14,10 @@ export function chatReducer(state = initialState, action) {
         case "INIT_CHAT_MESSAGES" : {
             return{...state, initialState}
         }
-        case "ADD_CHAT_MESSAGES" : {
-            // console.log("ADD_CHAT_MESSAGES", action.payload)
-            return{...state, localChatMessages: action.payload}
-        }
+        // case "ADD_CHAT_MESSAGES" : {
+        //     // console.log("ADD_CHAT_MESSAGES", action.payload)
+        //     return{...state, localChatMessages: action.payload}
+        // }
         default:
             return state
     }

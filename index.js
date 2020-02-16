@@ -63,18 +63,18 @@ class RootOfMyApp extends Component {
                 <Spinner color={themeOptions['#7DA8E6'].primaryColor}/>
             </View>)
         return (
-        <Provider store={store}>
+            <Root>
+                <Provider store={store}>
             {/*<PersistGate loading={<View style={{position : "absolute", flex: 1, alignSelf : 'center', marginTop : 240, zIndex : 100 }}><Spinner color={themeOptions['#46b5be'].secondaryColor}/></View>}*/}
             {/*persistor={store}>*/}
             {/*<ReduxNetworkProvider>*/}
             {/*<NetworkProvider>*/}
-            <Root>
-                <MyApp/>
-            </Root>
+                    <MyApp/>
             {/*</NetworkProvider>*/}
             {/*</ReduxNetworkProvider>*/}
             {/*</PersistGate>*/}
-        </Provider>
+                </Provider>
+            </Root>
         )
     }
 }

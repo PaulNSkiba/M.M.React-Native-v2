@@ -155,8 +155,8 @@ class App extends Component {
 //            const dataSaved = JSON.parse(await getStorageData("myMarks.data"))
 //             const {email, token} = dataSaved
 
-            this.keyboardDidShowSub = Keyboard.addListener('keyboardDidShow', this.handleKeyboardDidShow);
-            this.keyboardDidHideSub = Keyboard.addListener('keyboardDidHide', this.handleKeyboardDidHide);
+            // this.keyboardDidShowSub = Keyboard.addListener('keyboardDidShow', this.handleKeyboardDidShow);
+            // this.keyboardDidHideSub = Keyboard.addListener('keyboardDidHide', this.handleKeyboardDidHide);
 
             this.props.onReduxUpdate("UPDATE_TOKEN", token===null?'':token)
             this.setState({userEmail: email, userToken: token===null?'':token})
@@ -173,8 +173,8 @@ class App extends Component {
         //     AppState.removeEventListener('change', this._handleAppStateChange);
         // }
         AppState.removeEventListener('change', this._handleAppStateChange);
-        this.keyboardDidShowSub.remove();
-        this.keyboardDidHideSub.remove();
+        // this.keyboardDidShowSub.remove();
+        // this.keyboardDidHideSub.remove();
     }
     _toggleSubview() {
         // this.setState({
@@ -198,23 +198,24 @@ class App extends Component {
         this.setState({isHidden : !this.state.isHidden})
     }
     handleKeyboardDidShow = (event) => {
-        const { height: windowHeight } = Dimensions.get('window');
+        // const { height: windowHeight } = Dimensions.get('window');
         const keyboardHeight = event.endCoordinates.height;
-        console.log("keyboardHeight", keyboardHeight)
-        const currentlyFocusedField = this._animatedView;
 
+        // console.log("keyboardHeight", keyboardHeight)
         this.props.onReduxUpdate("UPDATE_KEYBOARD_SHOW", true)
+        this.props.onReduxUpdate("UPDATE_KEYBOARD_HEIGHT", keyboardHeight)
         // this.setState({viewHeight : (windowHeight - keyboardHeight), keyboardHeight})
-
-        console.log("handleKeyboardDidShow")
+        // console.log("handleKeyboardDidShow")
     }
 
     handleKeyboardDidHide = () => {
-        const { height: windowHeight } = Dimensions.get('window');
+        // const { height: windowHeight } = Dimensions.get('window');
         // this.setState({viewHeight : (windowHeight), keyboardHeight : 0})
 
         this.props.onReduxUpdate("UPDATE_KEYBOARD_SHOW", false)
-        console.log("handleKeyboardDidHide")
+        this.props.onReduxUpdate("UPDATE_KEYBOARD_HEIGHT", 0)
+
+        // console.log("handleKeyboardDidHide")
 
     }
     getLangAsync = async (lang) => {
