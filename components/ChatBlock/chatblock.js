@@ -22,6 +22,7 @@ class ChatBlock extends React.Component {
         // console.log("chatRender", this.props.user.logging)
         const {userID} = this.props.userSetup
         const {showLogin, theme} = this.props.interface
+        // <LoginBlock updateState={this.props.updateState}/>
         return (
         <View style={{flex : 1, position : "relative", flexDirection: 'column', height : "50%"}}>
             {/*{this.props.user.logging?<View style={{position : "absolute", flex: 1, alignSelf : 'center', marginTop : 240, zIndex : 100 }}><Spinner color={theme.secondaryColor}/></View>:null}*/}
@@ -36,11 +37,13 @@ class ChatBlock extends React.Component {
                             messages={this.state.chatMessages}
                             subjs={this.props.userSetup.selectedSubjects}
                             btnclose={() => { this.setState({displayChat: !this.state.displayChat}) }}
-                            display={this.state.displayChat} newmessage={this.newChatMessage}
+                            display={this.state.displayChat}
+                            newmessage={this.newChatMessage}
                             updateState={this.props.updateState}
                             inputenabled={this.props.inputenabled}
+                            newmessages={this.props.newmessages}
                         />
-                :<LoginBlock updateState={this.props.updateState}/>}
+                        :null}
             </View>
         </View>)
     }

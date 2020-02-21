@@ -5,8 +5,9 @@ import React, { Component } from 'react'
 import { StyleSheet, Text, View, Image, ScrollView,
         TouchableHighlight, Modal, Radio, TouchableOpacity, TouchableWithoutFeedback, Dimensions } from 'react-native';
 import {    Container, Header, Left, Body, Right, Button,
-    Icon, Title, Content,  Footer, FooterTab, TabHeading, Tabs, Tab, Badge,
-    Form, Item, Input, Label, Textarea, CheckBox, ListItem, Thumbnail, Spinner } from 'native-base';
+            Title, Content,  Footer, FooterTab, TabHeading, Tabs, Tab, Badge,
+            Form, Item, Input, Label, Textarea, CheckBox, ListItem, Thumbnail, Spinner, Icon, Toast } from 'native-base';
+// import { Icon } from 'react-native-elements'
 import RadioForm, {RadioButton, RadioButtonInput, RadioButtonLabel} from 'react-native-simple-radio-button';
 import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, addDay, toYYYYMMDD,
         daysList, toLocalDate, instanceAxios, axios2, arrOfWeekDaysLocal,
@@ -21,6 +22,7 @@ import {RFPercentage, RFValue} from "react-native-responsive-fontsize";
 import UserAvatar from 'react-native-user-avatar'
 import SwitchSelector from 'react-native-switch-selector'
 import CalendarPicker from 'react-native-calendar-picker';
+import moment from "moment";
 
 // import VisibilitySensor from 'react-native-visibility-sensor'
 // import InViewPort from 'react-native-inviewport'
@@ -81,11 +83,14 @@ class MessageList extends Component {
             uploadedMessages : false,
             hwOnDate : null,
             workType : 0,
+            i : 0,
+            currentMsgID : 0,
             selDateIndex : this.getNextStudyDay(daysList().map(item=>{   let newObj = {};
                 newObj.label = item.name;
                 newObj.value = item.id;
                 return newObj;}))[0]
             };
+        this.i = 0
         this.curMsgDate = new Date('19000101')
         this.onMessageDblClick = this.onMessageDblClick.bind(this)
         this.onSaveMsgClick=this.onSaveMsgClick.bind(this)
@@ -113,13 +118,27 @@ class MessageList extends Component {
         // setTimeout(()=> {
         //     this._scrollView.scrollTo({x: 0, y: this.unreadY, animated: false})
         //     }, 1000)
-
+        this.props.onStopLoading()
     }
-    // shouldComponentUpdate(nextProps, nextState) {
-    //     if (nextState.isDone&&this.state.isDone!==nextState.isDone)
-    //         this._scrollView.scrollTo({x: 0, y: this.unreadY, animated: false})
-    //     return nextState.isDone
-    // }
+    shouldComponentUpdate(nextProps, nextState) {
+        // console.log("shoudUpdate:MessageList", nextProps.stat.gotStats, nextProps.stat.chatID, this.msgsY, this.state.isDone, nextState.isDone, new Date().toLocaleTimeString())
+        // if (nextProps.stat.gotStats!==this.props.stat.gotStats&&nextProps.stat.chatID!==this.props.stat.chatID&&this.msgsY.count&&this.state.isDone)
+        //     this._scrollView.scrollTo({x: 0, y: this.msgsY[nextProps.stat.chatID], animated: false})
+
+        if (nextState.isDone&&this.state.isDone!==nextState.isDone&&nextProps.stat.chatID&&this.msgsY.has(nextProps.stat.chatID)) {
+            this._scrollView.scrollTo({x: 0, y: this.msgsY.get(nextProps.stat.chatID), animated: false})
+            console.log("SCROLL", this.msgsY.get(nextProps.stat.chatID))
+        }
+        if (nextProps.islastmsg)
+            this._scrollView.scrollToEnd()
+
+        // if (!this.state.isDone)
+        //     this.props.onStartLoading()
+        // else
+        //     this.props.onStopLoading()
+
+        return true//nextState.isDone
+    }
     getSavedCreds=async ()=>{
         const credents = await getStorageData("checkTimetable")
         if (credents.length){
@@ -198,7 +217,7 @@ class MessageList extends Component {
         // console.log("onMessageDblClick", "e.target.id:", e.target.id, "key", key, "this.state.editKey", this.state.editKey)
         if (Number(key)!==this.state.editKey) this.setState({editKey : Number(key)})
     }
-    onLongPressMessage=(id, hwSubjID, hwOnDate, text)=>{
+    onLongPressMessage=(id, hwSubjID, hwOnDate, text, cwSubjID, cwOnDate)=>{
         const {selectedSubjects} = this.props.userSetup
         let {langCode} = this.props.interface
         const subjects = selectedSubjects.map(item=>{
@@ -207,27 +226,32 @@ class MessageList extends Component {
                 value : item.id
             }
         })
+        const curSubjID = cwSubjID!==null&&cwSubjID?cwSubjID:hwSubjID
+        const curOnDate = cwSubjID!==null&&cwSubjID?cwOnDate:hwOnDate
+
         let curSubjKey = -1, curSubjValue = 0
             for (let i = 0; i < subjects.length; i++){
-                // console.log("Cicle", hwSubjID, subjects[i].value, i, subjects)
-                if (hwSubjID===subjects[i].value) {
+                if (curSubjID===subjects[i].value) {
                     curSubjKey = i;
                     curSubjValue = subjects[i].value
                     break;
                 }
             }
-            console.log("OnLongPress", curSubjKey, hwOnDate)
+        console.log("OnLongPress", curOnDate, moment(curOnDate).date(), this._calendarPicker)
+        // const daysArr = this.state.daysList //daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id; newObj.value = "wd"+item.id;  return newObj;})
 
-        const daysArr = this.state.daysList //daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id; newObj.value = "wd"+item.id;  return newObj;})
         this.setState({ modalVisible : true,
                         currentHomeworkID : id,
                         curSubjKey : curSubjValue,
-                        curDateKey : (!(hwOnDate===null))?hwOnDate:null,
+                        curDateKey : (!(curOnDate===null))?curOnDate:null,
                         selSubject : { value : curSubjValue} ,
-                        selDate : (!(hwOnDate===null))?this.getCurStudyDay(daysArr, new Date(hwOnDate))[1]:this.state.selDate,
+                        selDate : curOnDate!==null?this.getCurStudyDay(this.state.daysList, new Date(curOnDate))[1]:this.state.selDate,
                         curMessage : text,
-                        hwOnDate})
+                        workType : cwSubjID!==null&&cwSubjID?1:0,
+                        curOnDate})
 
+        if (this._calendarPicker!==undefined&&this._calendarPicker!==null)
+            this._calendarPicker.handleOnPressDay(moment(curOnDate).date())
     }
     setModalVisible(visible, setHomework) {
         let {selSubject, selDate, currentHomeworkID} = this.state
@@ -281,7 +305,7 @@ class MessageList extends Component {
 
                 // Здесь будем апдейтить базу домашки
                 if (currentHomeworkID)
-                this.props.addhomework(homeworkMsg.message, subject.subj_key, subject.subj_name_ua, new Date(addDay(new Date(), selDate.value)), currentHomeworkID)
+                this.props.addhomework(homeworkMsg.message, subject.subj_key, subject.subj_name_ua, new Date(addDay(new Date(), selDate.value)), currentHomeworkID, this.props.userSetup)
                 //  daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id; newObj.value = "wd" + item.id;  return newObj;})
 
                 const todayMessages = localChatMessages.filter(item=>(new Date(item.msg_date).toLocaleDateString())===(new Date().toLocaleDateString()))
@@ -458,7 +482,9 @@ class MessageList extends Component {
         return [i, obj];
     }
     getCurStudyDay=(arr, date)=>{
-        let i = 0; obj = {value : 1, value2 : "wd1"};
+        let i = dateDiff(date, new Date());
+        obj = {value : dateDiff(date, new Date()), value2 : "wd1", label : new Date(date).toLocaleDateString(), date : date};
+
         arr.forEach((item, index)=>{
             let arrDate = dateFromYYYYMMDD(toYYYYMMDD(addDay(new Date(), item.value)))
             // console.log("getCurStudyDay", arrDate, item.value, date)
@@ -489,7 +515,7 @@ class MessageList extends Component {
     }
     updateMsg=(id, isDel)=>{
         // if (isDel) return
-        this.setState({isSpinner : true})
+        // this.setState({isSpinner : true})
         let json = ""
         if (!isDel)
         json = `{   "id":${id}, 
@@ -506,19 +532,27 @@ class MessageList extends Component {
         // instanceAxios().post(`${API_URL}chat/add/${id}`, json)
         axios2('post', `${API_URL}chat/add/${id}`, json)
             .then(res=>{
-                this.setState({isEdited : false, isSpinner : false})
+                this.setState({isEdited : false})
                 Toast.show({
-                    text: `Сообщение изменено`,
+                    text: isDel?`Сообщение удалено`:`Изменения сохранены`,
                     buttonText: 'ОК',
                     position : 'bottom',
-                    duration : 3000,
+                    duration : 2500,
                     style : {marginBottom : 100}
                     // type : 'success'
                 })
                 console.log("Удачно записано")
             })
             .catch(res=>{
-                this.setState({isSpinner : false})
+                // this.setState({isSpinner : false})
+                Toast.show({
+                    text: `Ошибка записи`,
+                    buttonText: 'ОК',
+                    position : 'bottom',
+                    duration : 2500,
+                    style : {marginBottom : 100}
+                    // type : 'success'
+                })
                 console.log("Ошибка записи", res)
             })
 
@@ -527,7 +561,7 @@ class MessageList extends Component {
     updateReadedID=ID=>{
         const {classID, localChatMessages, userID} = this.props.userSetup
         let {stat} = this.props
-
+        this.setState({currentMsgID : ID})
         if (stat.chatID < ID) {
             stat.chatID = ID
             stat.chatCnt = localChatMessages.filter(item => (item.id > ID && item.user_id !== userID)).length
@@ -540,22 +574,27 @@ class MessageList extends Component {
         }
     }
     updateY=(offsetY, chatMaxID, msgID)=> {
-        // console.log('updateY', offsetY, chatMaxID)
+        // console.log('updateY:0', offsetY, chatMaxID)
         if (msgID!==null) {
-            this.msgsY.set(msgID, offsetY)
+            this.msgsY.set(msgID, Math.round(offsetY))
+            if (chatMaxID)
+                this.setState({isDone : true})
         }
         else {
             if (!chatMaxID) {
                 console.log("updateY:1", offsetY)
                 this._scrollView.scrollTo({x: 0, y: offsetY, animated: false})
-                this.setState({isDone: true})
+                this.setState({isDone : true})
             }
             else {
                 // this._scrollView.scrollTo({x: 0, y: offsetY, animated: false})
                 console.log("updateY:2", offsetY)
-                this.props.updateChatState('isLastMsg', false)
-                this._scrollView.scrollToEnd()
                 this.setState({isDone: true})
+                this._scrollView.scrollTo({x: 0, y: offsetY, animated: false})
+                this.props.updateChatState('isLastMsg', false)
+                this.props.setstate({isLastMsg : false})
+                // this._scrollView.scrollToEnd()
+
             }
             this.unreadY = offsetY
             // alert("isDone")
@@ -572,6 +611,8 @@ class MessageList extends Component {
         let { text } = msg;
         isImage = ((message.attachment3!==null)&&(message.attachment3!==undefined))
 
+        this.i = i
+
         urlMatches.forEach(link => {
             const startIndex = text.indexOf(link);
             const endIndex = startIndex + link.length;
@@ -586,6 +627,7 @@ class MessageList extends Component {
         }
         let username = msg.hasOwnProperty('userID')?msg.userName:msg.senderId
         let hw = msg.hasOwnProperty('hwdate')&&(!(msg.hwdate===undefined))&&(!(msg.hwdate===null))?msg.subjname+':'+(toLocalDate(msg.hwdate.lenght===8?dateFromYYYYMMDD(msg.hwdate):msg.hwdate, "UA", false, true)):''
+        let cw = msg.hasOwnProperty('cwdate')&&(!(msg.cwdate===undefined))&&(!(msg.cwdate===null))?msg.subjname+':'+(toLocalDate(msg.cwdate.lenght===8?dateFromYYYYMMDD(msg.cwdate):msg.cwdate, "UA", false, true)):''
         let isClassWork = msg.hasOwnProperty('cwdate')
         let ownMsg = (username===userName)
         const isDel = (message.isdel===1)
@@ -595,8 +637,8 @@ class MessageList extends Component {
             isClassWork = false
             LinkPreview = null
         }
-        // console.log("msg", msg, message)
-        const {user_id, msg_date, homework_subj_id, homework_date} = message
+        // console.log("msg", i, (new Date()).toLocaleTimeString())
+        const {user_id, msg_date, homework_subj_id, homework_date, classwork_subj_id, classwork_date} = message
 
         return (this.props.hwdate===null||(!(this.props.hwdate===null)&&((new Date(this.props.hwdate)).toLocaleDateString()===(new Date(msg.hwdate)).toLocaleDateString())))?
             <ViewportView key={i}
@@ -652,8 +694,8 @@ class MessageList extends Component {
                 {/*{console.log("MSG_TAG", msg.tagid, dateDiff(new Date(message.msg_date), new Date()), message.msg_date, msg, message)}*/}
 
                 <TouchableWithoutFeedback   key={i} id={"msgarea-"+msg.id}
-                                            delayLongPress={500}
-                                            onLongPress={user_id===userID?()=>this.onLongPressMessage(msg.id, homework_subj_id, (homework_date===undefined)?null:homework_date, msg.text):null}
+                                            delayLongPress={300}
+                                            onLongPress={user_id===userID?()=>this.onLongPressMessage(msg.id, homework_subj_id, (homework_date===undefined)?null:homework_date, msg.text, classwork_subj_id, classwork_date):null}
                 >
                     <View style={{width : "100%"}}>
                     {!ownMsg?<View style={{position : "absolute", display : "flex", flexDirection : "column",
@@ -711,6 +753,12 @@ class MessageList extends Component {
                         {hw.length?<View key={'idhw'+i} style={!ownMsg?[styles.msgLeftIshw, {color : theme.primaryTextColor, backgroundColor : theme.primaryMsgColor}]:[styles.msgLeftIshw, {color : theme.primaryTextColor, backgroundColor : theme.primaryMsgColor}]}>
                             <Text style={{color : theme.primaryTextColor, fontSize : RFPercentage(2)}}>{hw}</Text>
                         </View>:null}
+
+                        {cw.length?<View key={'idcw'+i} style={!ownMsg?[styles.msgLeftIshw, {display : "flex", flexDirection : "row", color : theme.primaryMsgColor, backgroundColor : theme.primaryTextColor, borderWidth : 2, borderColor : theme.primaryMsgColor}]:[styles.msgLeftIshw, {display : "flex", flexDirection : "row", color : theme.primaryMsgColor, backgroundColor : theme.primaryTextColor, borderWidth : 2, borderColor : theme.primaryMsgColor}]}>
+                            <Icon type="Entypo" style={{fontSize: 15, color: theme.primaryMsgColor}} name="open-book"/>
+                            <Text style={{color : theme.primaryMsgColor, fontSize : RFPercentage(2)}}>{` ${cw}`}</Text>
+                         </View>:null}
+
                         <View style={msg.id?[styles.btnAddTimeDone, {color : theme.primaryDarkColor}]:styles.btnAddTime}>
                             <Text style={msg.id?[styles.btnAddTimeDone, {color : theme.primaryDarkColor}]:styles.btnAddTime}>{msg.time}</Text>
                         </View>
@@ -718,10 +766,10 @@ class MessageList extends Component {
                             <View><Icon type="Entypo" style={{fontSize: 15, color: theme.primaryMsgColor}} name="pin"/>
                             </View>
                         </View>:null}
-                        {isClassWork?<View style={{ position : "absolute", right : 3, top : 5, display : "flex", alignItems : "center"}}>
-                            <View><Icon type="Entypo" style={{fontSize: 15, color: theme.primaryMsgColor}} name="open-book"/>
-                            </View>
-                        </View>:null}
+                        {/*{isClassWork?<View style={{ position : "absolute", right : 3, top : 5, display : "flex", alignItems : "center"}}>*/}
+                            {/*<View><Icon type="Entypo" style={{fontSize: 15, color: theme.primaryMsgColor}} name="open-book"/>*/}
+                            {/*</View>*/}
+                        {/*</View>:null}*/}
                     </View>
                     </View>
                 </TouchableWithoutFeedback>
@@ -839,7 +887,7 @@ class MessageList extends Component {
 
         let messages = []
         if (this.props.isnew) {
-            messages = this.props.localmessages
+            messages = localChatMessages //this.props.localmessages
         }
         else
             messages = this.props.messages
@@ -859,16 +907,21 @@ class MessageList extends Component {
             //                                         return newObj;})
 
         let initialDay = this.getNextStudyDay(daysArr)[1].value; // this.getNextStudyDay(daysArr)[1].label //
+        let initialDate = this.getNextStudyDay(daysArr)[1].date;
 
         // Если уже готовая домашка
-        if (!(this.state.curDateKey===null))
+        if (!(this.state.curDateKey===null)) {
             initialDay = this.getCurStudyDay(daysArr, new Date(this.state.curDateKey))[1].value //'wd'+this.getCurStudyDay(daysArr, new Date(this.state.curDateKey))[0]; // this.getCurStudyDay(daysArr, new Date(this.state.curDateKey))[1].label //
+            initialDate = new Date(this.state.curDateKey)
+        }
         else {
-            if (this.state.selDate!== null&&this.state.selDate)
-                initialDay = this.getCurStudyDay(daysArr, new Date(this.state.selDate.date))[1].value// this.state.selDate.value; // this.state.selDate.label //
+            if (this.state.selDate!== null&&this.state.selDate) {
+                initialDay = this.getCurStudyDay(daysArr, new Date(this.state.selDate.date))[1].value // this.state.selDate.value; // this.state.selDate.label //
+                initialDate = new Date(this.state.selDate.date)
+            }
         }
 
-        // console.log("INITIALDAY", initialDay, this.state.curDateKey, this.state.selDate)
+        // console.log("INITIALDAY", initialDay, initialDate, moment(initialDay).date())
 
         let realDateIndex = null
 
@@ -916,14 +969,29 @@ class MessageList extends Component {
         const topMsgID = notOwnMsgs.length?notOwnMsgs[0].id:chatMaxID
         const today = Number((new Date()).getDay() === 0 ? 6 : ((new Date()).getDay() - 1));
 
-        console.log("TOP_MSG_CALC")
+        // console.log("TOP_MSG_CALC")
 
         // if (this.state.firstLoading&&this.state.isDone&&gotStats){
         //     this.firstLoaded(chatMaxID)
         // }
         //
+        const workOptions=[
+        { label: "Домашка", value: 0, imageIcon: null },
+        { label: "Классная", value: 1, imageIcon: null } //images.masculino = require('./path_to/assets/img/masculino.png')
+        ]
+        //this.state.isDone&&gotStats?1:0
+        // this.state.isDone?1:0
+        // console.log("TOP_MSG_CALC", this.state.isDone, gotStats)
+        // if (!this.state.isDone)
+        //     return <View style={{   width : Dimensions.get("window").width,
+        //                             height : Dimensions.get("window").height,
+        //                             backgroundColor : theme.primaryTextColor,
+        //                             display : "flex",
+        //                             alignItems : "center",
+        //                             justifyContent : "center"
+        //     }}></View>
         return (
-            <View style={{opacity : this.state.isDone&&gotStats?1:0}}>
+            <View style={{opacity : this.state.isDone?1:0}}>
                 <Modal
                     animationType="slide"
                     transparent={false}
@@ -964,27 +1032,74 @@ class MessageList extends Component {
                         <Tabs onChangeTab={({ i, ref, from }) => this.setState({activeSubTab : i})}>
                             <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color : theme.primaryTextColor}}>{langLibrary===undefined?'':langLibrary.mobSubject===undefined?'':langLibrary.mobSubject.toUpperCase()}</Text></TabHeading>}>
                                 <View style={{width : "90%", marginTop : 5, marginBottom : 5, marginLeft : "5%", marginRight : "5%"}}>
-                                <SwitchSelector
-                                    initial={this.state.workType}
-                                    onPress={value => this.setState({ workType: value })}
-                                    textColor={theme.primaryColor} //'#7a44cf'
-                                    selectedColor={theme.primaryDarkColor}
-                                    buttonColor={theme.primaryColor}
-                                    borderColor={theme.primaryColor}
-                                    hasPadding
-                                    options={[
-                                        { label: "Домашка", value: 0, imageIcon: null }, //images.feminino = require('./path_to/assets/img/feminino.png')
-                                        { label: "Классная", value: 1, imageIcon: <Icon type="Entypo" style={{fontSize: 15, color: theme.primaryMsgColor}} name="open-book"/> } //images.masculino = require('./path_to/assets/img/masculino.png')
-                                    ]}
-                                />
+                                        <RadioForm
+                                            formHorizontal={true}
+                                            animation={false}
+                                            style={{backgroundColor : "#fff", display : "flex",
+                                                    flexDirection : "row", borderRadius : 15
+                                                // , borderColor : "#00f", borderWidth : 1,
+
+                                            }}
+                                        >
+                                            <View style={{backgroundColor : theme.primaryColor, display : "flex",
+                                                flexDirection : "row", borderRadius : 15, width : "100%",
+                                                alignItems : "center", justifyContent : "space-around"}}>
+                                            {workOptions.map((obj, i)=>{
+                                                return <RadioButton labelHorizontal={true} key={i}>
+                                                    {/*  You can set RadioButtonLabel before RadioButtonInput */}
+                                                    <RadioButtonInput
+                                                        obj={obj}
+                                                        index={i}
+                                                        isSelected={this.state.workType === i}
+                                                        onPress={value => this.setState({ workType: value })}
+                                                        borderWidth={1}
+                                                        buttonInnerColor={theme.primaryTextColor}
+                                                        buttonOuterColor={theme.primaryTextColor}
+                                                        buttonSize={15}
+                                                        buttonOuterSize={19}
+                                                        buttonStyle={{}}
+                                                        buttonWrapStyle={{marginLeft: 10, marginTop: 15, marginBottom : 10}}
+                                                    />
+                                                    <RadioButtonLabel
+                                                        obj={obj}
+                                                        index={i}
+                                                        labelHorizontal={true}
+                                                        onPress={value => this.setState({ workType: value })}
+                                                        labelStyle={{
+                                                            fontSize: RFPercentage(3),
+                                                            color: theme.primaryTextColor
+                                                        }}
+                                                        labelWrapStyle={{marginTop: 15, marginBottom : 10}}
+                                                    />
+                                                </RadioButton>
+
+                                            })}
+                                            </View>
+                                        </RadioForm>
+
+
+                                    {/*<SwitchSelector*/}
+                                    {/*initial={this.state.workType}*/}
+                                    {/*onPress={value => this.setState({ workType: value })}*/}
+                                    {/*textColor={theme.primaryColor} //'#7a44cf'*/}
+                                    {/*selectedColor={theme.primaryDarkColor}*/}
+                                    {/*buttonColor={theme.primaryColor}*/}
+                                    {/*borderColor={theme.primaryColor}*/}
+                                    {/*hasPadding*/}
+                                    {/*options={[*/}
+                                        {/*{ label: "Домашка", value: 0, imageIcon: null }, //images.feminino = require('./path_to/assets/img/feminino.png')*/}
+                                        {/*{ label: "Классная", value: 1, imageIcon: <Icon type="Entypo" style={{fontSize: 15, color: theme.primaryMsgColor}} name="open-book"/> } //images.masculino = require('./path_to/assets/img/masculino.png')*/}
+                                    {/*]}*/}
+                                {/*/>*/}
                                 </View>
                                 <ScrollView style={styles.homeworkSubjectList}>
                                      <RadioForm
                                         formHorizontal={false}
-                                        animation={false}>
+                                        animation={false}
+                                        style = {{backgroundColor : "#fff"}}
+                                     >
                                         {
                                             subjects.map((obj, i) => {
-
 
                                                 let nextDay = this.state.checkTimetable?this.getNextSubjDayInTimetable(obj.value, today):null
                                                 if (nextDay!==null&&!this.state.workType){
@@ -1001,7 +1116,7 @@ class MessageList extends Component {
                                                         onPress={(item) => this.onSelectSubject(item)}
                                                         borderWidth={1}
                                                         buttonInnerColor={theme.primaryDarkColor}
-                                                        buttonOuterColor={initialDay === i ? theme.primaryDarkColor : theme.primaryDarkColor}
+                                                        buttonOuterColor={theme.primaryDarkColor}
                                                         buttonSize={15}
                                                         buttonOuterSize={19}
                                                         buttonStyle={{}}
@@ -1029,6 +1144,8 @@ class MessageList extends Component {
                                 <ScrollView style={styles.homeworkSubjectList}>
                                     {this.state.workType?
                                         <CalendarPicker
+                                            ref={ref => this._calendarPicker = ref}
+                                            selectedStartDate={moment(initialDate)}
                                             weekdays={arrOfWeekDaysLocal}
                                             months={["Янв","Фев","Мар","Апр","Май","Июн","Июл","Авг","Сен","Окт","Ноя","Дек"]}
                                             previousTitle={"Пред"}
@@ -1037,10 +1154,12 @@ class MessageList extends Component {
                                             todayTextStyle={{color : theme.primaryTextColor}}
                                             selectedDayColor={theme.primaryColor}
                                             onDateChange={(item) => this.onSelectDay(item, true)}
-                                        />:
+                                        />
+                                     :
                                     <RadioForm
                                         formHorizontal={false}
-                                        animation={false}>
+                                        animation={false}
+                                        style = {{backgroundColor : "#fff"}}>
                                         {
                                             this.state.daysList.map((obj, i) => (
                                                 <RadioButton labelHorizontal={true} key={i} >
@@ -1068,8 +1187,9 @@ class MessageList extends Component {
                                                     />
                                                 </RadioButton>
                                             ))
-                                        }
-                                    </RadioForm>}
+                                         }
+                                    </RadioForm>
+                                     }
                                 </ScrollView>
                             </Tab>
                             <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{langLibrary===undefined?'':langLibrary.mobChange===undefined?'':langLibrary.mobChange.toUpperCase()}</Text></TabHeading>}>
@@ -1081,14 +1201,14 @@ class MessageList extends Component {
                                                   value={this.state.curMessage}
                                         />
                                     <TouchableOpacity
-                                        onPress={()=>this.updateMsg(this.state.currentHomeworkID, false)}>
+                                        onPress={()=>{this.updateMsg(this.state.currentHomeworkID, false);this.setModalVisible(!this.state.modalVisible, false);this.setState({activeSubTab : 0});}}>
                                         <View style={styles.updateMsg}>
                                             <Text style={this.state.isEdited?styles.updatedMsgText:styles.updateMsgText} >{this.state.isEdited?langLibrary===undefined?'':langLibrary.mobSaveChanges===undefined?'':langLibrary.mobSaveChanges.toUpperCase():langLibrary===undefined?'':langLibrary.mobChangeTextUpper===undefined?'':langLibrary.mobChangeTextUpper.toUpperCase()}</Text>
                                         </View>
                                     </TouchableOpacity>
 
                                     <TouchableOpacity style={{marginTop : 150}}
-                                        onPress={()=>this.updateMsg(this.state.currentHomeworkID, true)}>
+                                        onPress={()=>{this.updateMsg(this.state.currentHomeworkID, true);this.setModalVisible(!this.state.modalVisible, false);this.setState({activeSubTab : 0});}}>
                                         <View style={[styles.updateMsg, {backgroundColor : theme.primaryDarkColor, color : theme.primaryTextColor}]}>
                                             <Text style={[styles.deleteMsgText, {backgroundColor : theme.primaryDarkColor}]}>{langLibrary===undefined?'':langLibrary.mobDeleteMsg===undefined?'':langLibrary.mobDeleteMsg.toUpperCase()}</Text>
                                         </View>
@@ -1150,14 +1270,14 @@ class MessageList extends Component {
                             </Tab>
                         </Tabs>
                         {this.state.activeSubTab<2?
-                        <ListItem style={[styles.modalHeader, {margin : 0}]}>
+                        <ListItem style={[styles.modalHeader, {margin : 0, borderTopWidth : .5, borderTopColor : theme.primaryColor, borderBottomWidth : .5, borderBottomColor : theme.primaryColor}]}>
                             <Text style={[styles.modalHeaderText, {color : theme.primaryDarkColor}]}>
                                 {this.state.selSubject.value?this.state.selSubject.label:null}
                                 {this.state.selDate.value>-3?` ${langLibrary===undefined?'':langLibrary.mobTo===undefined?'':langLibrary.mobTo} ${this.state.selDate.label!==undefined?this.state.selDate.label:(this.state.hwOnDate!==null?toLocalDate(new Date(this.state.hwOnDate), "UA", false, false):toLocalDate(new Date(), "UA", false, false))}`:null}
                             </Text>
                         </ListItem>:null}
                         {this.state.activeSubTab<2?
-                        <ListItem className={[styles.editHomeworkCheckbox, {margin : 0}]}>
+                        <ListItem className={[styles.editHomeworkCheckbox, {margin : 0, borderTopWidth : .5, borderTopColor : theme.primaryColor}]}>
                             <CheckBox checked={this.state.checkTimetable} onPress={()=>{this.saveCredentials(!this.state.checkTimetable)}} color={theme.primaryDarkColor}/>
                             <Body>
                                 <Text>{`  ${langLibrary===undefined?'':langLibrary.mobConsiderTimetable===undefined?'':langLibrary.mobConsiderTimetable}`}</Text>
@@ -1178,6 +1298,7 @@ class MessageList extends Component {
                     </View>
                 </Modal>
                 <Viewport.Tracker>
+
                 <ScrollView
                     // ref="_scrollViewMain"
                     ref={ref => this._scrollView = ref}
@@ -1188,7 +1309,7 @@ class MessageList extends Component {
                     // onContentSizeChange={(contentWidth, contentHeight)=>this.state.isDone&&this.props.stat.gotStats?this._scrollView.scrollToEnd():null}
                     // onContentSizeChange={(contentWidth, contentHeight)=>{this._scrollView.scrollResponderScrollToEnd({animated: true})}
                 >
-
+                    {/*<Text>{`Done: ${this.i} from ${messages.length}`}</Text>*/}
                     <TouchableOpacity onPress={()=>{this.setState({firstMsgDate : addDay(this.state.firstMsgDate, -7), uploadedMessages : true}); this.props.loadmessages(addDay(this.state.firstMsgDate, -7))}}>
                         <View style={[styles.mymMsgAddSeparator, {backgroundColor : theme.primaryLightColor, borderWidth : 5, borderColor : theme.primaryLightColor, borderRadius: 20}]}>
                             <Text style={[styles.mymMsgDateSeparatorText, {color : theme.primaryTextColor, fontWeight : "900"}]}>
@@ -1196,6 +1317,7 @@ class MessageList extends Component {
                             </Text>
                         </View>
                     </TouchableOpacity>
+
                     {messages.length?
                         messages.map((message, i) =>{
                                 return this.renderMsg(message, i, chatMaxID, topMsgID)
@@ -1302,6 +1424,62 @@ class MessageList extends Component {
 
                 </ScrollView>
                 </Viewport.Tracker>
+                <TouchableOpacity
+                    style={{ borderWidth:1,
+                        borderColor:    theme.primaryColor,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width:50,
+                        height:50,
+                        backgroundColor: theme.primaryColor,
+                        opacity : .6,
+                        borderRadius: 50,
+                        position : "absolute",
+                        bottom : 80,
+                        right : 20,
+                        zIndex : 21,
+                    }}
+                    delayLongPress={300}
+                    onLongPress={()=>{this._scrollView.scrollTo({x: 0, y: 0, animated: false})}}
+                >
+                    <Icon
+                        name='menu-up'
+                        type='MaterialCommunityIcons'
+                        color={theme.primaryDarkColor}
+                        size={50}
+                    />
+                    <View style={{position : "absolute", right : 7, top : 5, fontSize : RFPercentage(1.2), color : theme.secondaryColor}}>
+                        <Text style={{fontSize : RFPercentage(1.7), fontWeight : "800", color : theme.primaryDarkColor, opacity : 1}}>{messages.filter(item=>item.id<this.state.currentMsgID).length}</Text>
+                    </View>
+                </TouchableOpacity>
+                <TouchableOpacity
+                    style={{ borderWidth:1,
+                        borderColor:    theme.primaryColor,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width:50,
+                        height:50,
+                        backgroundColor: theme.primaryColor,
+                        opacity : .6,
+                        borderRadius: 50,
+                        position : "absolute",
+                        bottom : 20,
+                        right : 20,
+                        zIndex : 21,
+                    }}
+                    delayLongPress={300}
+                    onLongPress={()=>{this._scrollView.scrollToEnd()}}
+                >
+                    <Icon
+                        name='menu-down'
+                        type='MaterialCommunityIcons'
+                        color={theme.primaryDarkColor}
+                        size={50}
+                    />
+                    <View style={{position : "absolute", right : 7, bottom : 7, fontSize : RFPercentage(1.2), color : theme.secondaryColor}}>
+                        <Text style={{fontSize : RFPercentage(1.7), fontWeight : "800", color : theme.primaryDarkColor, opacity : 1}}>{messages.filter(item=>item.id>this.state.currentMsgID).length}</Text>
+                    </View>
+                </TouchableOpacity>
             </View>
         )
     }
@@ -1310,6 +1488,8 @@ class MessageList extends Component {
 const mapDispatchToProps = dispatch => {
     return ({
         onReduxUpdate : (key, payload) => dispatch({type: key, payload: payload}),
+        onStartLoading: () => dispatch({type: 'APP_LOADING'}),
+        onStopLoading: () => dispatch({type: 'APP_LOADED'}),
     })
 }
 export default connect(mapStateToProps, mapDispatchToProps)(MessageList)

@@ -4,8 +4,8 @@
 import React, { Component } from 'react'
 import {    StyleSheet, Text, View, Image, ScrollView,
             TouchableHighlight, Modal, Radio, TouchableOpacity, FlatList, Dimensions } from 'react-native';
-import {    Container, TabHeading, Tabs, Tab, ScrollableTab, Spinner} from 'native-base';
-import { Badge, Icon } from 'react-native-elements'
+import {    Icon, Container, TabHeading, Tabs, Tab, ScrollableTab, Spinner} from 'native-base';
+import { Badge } from 'react-native-elements'
 import RadioForm from 'react-native-radio-form';
 import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, addDay,
         toYYYYMMDD, daysList, toLocalDate, dateFromTimestamp,
@@ -14,6 +14,7 @@ import { connect } from 'react-redux'
 import { Table, TableWrapper, Row, Rows, Cell, Col } from 'react-native-table-component';
 import { RFPercentage, RFValue } from "react-native-responsive-fontsize";
 import ButtonWithBadge from '../../components/ButtonWithBadge/buttonwithbadge'
+import { Viewport } from '@skele/components'
 
 // import { ListView } from 'deprecated-react-native-listview';
 
@@ -28,6 +29,8 @@ import ButtonWithBadge from '../../components/ButtonWithBadge/buttonwithbadge'
 //     });
 // };
 const windowRatio = Dimensions.get('window').width? Dimensions.get('window').height / Dimensions.get('window').width : 1.9
+
+const ViewportViewMark = Viewport.Aware(View)
 
 class MarksBlock extends Component {
     constructor(props) {
@@ -159,7 +162,7 @@ class MarksBlock extends Component {
             }
         }
         this.setState({dayPages, subjPages, curPage : (dayPages.length-1), isSpinner : false})
-        console.log("Mark_Periods")
+        console.log("Mark_Periods", dayPages, subjPages)
     }
     markColor=mark=>{
 // ToDO: Для разных систем оценивания указать разные подходы к отображению оценок
@@ -229,7 +232,7 @@ class MarksBlock extends Component {
         const {classID, marks} = this.props.userSetup
         let {stat} = this.props
         const ID = this.state.dayPages[i].markID
-        console.log("updateReadedID", stat.markID, ID)
+        // console.log("updateReadedID", stat.markID, ID)
 
         if (stat.markID < ID) {
             stat.markID = Number(ID)
@@ -241,6 +244,9 @@ class MarksBlock extends Component {
         }
         this.setState({activeTab:i})
     }
+    updateReadedID=subj_key=>{
+        console.log("updateReadedIDMark", subj_key)
+    }
     render () {
         const {langLibrary, marks, stats3} = this.props.userSetup
         const {tempdata, online} = this.props.tempdata
@@ -248,10 +254,13 @@ class MarksBlock extends Component {
         const {headerHeight, footerHeight, showFooter, showKeyboard, theme, themeColor} = this.props.interface
 
         const initialDay = this.getNextStudyDay(daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;}))[0];
-        let viewSize = Number(Number(Dimensions.get("window").height) - 2 *(headerHeight + footerHeight))
+
+        let viewSize = Number(Number(Dimensions.get("window").height) - 2 *(headerHeight + 50))
+        const rowcnt = Math.floor(viewSize / 40)
             viewSize = Math.floor(viewSize / 40) * 40
         console.log("MARKS_RENDER")
         let mark = "", subjmarks = ""
+        let markcnt = 0
         {/*<Container>*/}
         // style={styles.modalView}
          return (
@@ -262,8 +271,8 @@ class MarksBlock extends Component {
                           initialPage={this.state.initialPage}
                           page={this.state.activeTab}
                     >
-                        {this.state.dayPages.map((rootItem, key) =>
-                            <Tab key={"tab" + key} heading={<TabHeading style={{backgroundColor : theme.primaryColor}}>
+                        {this.state.dayPages.map((rootItem, keydp) =>
+                            <Tab key={"tab" + keydp} heading={<TabHeading style={{backgroundColor : theme.primaryColor}}>
                                 <Text style={{color: theme.primaryTextColor, fontSize: RFPercentage(1.5)}}>
                                 {toLocalDate(new Date(rootItem.arr.slice(-1)), "UA", false, false)}
                                 </Text>
@@ -283,22 +292,34 @@ class MarksBlock extends Component {
                                                 {(new Date(dateFromTimestamp(stats3.max)) instanceof Date)?localDateTime(dateFromTimestamp(stats3.max), "UA"):null}
                                                 </Text>
                                         </View>
-                                        {  rootItem.arr.map((item, key) =>
-                                            <View key={"header"+key}>
-                                                <Text style={[globalStyles.headerCell, {backgroundColor : theme.primaryLightColor, borderColor : theme.primaryDarkColor}]}>{toLocalDate(new Date(item.slice(-2)===".1"?item.slice(0, -2):item), "UA", false, true)}</Text>
-                                            </View>
+                                        {  rootItem.arr.map((item, key) => {
+                                                markcnt = 0
+                                                return <View key={"header" + key}>
+                                                    <Text style={[globalStyles.headerCell, {
+                                                        backgroundColor: theme.primaryLightColor,
+                                                        borderColor: theme.primaryDarkColor
+                                                    }]}>{toLocalDate(new Date(item.slice(-2) === ".1" ? item.slice(0, -2) : item), "UA", false, true)}</Text>
+                                                </View>
+                                            }
                                         )
                                         }
                                     </View>
                                     <View
                                         // onLayout={(event) => { this.measureView(event) }}
                                         style={{ height: viewSize, justifyContent : "flex-start", alignItems : "flex-start", alignSelf : "flex-start"}} >
-                                        <ScrollView>
+                                         <ScrollView
+                                             ref = { view => ( this[`sectionItem${keydp}`] = view ) }
+                                         >
                                          {this.state.subjPages.filter(item=>item.i===rootItem.i)[0].arr.map(
-                                            (subjItem, key)=> {
+                                            (subjItem, keypg)=> {
                                                 subjmarks = marks.filter(item=>item.subj_key===subjItem.subj_key)
-                                                return <View key={"viewKey"+key} style={{flexDirection: "row"}}>
-                                                    <View key={"cellBody" + key + '.0@' + subjItem.subj_key + '@'+rootItem.arr.slice(-1)}>
+                                                return <ViewportViewMark key={keydp+keypg}
+                                                              id={"vp-"+keydp+keypg}
+                                                              onViewportEnter={() =>{
+                                                                  this.updateReadedID(subjItem.subj_key)}}
+                                                    >
+                                                <View key={"viewKey"+keydp} style={{flexDirection: "row"}}>
+                                                    <View key={"cellBody" + keypg + '.0@' + subjItem.subj_key + '@'+rootItem.arr.slice(-1)}>
                                                         <Text
                                                             style={[globalStyles.headerCellSubj, {backgroundColor : theme.primaryLightColor, borderColor : theme.primaryDarkColor, fontSize: subjItem[getSubjFieldName(langCode)].length >= 15?RFPercentage(1.7):RFPercentage(1.8)}]}>{subjItem[getSubjFieldName(langCode)]}
                                                         </Text>
@@ -310,18 +331,56 @@ class MarksBlock extends Component {
                                                                         return ((item.subj_key === subjItem.subj_key) && (toYYYYMMDD(new Date(item.mark_date)) === toYYYYMMDD(new Date(dateItem.slice(-2)===".1"?dateItem.slice(0, -2):dateItem)))&& item.position===(dateItem.slice(-2)===".1"?1:0))
                                                                     })
                                                                 }
+
+
+                                                                if ((keypg>=rowcnt)&&(mark.length>0)) markcnt++
+                                                                // if (keydp===1) {
+                                                                //     console.log("MarksDown", markcnt, keypg, rowcnt,
+                                                                //         mark.length, keypg>rowcnt, mark.length>0, (keypg>rowcnt)&&mark.length)
+                                                                // }
                                                                 return <View key={"cellBodyMarks" + key2 + '.1@' + subjItem.subj_key + '@'+rootItem.arr.slice(-1)}>
                                                                     <Text
                                                                         style={[globalStyles.bodyCell, {backgroundColor: mark.length ? this.markColor(mark[0].mark) : "#fff", borderColor : theme.primaryDarkColor}]}>
-                                                                        {mark.length ? mark[0].mark : null}
+
+                                                                        {mark.length? mark[0].mark : null}
                                                                     </Text>
                                                                 </View>
                                                             }
                                                         )
                                                     }
                                                 </View>
+                                                </ViewportViewMark>
                                             })}
                                         </ScrollView>
+                                        {rowcnt>0?
+                                        <TouchableOpacity
+                                            style={{ borderWidth:1,
+                                                borderColor:    theme.primaryColor,
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                width:50,
+                                                height:50,
+                                                backgroundColor: theme.primaryColor,
+                                                opacity : .6,
+                                                borderRadius: 50,
+                                                position : "absolute",
+                                                bottom : 20,
+                                                right : 20,
+                                                zIndex : 21,
+                                            }}
+                                            delayLongPress={100}
+                                            onLongPress={()=>{this[`sectionItem${keydp}`].scrollToEnd()}}
+                                        >
+                                            <Icon
+                                                name='menu-down'
+                                                type='MaterialCommunityIcons'
+                                                color={theme.primaryDarkColor}
+                                                size={50}
+                                            />
+                                            <View style={{position : "absolute", right : 7, bottom : 7, fontSize : RFPercentage(1.2), color : theme.secondaryColor}}>
+                                                <Text style={{fontSize : RFPercentage(1.7), fontWeight : "800", color : theme.primaryDarkColor, opacity : 1}}>{markcnt}</Text>
+                                            </View>
+                                        </TouchableOpacity>:null}
                                     </View>
                                     <View>
 

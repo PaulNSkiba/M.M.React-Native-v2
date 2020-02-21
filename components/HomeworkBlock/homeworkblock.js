@@ -669,12 +669,12 @@ class HomeworkBlock extends Component {
                         <Container>
                             <Tabs>
                                 <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{langLibrary.mobTasks.toUpperCase()}</Text></TabHeading>}>
-                                    <View style={{height : Dimensions.get('window').height - headerHeight - footerHeight - 20}}>
+                                    <View style={{height : Dimensions.get('window').height - headerHeight - 120}}>
                                         <AccordionCustom data={daysArr}  data2={homeworkItems} usersetup={this.props.userSetup} ishomework={true} index={index}/>
                                     </View>
                                 </Tab>
                                 <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{langLibrary.mobInClass!==undefined?langLibrary.mobInClass.toUpperCase():"В классе"}</Text></TabHeading>}>
-                                    <View style={{height : Dimensions.get('window').height - headerHeight - footerHeight - 20}}>
+                                    <View style={{height : Dimensions.get('window').height - headerHeight - 120}}>
                                         {/*<AccordionCustom data={daysArr}  data2={homeworkItems} usersetup={this.props.userSetup} ishomework={true} index={index}/>*/}
                                         <CalendarPicker
                                             weekdays={arrOfWeekDaysLocal}

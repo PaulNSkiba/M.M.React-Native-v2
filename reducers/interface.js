@@ -4,7 +4,6 @@
 const initialState = {
     showFooter : true, showLogin : false, showKeyboard : false,
     headerHeight : 0, footerHeight : 0, viewHeight : 0, keyboardHeight : 0, langCode : "",
-    // online : false,
     themeColor : "#46b5be",
     theme : {
         primaryColor : '#47b5be',

@@ -77,7 +77,7 @@ export const userLoggedInByToken = (email, token, kind, langLibrary, theme, them
             "token": token,
             "kind": kind,
         };
-        console.log("userLoggedInByToken", langLibrary, token);
+        console.log("userLoggedInByToken");
         // document.body.style.cursor = 'progress';
         dispatch ({type: 'USER_LOGGING'})
 
@@ -140,12 +140,21 @@ export const userLoggedOut = (token, langLibrary, theme, themeColor) => {
             dispatch({type: 'UPDATE_TOKEN',  payload : ''})
             dispatch({type: 'USER_LOGGEDOUT', payload : {langLibrary : langLibrary, theme : theme, themeColor : themeColor}});
 
+            let saveddata = {}
+            saveddata.email = null
+            saveddata.userName = null
+            saveddata.userID = null
+            saveddata.classID = null
+            saveddata.token = null
+
+            dispatch({type : 'SAVE_DATA', payload : saveddata})
             dispatch({type: 'APP_LOADED'})
         })
         .catch(response => {
+            dispatch({type: 'UPDATE_TOKEN',  payload : ''})
             dispatch({type: "LANG_LIBRARY", payload: langLibrary})
             dispatch({type: 'APP_LOADED'})
-            console.log("logoutError", response);
+            console.log("logoutError", token, LOGOUTUSER_URL, response);
         })
         };
 }

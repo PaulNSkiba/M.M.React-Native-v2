@@ -94,7 +94,7 @@ class HelpBlock extends Component {
             "msg_header" : "${userID?(this.state.isNews?"Внесены следующие изменения":""):"Вопрос от незарегистрированного пользователя"}",
             "question" : "${""}",
             "answer" : "${""}",
-            "is_news" : ${this.state.isNews?1:null}
+            "is_news" : ${this.state.isNews?2:null}
         }`
 
         text = JSON.parse(text)
@@ -250,6 +250,7 @@ class HelpBlock extends Component {
     setActiveTab=i=>{
         // console.log("ACTIVE_TAB", i, this.state.dayPages[i]);
         const {classID, classNews} = this.props.userSetup
+        this.props.setstate({helpChat : i===2?true:false})
         let {stat} = this.props
         const {newsID, buildsID} = stat
         // const ID = this.state.dayPages[i].markID
@@ -286,12 +287,47 @@ class HelpBlock extends Component {
         }
         this.setState({activeTab:i})
     }
+    getNewsArr=()=>
+        this.props.userSetup.classNews.filter(item=>item.is_news===2).map(item => {
+            let newObj = {};
+            newObj.label = `${item.msg_header}`;
+            newObj.value = item.id;
+            newObj.count = toLocalDate(new Date(item.msg_date.length===8?dateFromYYYYMMDD(item.msg_date):item.msg_date), "UA", false, false);
+            return newObj;
+        })
+    getUpdatesArr=()=>
+        this.props.userSetup.classNews.filter(item=>item.is_news===1).map(item => {
+        let newObj = {};
+        newObj.label = `${item.build_number}`;
+        newObj.value = item.id;
+        newObj.count = toLocalDate(new Date(item.msg_date.length===8?dateFromYYYYMMDD(item.msg_date):item.msg_date), "UA", false, false);
+        return newObj;
+    })
 
     render () {
         // const daysArr = daysList().map(item=>{let newObj = {}; newObj.label = item.name; newObj.value = item.id;  return newObj;})
-        const {newsArr, updatesArr, updates, news, height, keyboardHeight} = this.state
+        console.log("helpBlock", this.props.userSetup.classNews)
+        let {height, keyboardHeight} = this.state
         const {langLibrary, classNews, userID} = this.props.userSetup
-        const {theme, headerHeight, footerHeight} = this.props.interface
+        const {theme, headerHeight} = this.props.interface
+
+        // const newsArr = classNews.filter(item=>item.is_news===2).map(item => {
+        //     let newObj = {};
+        //     newObj.label = `${item.msg_header}`;
+        //     newObj.value = item.id;
+        //     newObj.count = toLocalDate(new Date(item.msg_date.length===8?dateFromYYYYMMDD(item.msg_date):item.msg_date), "UA", false, false);
+        //     return newObj;
+        // })
+        // const updatesArr = classNews.filter(item=>item.is_news===1).map(item => {
+        //     let newObj = {};
+        //     newObj.label = `${item.build_number}`;
+        //     newObj.value = item.id;
+        //     newObj.count = toLocalDate(new Date(item.msg_date.length===8?dateFromYYYYMMDD(item.msg_date):item.msg_date), "UA", false, false);
+        //     return newObj;
+        // })
+        //
+        // const updates = this.getUpdateForAccordion()
+        // const news = this.getNewsForAccordion()
 
         let unreadNewsCount = 0, unreadBuildsCount = 0
         if (this.props.kind==='info') {
@@ -300,16 +336,16 @@ class HelpBlock extends Component {
             unreadBuildsCount = classNews.filter(item =>(item.is_news===1&&Number(item.id) > buildsID)).length
             // console.log("button", this.props.kind, markID, unreadMarksCount, marks)
         }
-        const msgBlockHeight = height - (keyboardHeight?1:2)*footerHeight - headerHeight - 70 - 20 - keyboardHeight
+        const msgBlockHeight = height - headerHeight - 120
         return (
             <View >
-                 <Tabs onChangeTab={({ i, ref, from }) => this.setActiveTab(i)} style={this.state.activeTab===2?{height: (height - keyboardHeight)}:null}>
+                 <Tabs onChangeTab={({ i, ref, from }) => this.setActiveTab(i)} style={this.state.activeTab===2?{height: (height)}:null}>
                          <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{langLibrary.mobNews.toUpperCase()}</Text></TabHeading>}
                                 onPress={()=>console.log("Tab1_Clicked")}>
                              <View style={styles.homeworkSubjectList}>
                                  <Container style={{flex: 1, width : "100%", flexDirection: 'column', position: "relative"}}>
-                                     <View style={{height : Dimensions.get('window').height - headerHeight - 2*footerHeight - 20}}>
-                                        <AccordionCustom data={newsArr}  data2={news} usersetup={this.props.userSetup} ishomework={true} index={0}/>
+                                     <View style={{height : Dimensions.get('window').height - 2*headerHeight - 70}}>
+                                        <AccordionCustom data={this.getNewsArr()}  data2={this.getNewsForAccordion()} usersetup={this.props.userSetup} ishomework={true} index={0}/>
                                      </View>
                                  </Container>
                              </View>
@@ -317,8 +353,8 @@ class HelpBlock extends Component {
                         <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{langLibrary.mobBuilds.toUpperCase()}</Text></TabHeading>}>
                             <View style={styles.homeworkSubjectList}>
                                 <Container style={{flex: 1, width : "100%", flexDirection: 'column', position: "relative"}}>
-                                    <View style={{height : Dimensions.get('window').height - headerHeight - 2*footerHeight - 20}}>
-                                        <AccordionCustom data={updatesArr}  data2={updates} usersetup={this.props.userSetup} ishomework={true} index={0}/>
+                                    <View style={{height : Dimensions.get('window').height - 2*headerHeight - 70}}>
+                                        <AccordionCustom data={this.getUpdatesArr()}  data2={this.getUpdateForAccordion()} usersetup={this.props.userSetup} ishomework={true} index={0}/>
                                     </View>
                                 </Container>
                             </View>
@@ -330,7 +366,7 @@ class HelpBlock extends Component {
                                     ref={component => this._animatedView = component}
                                     collapsable={false}
                                     onLayout={(event) => {this.measureView(event)}}
-                                    style={[styles.chatContainerNew, {flex: 1}, {height: (height - keyboardHeight)}]}>
+                                    style={[styles.chatContainerNew, {flex: 1}, {height: (height  - 2*headerHeight - 70)}]}>
                                     {this.state.isSpinner ? <View
                                         style={{position: "absolute", flex: 1, alignSelf: 'center', marginTop: 240, zIndex: 100}}>
                                         <Spinner color={theme.secondaryColor}/>
@@ -385,45 +421,45 @@ class HelpBlock extends Component {
                                                         </DialogContent>
                                                     </Dialog>
                                                 </View>
-                                                {this.props.userSetup.isadmin?
-                                                    <View className={styles.isNewsCheckbox}>
-                                                        <CheckBox style={{marginTop : 20}}
-                                                                  checked={this.state.isNews}
-                                                                  onPress={()=>{this.setState({isNews:!this.state.isNews})}} color={theme.primaryDarkColor}/>
-                                                        <Body>
-                                                        <Text style={{ color : theme.primaryDarkColor, fontSize: RFPercentage(2)}}> News</Text>
-                                                        </Body>
-                                                    </View>
-                                                    :null}
-                                                <View style={{flex : 6.5}}>
-                                                                <Textarea
-                                                                    style={styles.msgAddTextarea}
-                                                                    ref={component => this._textarea = component}
-                                                                    onSubmitEditing={() => {
-                                                                        this._textarea.setNativeProps({'editable':false});
-                                                                        this._textarea.setNativeProps({'editable':true});
-                                                                    }}
-                                                                    onChangeText={text=>this.onChangeText('curMessage', text)}
-                                                                    onFocus={()=>{this.props.onReduxUpdate('UPDATE_FOOTER_SHOW', false);
-                                                                    // this.props.setstate({showFooter : false}); this.setState({showFooter : false})
-                                                                    }}
-                                                                    onBlur={()=>{this.props.onReduxUpdate('UPDATE_FOOTER_SHOW', true);
-                                                                    // this.props.setstate({showFooter : true}); this.setState({showFooter : true})
-                                                                    }}
-                                                                    placeholder={userID?"Задать вопрос разработчику..." : "Задавая вопрос без логина, пожалуйста, укажите в сообщении контактный email для связи)..."} type="text"
-                                                                    rowSpan={userID?3:5}
-                                                                    value={this.state.curMessage}
-                                                                />
-                                                </View>
-                                                <View style={styles.btnAddMessage}>
-                                                    <Icon
-                                                        name='rightcircle'
-                                                        type='antdesign'
-                                                        color={theme.primaryDarkColor}
-                                                        size={40}
-                                                        onPress={()=>{this.setState({isSpinner : true}); this.addQuestionToService()}} />
-                                                </View>
-                                                <View style={{width : 4}}></View>
+                                                {/*{this.props.userSetup.isadmin?*/}
+                                                    {/*<View className={styles.isNewsCheckbox}>*/}
+                                                        {/*<CheckBox style={{marginTop : 20}}*/}
+                                                                  {/*checked={this.state.isNews}*/}
+                                                                  {/*onPress={()=>{this.setState({isNews:!this.state.isNews})}} color={theme.primaryDarkColor}/>*/}
+                                                        {/*<Body>*/}
+                                                        {/*<Text style={{ color : theme.primaryDarkColor, fontSize: RFPercentage(2)}}> News</Text>*/}
+                                                        {/*</Body>*/}
+                                                    {/*</View>*/}
+                                                    {/*:null}*/}
+                                                {/*<View style={{flex : 6.5}}>*/}
+                                                                {/*<Textarea*/}
+                                                                    {/*style={styles.msgAddTextarea}*/}
+                                                                    {/*ref={component => this._textarea = component}*/}
+                                                                    {/*onSubmitEditing={() => {*/}
+                                                                        {/*this._textarea.setNativeProps({'editable':false});*/}
+                                                                        {/*this._textarea.setNativeProps({'editable':true});*/}
+                                                                    {/*}}*/}
+                                                                    {/*onChangeText={text=>this.onChangeText('curMessage', text)}*/}
+                                                                    {/*onFocus={()=>{this.props.onReduxUpdate('UPDATE_FOOTER_SHOW', false);*/}
+                                                                    {/*// this.props.setstate({showFooter : false}); this.setState({showFooter : false})*/}
+                                                                    {/*}}*/}
+                                                                    {/*onBlur={()=>{this.props.onReduxUpdate('UPDATE_FOOTER_SHOW', true);*/}
+                                                                    {/*// this.props.setstate({showFooter : true}); this.setState({showFooter : true})*/}
+                                                                    {/*}}*/}
+                                                                    {/*placeholder={userID?"Задать вопрос разработчику..." : "Задавая вопрос без логина, пожалуйста, укажите в сообщении контактный email для связи)..."} type="text"*/}
+                                                                    {/*rowSpan={userID?3:5}*/}
+                                                                    {/*value={this.state.curMessage}*/}
+                                                                {/*/>*/}
+                                                {/*</View>*/}
+                                                {/*<View style={styles.btnAddMessage}>*/}
+                                                    {/*<Icon*/}
+                                                        {/*name='rightcircle'*/}
+                                                        {/*type='antdesign'*/}
+                                                        {/*color={theme.primaryDarkColor}*/}
+                                                        {/*size={40}*/}
+                                                        {/*onPress={()=>{this.setState({isSpinner : true}); this.addQuestionToService()}} />*/}
+                                                {/*</View>*/}
+                                                {/*<View style={{width : 4}}></View>*/}
                                             </View>
                                 </View>
 

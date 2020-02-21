@@ -4,7 +4,7 @@
 import store from '../store/configureStore'
 import axios from 'axios';
 import {Platform} from 'react-native'
-import {AUTH_URL, API_URL, BASE_HOST, WEBSOCKETPORT, LOCALPUSHERPWD} from '../config/config'
+import {AUTH_URL, API_URL, BASE_HOST, WEBSOCKETPORT, LOCALPUSHERPWD, HOMEWORK_ADD_URL} from '../config/config'
 import Echo from 'laravel-echo'
 import Pusher from 'pusher-js/react-native'
 import AsyncStorage from '@react-native-community/async-storage';
@@ -830,7 +830,7 @@ export const prepareImageJSON=(data, data100, classID, userName, userID, student
 
     obj.id = 0;
     obj.class_id = classID;
-    obj.message = "ФОТО";
+    obj.message = "Файл-вложение";
     obj.msg_date = toYYYYMMDD(new Date());
     obj.msg_time = (new Date()).toLocaleTimeString().slice(0, 5);
     obj.attachment2 = data
@@ -839,8 +839,121 @@ export const prepareImageJSON=(data, data100, classID, userName, userID, student
     obj.user_name = userName
     obj.student_id = studentId
     obj.student_name = studentName
+    obj.homework_date = null
     obj.uniqid = new Date().getTime() + userName//this.props.userSetup.userName //uniqid()
 
-    // console.log("prepareJSON", obj, JSON.stringify(obj))
     return JSON.stringify(obj)
+}
+export const prepareJSON=(txt, userSetup, isnew, selSubjkey, selSubjname, curDate)=>{
+    console.log("prepareJSON", selSubjkey)
+    let {classID, userName, userID, studentId, studentName} = userSetup
+    let text = txt //this.state.curMessage
+    let obj = {}
+    switch (isnew) {
+        case true :
+            obj.id = 0;
+            obj.class_id = classID;
+            obj.message = text //this.inputMessage.value;
+            obj.msg_date = toYYYYMMDD(new Date());
+            obj.msg_time = (new Date()).toLocaleTimeString().slice(0, 5);
+            if (!(selSubjkey === null)) {
+                obj.homework_date = toYYYYMMDD(curDate)
+                obj.homework_subj_key = selSubjkey
+                obj.homework_subj_name = selSubjname
+                addHomeWork(obj.text, selSubjkey, selSubjname, curDate, 0, userSetup)
+            }
+            obj.user_id = userID
+            obj.user_name = userName
+            obj.student_id = studentId
+            obj.student_name = studentName
+            obj.uniqid = new Date().getTime() + userName //uniqid()
+            // this.setState({messagesNew : [...this.state.messagesNew, obj.uniqid]})
+            break;
+        default :
+            obj.senderId = chatUserName
+            obj.text = text //this.inputMessage.value
+            obj.time = (new Date()).toLocaleTimeString().slice(0, 5)
+            obj.userID = userID
+            obj.userName = userName
+            if (!(selSubjkey === null)) {
+                obj.hwdate = toYYYYMMDD(curDate)
+                obj.subjkey = selSubjkey
+                obj.subjname = selSubjname
+                addHomeWork(obj.text, selSubjkey, selSubjname, curDate, 0, userSetup)
+            }
+            break;
+    }
+    // console.log("prepareJSON", obj, JSON.stringify(obj))
+
+    // this.setState({curMessage:""})
+    // this.setState({
+    //     selSubject: false,
+    //     selDate: false,
+    // })
+    return JSON.stringify(obj)
+}
+export const prepareMessageToState=(objFrom)=>{
+    // console.log('418', objFrom)
+    objFrom = JSON.parse(objFrom)
+    let obj = {}
+    obj.senderId = objFrom.user_name
+    obj.text = objFrom.message
+    obj.time = objFrom.msg_time
+    obj.userID = objFrom.user_id
+    obj.userName = objFrom.user_name
+    obj.uniqid = objFrom.uniqid
+    if (!(objFrom.homework_date === null)) {
+        obj.hwdate = objFrom.homework_date
+        obj.subjkey = objFrom.homework_subj_key
+        obj.subjname = objFrom.homework_subj_name
+        obj.subjid = objFrom.homework_subj_id
+    }
+    obj.id = 0
+    //"{"senderId":"my-marks","text":"выучить параграф 12","time":"14:59","userID":209,"userName":"Menen",
+    // "hwdate":"2019-07-16T21:00:00.000Z","subjkey":"#lngukr","subjname":"Українська мова"}"
+    // console.log('prepareMessageToState', JSON.stringify(obj))
+    return JSON.stringify(obj)
+}
+export const addHomeWork=(txt, subj_key, subj_name_ua, ondate, chat_id, userSetup)=>{
+    let {classID, userID, studentId} = userSetup
+    let json = `{   "subj_key":"${subj_key}", 
+                        "subj_name_ua": "${subj_name_ua}", 
+                        "homework": "${txt}", 
+                        "ondate": "${toYYYYMMDD(ondate)}", 
+                        "user_id": "${userID}", 
+                        "chat_id": ${chat_id}, 
+                        "student_id":"${studentId}"}`;
+    console.log(json);
+    axios2('post', `${HOMEWORK_ADD_URL}/${classID}/hw/0`, json)
+        .then(response => {
+            console.log("HOMEWORK_ADD_URL", response.data)
+        })
+        .catch(response => {
+            console.log(response);
+        })
+}
+export const sendMail=(mail, text, userSetup, session_id)=>{
+    console.log("mailSent")
+    const {chatSessionID, userName, classID, userID} = userSetup
+    let json = `{   "session_id":"${session_id}",
+                        "mailService":"${mail}",
+                        "author":"${userID?userName:"Незарегистрированный пользователь"}",
+                        "mailAuthor":"${userID?userName:"Незарегистрированный пользователь"}",
+                        "text":"${text}",
+                        "classID":${classID?classID:1},
+                        "userID":${userID?userID:1}}`
+
+    let data = JSON.parse(json);
+    // console.log("547", JSON.stringify(data), API_URL + 'mail')
+    axios2('post', `${API_URL}mail`, JSON.stringify(data))
+        .then(response => {
+            console.log('SENDED_MAIL', response)
+            // this.setState({showMsg : true, isSpinner : false})
+            // dispatch({type: 'UPDATE_STUDENTS_REMOTE', payload: response.data})
+        })
+        .catch(response => {
+            console.log("SENDED_MAIL_ERROR", response);
+            // this.setState({isSpinner : false})
+            // dispatch({type: 'UPDATE_STUDENTS_FAILED', payload: response.data})
+        })
 }

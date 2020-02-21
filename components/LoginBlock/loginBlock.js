@@ -157,8 +157,10 @@ class LoginBlock extends React.Component {
     onLogin = () => {
         const {langLibrary, classID} = this.props.userSetup
         const {theme, themeColor} = this.props.interface
+        this.props.updateState("showDrawer", false)
         this.props.updateState("userEmail", this.state.username)
         this.props.updateState("calcStat", false)
+
         let name = this.state.username, //"test@gmail.com",
             pwd = this.state.password, //"test1",
             provider = null,
@@ -228,7 +230,7 @@ class LoginBlock extends React.Component {
         const {userID, token, langLibrary} = this.props.userSetup
         const {userName, password, email} = this.props.saveddata
 
-        console.log("LOGIN_RENDER", showKeyboard)
+        // console.log("LOGIN_RENDER")
         // const showModal = this.showLogin&&logBtnClicked&&(!loginmsg.length)
         // return <View></View>
 
@@ -418,7 +420,7 @@ class LoginBlock extends React.Component {
                         </View>
                     </Item>:null}
 
-                    {userID ?   <Button style={{  marginLeft : 60, marginTop : 5, marginRight : 60, borderRadius : 30,
+                    {userID&&token ?   <Button style={{  marginLeft : 60, marginTop : 5, marginRight : 60, borderRadius : 30,
                                                 justifyContent: "center",
                                                 alignItems: "center",
                                                 color : theme.primaryDarkColor, backgroundColor : theme.secondaryLightColor}}
@@ -532,8 +534,7 @@ class LoginBlock extends React.Component {
                     {/* Живой код*/}
 
                 </Form>
-
-                <View style={{position: "absolute", bottom: footerHeight===0?60:footerHeight + 30, marginLeft : Dimensions.get('window').width - 70}}>
+                <View style={{position: "absolute", bottom: 120, marginLeft : Dimensions.get('window').width - 70}}>
                     <Icon onPress={() => this.setState({showVideo: true})} style={{fontSize : 54, color : theme.primaryLightColor}} name='videocam'/>
                 </View>
             </View>

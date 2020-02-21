@@ -11,7 +11,6 @@ import styles from '../../css/styles'
 import {connect} from 'react-redux';
 import { RFPercentage, RFValue } from "react-native-responsive-fontsize";
 
-
 class ButtonWithBadge extends Component {
     constructor(props) {
         super(props);
@@ -48,10 +47,10 @@ class ButtonWithBadge extends Component {
         // }}
         return (
             <TouchableOpacity   key={0} id={"msgarea-"+0}
-                                        delayLongPress={500}
+                                        delayLongPress={300}
                                         onLongPress={()=>{this.props.longpress!==null?this.props.longpress(this.props.stateid):null}}
                                         onPress={()=> {
-                                            this.props.setstate({selectedFooter: this.props.stateid, showLogin: false, isSpinner : false})
+                                            this.props.setstate({selectedFooter: this.props.stateid, showLogin: false, isSpinner : false, helpChat : false})
                                             }}
                                         activeOpacity={.9}
                                         style={{zIndex : 10}}
@@ -60,7 +59,7 @@ class ButtonWithBadge extends Component {
                 backgroundColor : theme.secondaryColor,
                 borderWidth : 2,
                 borderColor : theme.secondaryColor,
-                height : footerHeight,
+                height : 50,
                 width : buttonWidth,
                 display : "flex",
                 alignItems : "center",

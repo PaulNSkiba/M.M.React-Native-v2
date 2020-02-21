@@ -48,7 +48,7 @@ const rootReducer = combineReducers({
     saveddata : saveddataReducer,
     tempdata : tempdataReducer,
     network,
-    blacklist: ["network", "user", "tempdata"]
+    blacklist: ["network", "user", "tempdata", "stat"]
 })
 export const persistedReducer = persistReducer(persistConfig, rootReducer)
 
