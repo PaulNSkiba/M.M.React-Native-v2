@@ -1,7 +1,6 @@
 /**
  * Created by Paul on 10.09.2019.
  */
-
 import React, { Component } from 'react'
 import {    StyleSheet, Text, View, Image, ScrollView,
             TouchableHighlight, Modal, Radio, TouchableOpacity, Animated, Dimensions, Keyboard } from 'react-native';
@@ -11,7 +10,7 @@ import {    Container, Header, Left, Body, Right, Button, Card, CardItem,
 import RadioForm from 'react-native-radio-form';
 import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat,
         addDay, toYYYYMMDD, daysList, instanceAxios, toLocalDate,
-        dateFromTimestamp, setStorageData, getStorageData} from '../../js/helpersLight'
+        dateFromTimestamp, setStorageData, getStorageData, getLangWord} from '../../js/helpersLight'
 import { API_URL, BASE_HOST, WEBSOCKETPORT, LOCALPUSHERPWD, HOMEWORK_ADD_URL,
     instanceLocator, testToken, chatUserName } from '../../config/config'
 import { Icon } from 'react-native-elements'
@@ -340,7 +339,9 @@ class HelpBlock extends Component {
         return (
             <View >
                  <Tabs onChangeTab={({ i, ref, from }) => this.setActiveTab(i)} style={this.state.activeTab===2?{height: (height)}:null}>
-                         <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{langLibrary.mobNews.toUpperCase()}</Text></TabHeading>}
+                         <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>
+                             {getLangWord("mobNews", langLibrary).toUpperCase()}
+                             </Text></TabHeading>}
                                 onPress={()=>console.log("Tab1_Clicked")}>
                              <View style={styles.homeworkSubjectList}>
                                  <Container style={{flex: 1, width : "100%", flexDirection: 'column', position: "relative"}}>
@@ -350,7 +351,9 @@ class HelpBlock extends Component {
                                  </Container>
                              </View>
                         </Tab>
-                        <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{langLibrary.mobBuilds.toUpperCase()}</Text></TabHeading>}>
+                        <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>
+                            {getLangWord("mobBuilds", langLibrary).toUpperCase()}
+                            </Text></TabHeading>}>
                             <View style={styles.homeworkSubjectList}>
                                 <Container style={{flex: 1, width : "100%", flexDirection: 'column', position: "relative"}}>
                                     <View style={{height : Dimensions.get('window').height - 2*headerHeight - 70}}>
@@ -359,7 +362,9 @@ class HelpBlock extends Component {
                                 </Container>
                             </View>
                         </Tab>
-                        <Tab style={{height: (height - keyboardHeight)}} heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{langLibrary.mobQandA.toUpperCase()}</Text></TabHeading>}>
+                        <Tab style={{height: (height - keyboardHeight)}} heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>
+                            {getLangWord("mobQandA", langLibrary).toUpperCase()}
+                            </Text></TabHeading>}>
                             {/*<Container style={{width : "100%", flexDirection: 'column', position: "relative"}}>*/}
                                 {/*<View style={[styles.chatContainerNew, {flex: 1}]}>*/}
                                 <View

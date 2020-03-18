@@ -8,7 +8,7 @@ import {    Icon, Container, TabHeading, Tabs, Tab, ScrollableTab, Spinner} from
 import { Badge } from 'react-native-elements'
 import RadioForm from 'react-native-radio-form';
 import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, addDay,
-        toYYYYMMDD, daysList, toLocalDate, dateFromTimestamp,
+        toYYYYMMDD, daysList, toLocalDate, dateFromTimestamp, getLangWord,
         getNearestSeptFirst, getSubjFieldName, localDateTime, setStorageData} from '../../js/helpersLight'
 import { connect } from 'react-redux'
 import { Table, TableWrapper, Row, Rows, Cell, Col } from 'react-native-table-component';
@@ -16,10 +16,6 @@ import { RFPercentage, RFValue } from "react-native-responsive-fontsize";
 import ButtonWithBadge from '../../components/ButtonWithBadge/buttonwithbadge'
 import { Viewport } from '@skele/components'
 
-// import { ListView } from 'deprecated-react-native-listview';
-
-// import {Text} from "react-native-elements/src/index.d";
-// import {Text} from "react-native-elements/src/index.d";
 // import { DataTable, Cell, CheckableCell, EditableCell, Header, HeaderCell, Row as DataRow, TableButton } from 'react-native-data-table'
 // import '../../ChatMobile/chatmobile.css'
 
@@ -287,7 +283,9 @@ class MarksBlock extends Component {
                                 <View>
                                     <View style={globalStyles.head}>
                                         <View key={1000}>
-                                            <Text style={[globalStyles.headerCellFirst, {backgroundColor : theme.primaryLightColor, borderColor : theme.primaryDarkColor}]}>{`${langLibrary===undefined?'':langLibrary.mobSubject===undefined?'':langLibrary.mobSubject.toUpperCase()}`}</Text>
+                                            <Text style={[globalStyles.headerCellFirst, {backgroundColor : theme.primaryLightColor, borderColor : theme.primaryDarkColor}]}>
+                                                {`${getLangWord("mobSubject", langLibrary).toUpperCase()}`}
+                                            </Text>
                                             <Text style={{position : "absolute", top : 0, left : 0, fontSize : 8.5, paddingLeft : 4, paddingRight : 4, borderBottomRightRadius : 3, color : theme.primaryTextColor, backgroundColor : theme.primaryDarkColor}}>
                                                 {(new Date(dateFromTimestamp(stats3.max)) instanceof Date)?localDateTime(dateFromTimestamp(stats3.max), "UA"):null}
                                                 </Text>
@@ -372,8 +370,8 @@ class MarksBlock extends Component {
                                             onLongPress={()=>{this[`sectionItem${keydp}`].scrollToEnd()}}
                                         >
                                             <Icon
-                                                name='menu-down'
-                                                type='MaterialCommunityIcons'
+                                                name='ios-arrow-down'
+                                                type='Ionicons'
                                                 color={theme.primaryDarkColor}
                                                 size={50}
                                             />

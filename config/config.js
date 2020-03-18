@@ -5,7 +5,7 @@
 
 // Global consts
 export const ISDEBUG = false;
-export const version = '1.08.288'
+export const version = '1.08.290'
 export const supportEmail = 'paul.n.skiba@gmail.com'
 // URL's
 export const AUTH_URL  = ISDEBUG?'https://sch-journal.dev':'https://mymarks.info'

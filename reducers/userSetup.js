@@ -32,7 +32,8 @@ const initialState = {
             localChatMessages : [], isMobile : true, photoPath : [], markscount : 0,
             needRenew : false, chatTags : [], budget : [], budgetpays : [], renderBudget : 1, classNews : [],
             statsBudget : null, statsBudgetPays : null, selectedFooter : 0, logoutToken : '',
-            timetable : [], subjects : [], offlineMsgs : [],
+            timetable : [], subjects : [], offlineMsgs : [], school_id : null,
+            dishes : []
             // headerHeight : 0, footerHeight : 0, online : false, langCode : "",
             // themeColor : "#46b5be",
             // theme : {
@@ -71,7 +72,7 @@ export function userSetupReducer(state = initialState, action) {
                     mark_dates, best_lines, avg_lines, avg_marks, addUserToken,
                     lastmarkssent, emails, homework, stats2, stats3, mark_date,
                     avgclassmarks, classObj, chatrows, markscount, classNews, tags,
-                    statsBudget, statsBudgetPays, timetable, subjects} = action.payload.data;
+                    statsBudget, statsBudgetPays, timetable, subjects, school_id} = action.payload.data;
             let {   name : userName, id : userID, isadmin } = action.payload.data.user;
             let {   class_number, pupil_count, year_name, perioddayscount,
                     markblank_id, markblank_alias, selected_marker, titlekind,
@@ -89,10 +90,8 @@ export function userSetupReducer(state = initialState, action) {
                 selectedSubj : selected_subj, students : students?students:[], classObj,
                 isadmin, studentName, studentId, marks, mark_dates, best_lines, avg_lines, avg_marks, addUserToken,
                 cnt_marks, stud_cnt, subj_cnt, lastmarkssent, emails, homework, stats2 : stats2[0], stats3 : stats3[0],
-                mark_date, avgclassmarks, langLibrary : action.payload.langLibrary, localChatMessages : chatrows, markscount,
-                classNews, chatTags : tags, statsBudget, statsBudgetPays,
-                // showLogin : false,
-                timetable, subjects,
+                mark_date, avgclassmarks, langLibrary : action.payload.langLibrary, localChatMessages : [], markscount,
+                classNews, chatTags : tags, statsBudget, statsBudgetPays, timetable, subjects, school_id,
                 theme : action.payload.theme?action.payload.theme:themeOptions['#46b5be'], themeColor : action.payload.themeColor?action.payload.themeColor:'#46b5be'}
             return setup
             }
@@ -191,9 +190,6 @@ export function userSetupReducer(state = initialState, action) {
         case 'CHAT_SSL' : {
             return{...state, chatSSL: action.payload}
         }
-        case 'PHOTO_PATH' : {
-            return{...state, photoPath: action.payload}
-        }
         case 'CHAT_TAGS' : {
             return{...state, chatTags: action.payload}
         }
@@ -203,9 +199,9 @@ export function userSetupReducer(state = initialState, action) {
             return{...state, budgetpays: action.payload}
         case 'RENDER_BUDGET' :
             return{...state, renderBudget: action.payload}
-        case "ADD_CHAT_MESSAGES" : {
-            return{...state, localChatMessages: action.payload}
-        }
+        // case "ADD_CHAT_MESSAGES" : {
+        //     return{...state, localChatMessages: action.payload}
+        // }
         case "ADD_MARKS" : {
             return{...state, marks: action.payload, markscount : action.payload.length}
         }
@@ -214,6 +210,9 @@ export function userSetupReducer(state = initialState, action) {
         }
         case "UPDATE_NEWS" : {
             return{...state, classNews: action.payload}
+        }
+        case "UPDATE_DISHES" : {
+            return{...state, dishes: action.payload}
         }
         case 'USER_LOGGEDOUT' :
             let initState = initialState

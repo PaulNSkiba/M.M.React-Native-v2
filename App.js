@@ -11,10 +11,12 @@ import {SafeAreaView, StyleSheet, ScrollView, View, Text, StatusBar,
         AppState, Platform, Animated, Checkbox } from 'react-native';
 import {setStorageData, getStorageData, getNextStudyDay, daysList, toYYYYMMDD,
         themeOptions, hasAPIConnection, axios2, getViewStat, getViewStatStart,
-        getNearestSeptFirst, prepareJSON, prepareMessageToState, dateFromYYYYMMDD, prepareImageJSON, sendMail} from './js/helpersLight'
+        getNearestSeptFirst, prepareJSON, prepareMessageToState, dateFromYYYYMMDD,
+        prepareImageJSON, sendMail, getLangWord, echoClient, prepareMessageToFormat} from './js/helpersLight'
 import axios from 'axios';
 import {API_URL, arrLangs, supportEmail}        from './config/config'
-import { Container, Content, Body, Footer, FooterTab, Spinner, Button, Tabs, Tab, TabHeading, Toast } from 'native-base';
+import { Container, Content, Body, Footer, FooterTab, Spinner,
+        Button, Tabs, Tab, TabHeading, Toast, Icon } from 'native-base';
 import HeaderBlock from './components/HeaderBlock/headerBlock'
 import ChatBlock from './components/ChatBlock/chatblock'
 import ChatMobile from './components/ChatMobile/chatmobile'
@@ -25,7 +27,6 @@ import CameraBlock from './components/CameraBlock/camerablock'
 import ETCBlock from './components/ETCBlock/etcblock'
 import ButtonWithBadge from './components/ButtonWithBadge/buttonwithbadge'
 import styles from './css/styles'
-import {instanceAxios} from './js/helpersLight'
 import {RFPercentage, RFValue} from "react-native-responsive-fontsize";
 import Drawer from 'react-native-drawer'
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
@@ -42,6 +43,51 @@ import LoginBlock from './components/LoginBlock/loginBlock'
 import DocumentPicker from 'react-native-document-picker';
 import RNFS from 'react-native-fs';
 import ImageResizer from 'react-native-image-resizer';
+import PushNotification, {PushNotificationIOS} from "react-native-push-notification";
+
+window.Pusher = Pusher
+
+PushNotification.configure({
+    // (optional) Called when Token is generated (iOS and Android)
+    onRegister: function(token) {
+        console.log("TOKEN:", token);
+    },
+
+    // (required) Called when a remote or local notification is opened or received
+    onNotification: function(notification) {
+        console.log("NOTIFICATION:", notification);
+
+        // process the notification
+        PushNotification.cancelAllLocalNotifications()
+
+        // PushNotification.cancelLocalNotifications({id: notification.id});
+        // required on iOS only (see fetchCompletionHandler docs: https://github.com/react-native-community/react-native-push-notification-ios)
+        if (Platform.OS === "ios") {
+            notification.finish(PushNotificationIOS.FetchResult.NoData);
+        }
+    },
+
+    // ANDROID ONLY: GCM or FCM Sender ID (product_number) (optional - not required for local notifications, but is need to receive remote push notifications)
+    senderID: "MY.MARKS",
+
+    // IOS ONLY (optional): default: all - Permissions to register.
+    permissions: {
+        alert: true,
+        badge: true,
+        sound: true
+    },
+
+    // Should the initial notification be popped automatically
+    // default: true
+    popInitialNotification: true,
+
+    /**
+     * (optional) default: true
+     * - Specified if permissions (ios) and token (android and ios) will requested or not,
+     * - if not, you must call PushNotificationsHandler.requestPermissions() later
+     */
+    requestPermissions: true
+});
 
 // import * as Animatable from 'react-native-animatable';
 // import BottomDrawer from 'rn-bottom-drawer';
@@ -75,7 +121,7 @@ class App extends Component {
             isNews : false,
             helpChat : false,
             homeworks: 0,
-            localChatMessages : this.props.userSetup.localChatMessages,
+            localChatMessages : this.props.tempdata.localChatMessages,
             langLibrary : {},
             marksInBaseCount: 0,
             msgs: 0,
@@ -99,100 +145,137 @@ class App extends Component {
         this.setstate = this.setstate.bind(this)
         this.showDrawer = this.showDrawer.bind(this)
         this.connectivityCheck = this.connectivityCheck.bind(this)
-        // this.firstSeptember = getNearestSeptFirst()
-        this.thisYearMarks = [] //this.props.userSetup.marks.filter(item=>(new Date(item.mark_date) >= getNearestSeptFirst()))
+        this.thisYearMarks = []
         this.renewStat = this.renewStat.bind(this)
         this.isnew = true
-        // this.isHidden = true
+        this.notifchats = new Map()
+        this.notifhws = new Map()
+        this.notifmarks = new Map()
+        this.initLocalPusher = this.initLocalPusher.bind(this)
     }
-    // handleOpen = () => {
-    //     Animated.timing(this.state.animation, {
-    //         toValue: 1,
-    //         duration: 300,
-    //         useNativeDriver: true,
-    //     }).start();
-    // };
-    // handleClose = () => {
-    //     console.log("handleClose")
-    //     Animated.timing(this.state.animation, {
-    //         toValue: 0,
-    //         duration: 200,
-    //         useNativeDriver: true,
-    //     }).start();
-    // };
     componentWillMount(){
-        (async ()=> {
-            const {langCode} = this.props.interface
-            const {classID, langLibrary} = this.props.userSetup
-            const {gotStats} = this.props.stat
-            if (langLibrary===undefined) {
+    //     (async ()=> {
+    //         const {langCode} = this.props.interface
+    //         const {classID, langLibrary} = this.props.userSetup
+    //         const {gotStats} = this.props.stat
+    //         if (langLibrary===undefined) {
+    //             this.props.onStartLoading()
+    //             await this.getLangAsync(langCode && arrLangs.includes(langCode) ? langCode : this.defLang)
+    //             this.props.onStopLoading()
+    //         }
+    //         else {
+    //             if (!Object.keys(langLibrary).length) {
+    //                 this.props.onStartLoading()
+    //                 await this.getLangAsync(langCode && arrLangs.includes(langCode) ? langCode : this.defLang)
+    //                 this.props.onStopLoading()
+    //             }
+    //         }
+    //         // if (!this.state.calcStat&&classID>0&&!gotStats)
+    //     })()
+        this.props.onReduxUpdate("INIT_STATDATA")
+        this.props.onReduxUpdate("INIT_TEMPDATA")
+        this.checkLangLibrary()
+    }
+    async componentDidMount() {
+        // console.log("COMPONENT_DID_MOUNT", this.props.userSetup)
+        const {updateLang} = this.props.tempdata
+        const {langCode} = this.props.interface
+        const {classID} = this.props.userSetup
+
+        if ((Platform.OS === 'ios') || ((Platform.OS === 'android')&&(Platform.Version > 22))) // > 5.1
+        {
+            // if (AppState._eventHandlers.change.size === 0) {
+                AppState.addEventListener('change', this._handleAppStateChangeApp);
+            // }
+        }
+        if (updateLang) {
+            console.log("UPDATE_LANGLIBRARY")
+            this.props.onStartLoading()
+            await this.getLangAsync(langCode && arrLangs.includes(langCode) ? langCode : this.defLang)
+            this.props.onReduxUpdate("UPDATE_LANGLIBRARY", false)
+            this.props.onStopLoading()
+        }
+
+        MaterialIcons.loadFont()
+        Ionicons.loadFont()
+        AntDesign.loadFont()
+        Foundation.loadFont()
+
+        this.getSessionID();
+        this.connectivityCheck();
+
+        if (classID) this.getChatMessages(classID)
+        // console.log("COMPONENT_DID_MOUNT", classID)
+
+        const {email, token} = this.props.saveddata
+//            const dataSaved = JSON.parse(await getStorageData("myMarks.data"))
+//             const {email, token} = dataSaved
+
+        this.props.onReduxUpdate("UPDATE_TOKEN", token===null?'':token)
+        this.setState({userEmail: email, userToken: token===null?'':token})
+
+    }
+
+    shouldComponentUpdate(nextProps, nextState) {
+        // console.log("shouldComponentUpdate:chatMobile", nextProps.userSetup.classID, this.props.userSetup.classID)
+
+        if (nextProps.userSetup.userID&&this.state.Echo===null) {
+            if (this.isnew) {
+                console.log("shouldUpdateEcho", nextProps.userSetup.userID, this.state.Echo)
+                if (!this.state.isChatConnected) this.initLocalPusher()
+            }
+            else {
+                // this.initNetPusher()
+            }
+        }
+        else {
+            if ((!nextProps.userSetup.userID) && this.state.Echo!==null) {
+                this.state.Echo.disconnect()
+                this.state.Echo = null
+            }
+        }
+
+        return true
+    }
+    componentWillUnmount() {
+        // if (this.typingTimer) clearInterval(this.typingTimer)
+        AppState.removeEventListener('change', this._handleAppStateChangeApp);
+    }
+    getChatMessages=classID=>{
+        this.props.onStartLoading()
+        axios2('get', `${API_URL}chat/get/${classID}`)
+            .then(resp => {
+                this.setState({localChatMessages : resp.data})
+                // this.props.setstate({localChatMessages : resp.data})
+                this.props.onReduxUpdate("ADD_CHAT_MESSAGES", resp.data)
+                this.props.onReduxUpdate("UPDATE_HOMEWORK", resp.data.filter(item=>(item.homework_date!==null)))
+                this.props.onStopLoading()
+                console.log("getChatMessages : Загружено!", new Date().toLocaleTimeString())
+            })
+            .catch(error => {
+                console.log('getChatMessagesError', error)
+                this.props.onStopLoading()
+            })
+        this.props.onReduxUpdate("USER_LOGGEDIN_DONE")
+    }
+    checkLangLibrary=async ()=>{
+        const {langCode} = this.props.interface
+        const {classID, langLibrary} = this.props.userSetup
+
+        if (langLibrary===undefined) {
+            this.props.onStartLoading()
+            await this.getLangAsync(langCode && arrLangs.includes(langCode) ? langCode : this.defLang)
+            this.props.onStopLoading()
+        }
+        else {
+            if (!Object.keys(langLibrary).length) {
                 this.props.onStartLoading()
                 await this.getLangAsync(langCode && arrLangs.includes(langCode) ? langCode : this.defLang)
                 this.props.onStopLoading()
             }
-            else {
-                if (!Object.keys(langLibrary).length) {
-                    this.props.onStartLoading()
-                    await this.getLangAsync(langCode && arrLangs.includes(langCode) ? langCode : this.defLang)
-                    this.props.onStopLoading()
-                }
-            }
-            // if (!this.state.calcStat&&classID>0&&!gotStats)
-        })()
-    }
-    async componentDidMount() {
-        // console.log("COMPONENT_DID_MOUNT", this.props.userSetup)
-        if ((Platform.OS === 'ios') || ((Platform.OS === 'android')&&(Platform.Version > 22))) // > 5.1
-        {
-            MaterialIcons.loadFont()
-            Ionicons.loadFont()
-            AntDesign.loadFont()
-            Foundation.loadFont()
-            AppState.addEventListener('change', this._handleAppStateChange);
-
-            this.getSessionID();
-
-            this.connectivityCheck();
-
-            const {classID} = this.props.userSetup
-
-            // console.log("COMPONENT_DID_MOUNT", classID)
-            // this.renewStat(classID)
-
-            // console.log("componentDidMount: App", this.props.userSetup)
-            // if (classID > 0) {
-            //     console.log("GETSTAT")
-            //     // const stat =
-            //     this.props.onReduxUpdate("UPDATE_VIEWSTAT", await getViewStat(classID))
-            // }
-
-            const {email, token} = this.props.saveddata
-//            const dataSaved = JSON.parse(await getStorageData("myMarks.data"))
-//             const {email, token} = dataSaved
-            this.props.onReduxUpdate("INIT_STATDATA")
-            this.props.onReduxUpdate("INIT_TEMPDATA")
-            this.props.onReduxUpdate("UPDATE_TOKEN", token===null?'':token)
-            this.setState({userEmail: email, userToken: token===null?'':token})
         }
     }
-
-    // componentWillUnmount(){
-    //     this.keyboardDidShowSub.remove();
-    //     this.keyboardDidHideSub.remove();
-    // }
-    componentWillUnmount() {
-        // if ((Platform.OS === 'ios') || ((Platform.OS === 'android')&& (Platform.Version > 22))) // > 5.1
-        // {
-        //     AppState.removeEventListener('change', this._handleAppStateChange);
-        // }
-        AppState.removeEventListener('change', this._handleAppStateChange);
-        // this.keyboardDidShowSub.remove();
-        // this.keyboardDidHideSub.remove();
-    }
     _toggleSubview() {
-        // this.setState({
-        //     buttonText: !isHidden ? "Show Subview" : "Hide Subview"
-        // });
         let toValue = 100;
         if(this.state.isHiddenMenu)
             toValue = 0;
@@ -220,31 +303,22 @@ class App extends Component {
         // this.setState({viewHeight : (windowHeight - keyboardHeight), keyboardHeight})
         // console.log("handleKeyboardDidShow")
     }
-
     handleKeyboardDidHide = () => {
         // const { height: windowHeight } = Dimensions.get('window');
         // this.setState({viewHeight : (windowHeight), keyboardHeight : 0})
-
         this.props.onReduxUpdate("UPDATE_KEYBOARD_SHOW", false)
         this.props.onReduxUpdate("UPDATE_KEYBOARD_HEIGHT", 0)
-
         // console.log("handleKeyboardDidHide")
-
     }
     getLangAsync = async (lang) => {
         let {langCode} = this.props.interface
+        let {token} = this.props.userSetup
+
         if (!lang) {
             lang = langCode ? langCode : this.defLang
         }
         let langObj = {}
-
         // console.log("getLangLibrary:start", lang)
-        // console.log("langURL_0")
-        // console.log('langURL_', `${API_URL}langs/get${lang?('/'+lang):''}`)
-        // console.log('langURL', AUTH_URL + ('/api/langs/get' + (lang.length?('/' + lang) : '')))
-
-        let {token} = this.props.userSetup
-
         this.props.onReduxUpdate("LANG_CODE", lang)
 
         const headers = {
@@ -275,7 +349,7 @@ class App extends Component {
     connectivityCheck() {
         hasAPIConnection()
             .then(res=> {
-                console.log("AppCheck", res)
+                // console.log("AppCheck", res)
                 this.props.onReduxUpdate('UPDATE_ONLINE', res)
             })
             .catch(res=>console.log("AppCheck:error", res))
@@ -288,12 +362,83 @@ class App extends Component {
         //     })
         //     .catch(res=>console.log("AppCheck:error", res))
     }
-    _handleAppStateChange = (nextAppState) => {
-        const {classID, studentId} = this.props.userSetup
+    _handleAppStateChangeApp = (nextAppState) => {
+        const {classID, studentId, markscount} = this.props.userSetup
+        const {localChatMessages} = this.props.tempdata
+
+        // console.log("APP_STATE", this.state.appState, nextAppState)
         if (this.state.appState.match(/inactive|background/) && nextAppState === 'active') {
             // console.log('AppState: ', 'App has come to the foreground!');
             if (classID) {
                 this.renewStat(classID)
+
+                    axios2('get',`${API_URL}class/getstat/${classID}/${studentId}/0`)
+                        .then(res => {
+                            // homeworks: 13
+                            // marks: 0
+                            // msgs: 250
+                            // news: 3
+                            // ToDO: News исправим позже
+                            const today = toYYYYMMDD(new Date())
+                            const {msgs, marks, homeworks} = res.data
+                            const homeworks_count = localChatMessages.filter(item=>(item.homework_date!==null&&(toYYYYMMDD(new Date(item.homework_date))>=today))).length
+                            console.log("OFF_LINE_UPDATE", msgs, localChatMessages.slice(-1)[0].id, markscount, marks, homeworks_count, homeworks)
+
+                            if ((msgs!==localChatMessages.slice(-1)[0].id)||(markscount!==marks)||(homeworks_count!==homeworks)) {
+                                console.log('UPDATE_OFFLINE')
+                                axios2('get',`${API_URL}class/getstat/${classID}/${studentId}/1`)
+                                    .then(res => {
+                                        const msgs = res.data.msgs
+                                        let arr = localChatMessages//this.props.localchatmessages //this.state.localChatMessages
+                                        // console.log("GetStatMsgs", res.data.marks)
+                                        if (msgs.length) {
+                                            msgs.forEach(msgitem=>{
+                                                let isinmsg = false
+                                                arr = arr.map(item=>{
+                                                    if (item.id === msgitem.id) {
+                                                        item = msgitem
+                                                        isinmsg = true
+                                                    }
+                                                    return item
+                                                })
+                                                if (!isinmsg) {
+                                                    if (toYYYYMMDD(new Date(msgitem.msg_date))>=toYYYYMMDD(new Date()))
+                                                        arr.push(msgitem)
+                                                    else
+                                                        arr.unshift(msgitem)
+                                                }
+                                            })
+                                        }
+                                        // this.setState({localChatMessages : arr})
+                                        // this.props.setstate({localChatMessages : arr})
+                                        this.props.onReduxUpdate("ADD_CHAT_MESSAGES", arr)
+
+                                        console.log("Загружено по оффлайну!", this.notifmarks, AppState._eventHandlers.change.size, homeworks_count, homeworks, markscount, marks)
+                                        if (homeworks_count!==homeworks) {
+                                            this.props.onReduxUpdate("UPDATE_HOMEWORK", res.data.msgs.filter(item => (item.homework_date !== null)))
+                                            // this.sendPush("НОВАЯ ДОМАШКА", "Домашка", "", 0)
+                                        }
+                                        // this.props.onReduxUpdate("ADD_CHAT_MESSAGES", res.data.msgs)
+
+                                        if (markscount!==marks) {
+
+                                            this.props.onReduxUpdate("ADD_MARKS", res.data.marks)
+                                            if (!(this.notifmarks.has(marks))) {
+                                                this.sendPush(`НОВЫЕ ОЦЕНКИ[${marks - markscount}]`, "Оценки", "", 0)
+                                                this.notifmarks.set(marks, true)
+                                            }
+                                        }
+                                        this.renewStat(classID)
+                                    })
+                                    .catch(response=> {
+                                        console.log("NewData_ERROR", response)
+                                    })
+                            }
+                        })
+                        .catch(response=> {
+                            console.log("handleConnectivityChange_ERROR", response)
+                        })
+
             }
         }
         else {
@@ -334,7 +479,7 @@ class App extends Component {
         }
     }
     setstate = (obj) => {
-        // console.log("setstate")
+        console.log("setstate", obj)
         this.setState(obj)
         this.setState({isHiddenMenu : true})
         this.props.onReduxUpdate("UPDATE_PAGE", obj.selectedFooter)
@@ -369,17 +514,135 @@ class App extends Component {
 
         // console.log("renderDrawer")
         return  <Tabs initialPage={0} page={0}>
-            <Tab key={"tab1"} heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor, fontSize : RFPercentage(1.8)}}>{langLibrary===undefined?'':(langLibrary.mobLogin===undefined?'':langLibrary.mobLogin.toUpperCase())}</Text></TabHeading>}>
+            <Tab key={"tab1"} heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor, fontSize : RFPercentage(1.8)}}>
+                {getLangWord("mobLogin", langLibrary).toUpperCase()}
+                </Text></TabHeading>}>
                 <View>
                     <LoginBlock updateState={this.updateState}/>
                 </View>
             </Tab>
-            {/*<Tab key={"tab2"} heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor, fontSize : RFPercentage(1.8)}}>{langLibrary===undefined?'':(langLibrary.mobRegister===undefined?'':langLibrary.mobRegister.toUpperCase())}</Text></TabHeading>}>*/}
-                {/*<View style={{height : "100%", width : "100%", backgroundColor : theme.primaryDarkColor}}>*/}
-
-                {/*</View>*/}
-            {/*</Tab>*/}
-            <Tab key={"tab3"} heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor, fontSize : RFPercentage(1.8)}}>{langLibrary===undefined?'':(langLibrary.mobSettings===undefined?'':langLibrary.mobSettings.toUpperCase())}</Text></TabHeading>}>
+            <Tab key={"tab2"} heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor, fontSize : RFPercentage(1.8)}}>
+                {getLangWord("mobRegister", langLibrary).toUpperCase()}
+            </Text></TabHeading>}>
+                <View style={{height : "100%", width : "100%", backgroundColor : theme.primaryDarkColor,
+                    display : "flex",
+                    flexDirection : "column",
+                    // justifyContent : "center",
+                    alignItems : "center"
+                }}>
+                        <View style={{width : "100%", backgroundColor : theme.primaryDarkColor,
+                            display : "flex",
+                            flexDirection : "column",
+                            alignItems : "center",
+                            marginTop : "30%",
+                            marginLeft : 30,
+                            marginRight : 30
+                        }}>
+                            <View style={{
+                                display : "flex",
+                                flexDirection : "column",
+                                // justifyContent : "space-around",
+                                alignItems : "center"
+                                }}>
+                                <Icon type="Ionicons" style={{fontSize: 70, color: theme.primaryLightColor}} name="ios-people"/>
+                            </View>
+                            <View style={{width : "80%", display : "flex",
+                                flexDirection : "row",
+                                justifyContent : "space-between",
+                                alignItems : "center"
+                            }}>
+                                <Text style={{fontSize : RFPercentage(4), color : theme.primaryLightColor}}>НОВЫЙ КЛАСС</Text>
+                                <TouchableOpacity
+                                    style={{ borderWidth:1,
+                                        borderColor:    theme.secondaryLightColor,
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        width:40,
+                                        height:40,
+                                        backgroundColor: theme.secondaryLightColor,
+                                        // opacity : .6,
+                                        borderRadius: 40,
+                                        // position : "absolute",
+                                        // bottom : 20,
+                                        // right : 20,
+                                        zIndex : 21,
+                                    }}
+                                    onPress={()=>alert(">")}
+                                    // delayLongPress={300}
+                                    // onLongPress={()=>{this._scrollView.scrollToEnd()}}
+                                >
+                                    <Icon
+                                        name='ios-arrow-forward'
+                                        type='Ionicons'
+                                        color={theme.primaryDarkColor}
+                                        size={50}
+                                    />
+                                    {/*<View style={{position : "absolute", right : 7, bottom : 7, fontSize : RFPercentage(1.2), color : theme.secondaryColor}}>*/}
+                                        {/*<Text style={{fontSize : RFPercentage(1.7), fontWeight : "800", color : theme.primaryDarkColor, opacity : 1}}>{messages.filter(item=>item.id>this.state.currentMsgID).length}</Text>*/}
+                                    {/*</View>*/}
+                                </TouchableOpacity>
+                            </View>
+                    </View>
+                    <View style={{width : "100%", backgroundColor : theme.primaryDarkColor,
+                        display : "flex",
+                        flexDirection : "column",
+                        alignItems : "center",
+                        marginTop : 40,
+                        marginLeft : 30,
+                        marginRight : 30
+                    }}>
+                        <View style={{
+                            display : "flex",
+                            flexDirection : "column",
+                            // justifyContent : "space-around",
+                            alignItems : "center"
+                        }}>
+                            <Icon type="Ionicons" style={{fontSize: 70, color: theme.primaryLightColor}} name="ios-person-add"/>
+                        </View>
+                    <View style={{width : "80%", display : "flex",
+                        flexDirection : "row",
+                        justifyContent : "space-between",
+                        alignItems : "center"
+                    }}>
+                        {/*<Icon type="Ionicons" style={{fontSize: 40, color: theme.secondaryLightColor}} name="ios-person-add"/>*/}
+                        <Text style={{fontSize : RFPercentage(4), color : theme.primaryLightColor}}>НОВЫЙ СТУДЕНТ</Text>
+                        <TouchableOpacity
+                            style={{ borderWidth:1,
+                                borderColor:    theme.secondaryLightColor,
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                width:40,
+                                height:40,
+                                backgroundColor: theme.secondaryLightColor,
+                                // opacity : .6,
+                                borderRadius: 40,
+                                // position : "absolute",
+                                // bottom : 20,
+                                // right : 20,
+                                zIndex : 21,
+                            }}
+                            onPress={()=>alert(">")}
+                            // delayLongPress={300}
+                            // onLongPress={()=>{this._scrollView.scrollToEnd()}}
+                        >
+                            <Icon
+                                name='ios-arrow-forward'
+                                type='Ionicons'
+                                color={theme.primaryDarkColor}
+                                size={50}
+                            />
+                            {/*<View style={{position : "absolute", right : 7, bottom : 7, fontSize : RFPercentage(1.2), color : theme.secondaryColor}}>*/}
+                                {/*<Text style={{fontSize : RFPercentage(1.7), fontWeight : "800", color : theme.primaryDarkColor, opacity : 1}}>{messages.filter(item=>item.id>this.state.currentMsgID).length}</Text>*/}
+                            {/*</View>*/}
+                        </TouchableOpacity>
+                    </View>
+                    </View>
+                </View>
+            </Tab>
+            <Tab key={"tab3"} heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor, fontSize : RFPercentage(1.8)}}>
+                    {getLangWord("mobSettings", langLibrary).toUpperCase()}
+                    </Text></TabHeading>}>
+                    <Container>
                     <View style={{
                     backgroundColor : theme.primaryColor,
                     height : Dimensions.get('window').height,
@@ -389,28 +652,50 @@ class App extends Component {
                     zIndex : 102,
                     }}>
                     <View style={{height: 100, width: 300, margin : 5}}>
-                        <View><Text style={{color : theme.primaryTextColor, fontWeight : '800', marginLeft : 10}}>{langLibrary===undefined?'':(langLibrary.lang===undefined?'':langLibrary.lang)}:</Text></View>
+                        <View><Text style={{color : theme.primaryTextColor, fontWeight : '800', marginLeft : 10}}>
+                            {getLangWord("lang", langLibrary)}
+                        </Text></View>
                         <View style={{  flex : 1, margin : 10, backgroundColor : "#fff", borderRadius: 10, height : 100, width : Dimensions.get('window').width - 30,
                             flexDirection : 'row', justifyContent : "space-around", alignItems : "center"}}>
                             <TouchableOpacity key={0} onPress={()=>{this.onSelectLang('GB')}}>
-                                <View style={{position : 'relative', textAligh: "center", borderColor : langLibrary===undefined?'':(langLibrary.langCode===undefined?'':langLibrary.langCode)!=='GB'?"#dcdcdc":theme.primaryDarkColor, borderWidth : langLibrary===undefined?1:(langLibrary.langCode===undefined?'':langLibrary.langCode)!=='GB'?1:4}}>
+                                <View style={{position : 'relative', textAligh: "center", borderColor : getLangWord("langCode", langLibrary)!=='GB'?"#dcdcdc":theme.primaryDarkColor, borderWidth : getLangWord("langCode", langLibrary)!=='GB'?1:4}}>
                                     <Image source={FlagUK}/>
                                 </View>
                             </TouchableOpacity>
                             <TouchableOpacity key={1} onPress={()=>{this.onSelectLang('RU')}}>
-                                <View style={{position : 'relative', textAligh: "center", borderColor : langLibrary===undefined?'':(langLibrary.langCode===undefined?'':langLibrary.langCode)!=='RU'?"#dcdcdc":theme.primaryDarkColor, borderWidth : langLibrary===undefined?1:(langLibrary.langCode===undefined?'':langLibrary.langCode)!=='RU'?1:4}}>
+                                <View style={{position : 'relative', textAligh: "center", borderColor : getLangWord("langCode", langLibrary)!=='RU'?"#dcdcdc":theme.primaryDarkColor, borderWidth : getLangWord("langCode", langLibrary)!=='RU'?1:4}}>
                                     <Image source={FlagRU}/>
                                 </View>
                             </TouchableOpacity>
                             <TouchableOpacity key={2} onPress={()=>{this.onSelectLang('UA')}}>
-                                <View style={{position : 'relative', textAligh: "center", borderColor : langLibrary===undefined?'':(langLibrary.langCode===undefined?'':langLibrary.langCode)!=='UA'?"#dcdcdc":theme.primaryDarkColor, borderWidth : langLibrary===undefined?1:(langLibrary.langCode===undefined?'':langLibrary.langCode)!=='UA'?1:4}}>
+                                <View style={{position : 'relative', textAligh: "center", borderColor : getLangWord("langCode", langLibrary)!=='UA'?"#dcdcdc":theme.primaryDarkColor, borderWidth : getLangWord("langCode", langLibrary)!=='UA'?1:4}}>
                                     <Image source={FlagUA}/>
                                 </View>
                             </TouchableOpacity>
                         </View>
                     </View>
+                    <View>
+                        <Button style={{  marginLeft : 60, marginTop : 5, marginRight : 60, borderRadius : 30,
+                            justifyContent: "center",
+                            alignItems: "center",
+                            color : theme.primaryDarkColor, backgroundColor : theme.secondaryLightColor}} onPress={async ()=>{
+                            const {langCode} = this.props.interface
+                            const {classID, langLibrary} = this.props.userSetup
+                              if (langLibrary===undefined) {
+                                this.props.onStartLoading()
+                                await this.getLangAsync(langCode && arrLangs.includes(langCode) ? langCode : this.defLang)
+                                this.props.onStopLoading()
+                            }
+                        }}>
+                            <View style={{ justifyContent: "center", alignItems: "center" }}>
+                                <Text style={{fontSize : RFPercentage(3), color : theme.primaryDarkColor, width : "100%", fontWeight : "800"}}>Обновить словарь</Text>
+                            </View>
+                        </Button>
+                    </View>
                     <View style={{height: 100, width: 300, margin : 5}}>
-                        <View><Text style={{color : theme.primaryTextColor, fontWeight : '800', marginLeft : 10}}>{langLibrary===undefined?'':(langLibrary.colorTheme===undefined?'':langLibrary.colorTheme)}:</Text></View>
+                        <View><Text style={{color : theme.primaryTextColor, fontWeight : '800', marginLeft : 10}}>
+                            {getLangWord("colorTheme", langLibrary)}
+                        </Text></View>
                         <View style={{  flex : 1, margin : 10, backgroundColor : "#fff", borderRadius: 10, height : 100, width : Dimensions.get('window').width - 30,
                                         flexDirection : 'row', justifyContent : "space-around", alignItems : "center"}}>
                             {
@@ -453,6 +738,7 @@ class App extends Component {
                         </Button>
                         :null}
                 </View>
+                </Container>
             </Tab>
         </Tabs>
     }
@@ -464,7 +750,8 @@ class App extends Component {
         this.setState({calcStat : true})
         getViewStatStart(classID)
             .then(res=>{
-                const {marks, localChatMessages, userID, classNews} = this.props.userSetup
+                const {marks, userID, classNews} = this.props.userSetup
+                const {localChatMessages} = this.props.tempdata
                 console.log("renewStat:then", res)
                 // const unreadMsgsCount = localChatMessages.filter(item=>(item.id>chatID&&item.user_id!==userID)).length
                 res.markCnt = marks.filter(item=>(new Date(item.mark_date) >= getNearestSeptFirst())).filter(item =>(Number(item.id) > res.markID)).length
@@ -504,9 +791,8 @@ class App extends Component {
     // }
     addMessage=(text)=>{
         if (!text.length) return
-        const {localChatMessages} = this.props.userSetup
+        const {localChatMessages} = this.props.tempdata
         const obj = prepareJSON(text, this.props.userSetup, true, null, null, null)
-        // console.log("APP: addMessage", [...localChatMessages, JSON.parse(obj)], obj)
         const objParsed = JSON.parse(obj)
 
         if (JSON.parse(obj).message.length) {
@@ -627,8 +913,7 @@ class App extends Component {
                                                 //     text: `Сообщение добавлено: ${cnt} из ${results.length}`,
                                                 //     buttonText: 'ОК'
                                                 // })
-
-                                                const {localChatMessages} = this.props.userSetup
+                                                const {localChatMessages} = this.props.tempdata
                                                 const obj = prepareImageJSON(JSON.stringify(data), JSON.stringify(data100), classID, userName, userID, studentId, studentName)
                                                 const objParsed = JSON.parse(obj)
                                                 this.setState({messagesNew : [...this.state.messagesNew, objParsed]})
@@ -710,21 +995,6 @@ class App extends Component {
         axios2('post', `${API_URL}chat/addserv`, JSON.stringify(json))
             .then(response => {
                 // console.log('ADD_MSG', response)
-                // if (this.state.isNews) {
-                //     let arr = classNews
-                //     // console.log("NEWS", text)
-                //     arr.unshift(response.data)
-                //     this.props.onReduxUpdate("UPDATE_NEWS", arr)
-                //
-                //     // this._textarea.setNativeProps({'editable': false});
-                //     // this._textarea.setNativeProps({'editable':true});
-                //     // this.props.setstate({showFooter : true})
-                //     this.setState({curMessage : ''})
-                //     // this.props.onReduxUpdate('UPDATE_FOOTER_SHOW', true);
-                // }
-                // else {
-                    // console.log("QUESTION", text)
-
                     let arr = classNews
                     arr.unshift(response.data)
                     this.props.onReduxUpdate("UPDATE_NEWS", arr)
@@ -732,12 +1002,6 @@ class App extends Component {
                     if (!this.state.isNews)
                         sendMail(supportEmail, text, this.props.userSetup, this.session_id)
 
-                    // this._textarea.setNativeProps({'editable': false});
-                    // this._textarea.setNativeProps({'editable':true});
-                    // console.log("SETSTATE", arr)
-
-                    // this.props.setstate({showFooter : true})
-                    // this.props.onReduxUpdate('UPDATE_FOOTER_SHOW', true);
                     this.setState({curMessage : ''})
                 // }
             })
@@ -746,22 +1010,355 @@ class App extends Component {
                     // this.setState({isSpinner : false})
                 }
             )
-        // this.refs.textarea.blur()
+    }
 
-        // this.refs.textarea.setNativeProps({'editable':true});
-        // console.log("sendMessage", text, API_URL + 'chat/addserv')
+    sendPush=(text, subText, author, id)=>{
+        const {theme} = this.props.interface
+        console.log("NOTIF", text, subText, id)
+        PushNotification.localNotification({
+            /* Android Only Properties */
+            id: id, // (optional) Valid unique 32 bit integer specified as string. default: Autogenerated Unique ID
+            ticker: "My.Marks Ticker", // (optional)
+            autoCancel: true, // (optional) default: true
+            largeIcon: "ic_launcher", // (optional) default: "ic_launcher"
+            smallIcon: "ic_notification", // (optional) default: "ic_notification" with fallback for "ic_launcher"
+            bigText: text, // (optional) default: "message" prop
+            subText: author, // (optional) default: none
+            color: theme.primaryDarkColor, // (optional) default: system default
+            vibrate: false, // (optional) default: true
+            // vibration: 100, // vibration length in milliseconds, ignored if vibrate=false, default: 1000
+            tag: 'some_tag', // (optional) add tag to message
+            group: "group", // (optional) add group to message
+            ongoing: false, // (optional) set whether this is an "ongoing" notification
+            priority: "high", // (optional) set notification priority, default: high
+            visibility: "private", // (optional) set notification visibility, default: private
+            importance: "high", // (optional) set notification importance, default: high
+
+            /* iOS only properties */
+            alertAction: "view", // (optional) default: view
+            category: "My.Marks", // (optional) default: null
+            userInfo: {author : author}, // (optional) default: null (object containing additional notification data)
+
+            /* iOS and Android properties */
+            title: subText, // (optional)
+            message: text, // (required)
+            // playSound: false, // (optional) default: true
+            // soundName: 'default', // (optional) Sound to play when the notification is shown. Value of 'default' plays the default sound. It can be set to a custom sound such as 'android.resource://com.xyz/raw/my_sound'. It will look for the 'my_sound' audio file in 'res/raw' directory and play it. default: 'default' (default sound is played)
+            number: 10, // (optional) Valid 32 bit integer specified as string. default: none (Cannot be zero)
+            // repeatType: 'day', // (optional) Repeating interval. Check 'Repeating Notifications' section for more info.
+            actions: '["Yes", "No"]',  // (Android only) See the doc for notification actions to know more
+    });
+
+    }
+    initLocalPusher=()=>{
+        const {chatSSL, token, userName, classID} = this.props.userSetup
+        const {users} = this.props.tempdata
+        const echo = echoClient(token, chatSSL)
+
+        console.log("INIT_LOCAL_PUSHER")
+
+        // echo.connector.pusher.logToConsole = true
+        // echo.connector.pusher.log = (msg) => {console.log(msg);};
+        echo.connect()
+
+        echo.connector.pusher.connection.bind('connected', () => {
+            console.log('Chat connected', new Date().toLocaleTimeString())
+            this.setState({isChatConnected : true})
+            // this.props.setstate({isChatConnected : true})
+        });
+        echo.connector.pusher.connection.bind('disconnected', () => {
+            console.log('Chat disconnected')
+            this.setState({isChatConnected : false})
+            // this.props.setstate({isChatConnected : false})
+        });
+//        Reconnection:
+//         echo.connector.socket.on('reconnecting', (attemptNumber) => {
+//             //your code
+//             console.log(`%cSocket reconnecting attempt ${attemptNumber}`, 'color:orange; font-weight:700;');
+//         });
+
+        const channelName = `class.${classID}`
+
+        this.setState({Echo: echo})
+        // this.props.setstate({Echo: echo})
+
+        console.log('websocket', channelName, chatSSL)
+
+        if (chatSSL) {
+            // console.log('websocket-listening', echo)
+            echo.join(channelName)
+                .listen('ChatMessageSSL', (e) => {
+                    // console.log("FILTER-SSL")
+
+                    let msg = prepareMessageToFormat(e.message), msgorig = e.message, isSideMsg = true
+                    let localChat = this.props.tempdata.localChatMessages
+                    let arrChat = []
+                    console.log("FILTER-SSL")
+
+                    arrChat = localChat
+                    if (this.state.messagesNew.filter(newmsg=>newmsg.uniqid===JSON.parse(msg).uniqid).length)
+                        arrChat = localChat.map(
+                            item => {
+                                // if (this.state.messagesNew.includes(item.uniqid)) {
+                                if (this.state.messagesNew.filter(newmsg=>item.uniqid===newmsg.uniqid).length) {
+                                    // Для своих новых
+                                    if (JSON.parse(msg).uniqid === item.uniqid) {
+                                        isSideMsg = false
+                                        let obj = item
+                                        obj.id = msgorig.id
+                                        obj.msg_date = msgorig.msg_date
+                                        return obj
+                                    }
+                                    else {
+                                        return item
+                                    }
+                                }
+                                else {
+                                    return item
+                                }
+                            }
+                        )
+                    if (localChat.filter(newmsg=>newmsg.id===JSON.parse(msg).id).length)
+                        arrChat = localChat.map(
+                            item => {
+                                // if (this.state.messagesNew.includes(item.uniqid)) {
+                                // if (localChat.filter(newmsg=>item.id===newmsg.id).length) {
+                                // Для своих новых
+                                if (JSON.parse(msg).id === item.id) {
+                                    // console.log("MSGORIG", msgorig, msgorig.id, this.props.newmessages.filter(newmsg=>item.uniqid===newmsg.uniqid))
+                                    isSideMsg = false
+                                    let obj = item
+                                    obj.id = msgorig.id
+                                    obj.msg_date = msgorig.msg_date
+                                    return obj
+                                }
+                                else {
+                                    return item
+                                }
+                                // }
+                                // else {
+                                //     return item
+                                // }
+                            }
+                        )
+
+                    // Если новое и стороннее!!!
+                    if (isSideMsg) {
+                        arrChat.push(msgorig)
+                    }
+                    this.props.onReduxUpdate("ADD_CHAT_MESSAGES", arrChat)
+
+                    this.setState({
+                        localChatMessages: arrChat,
+                        // messages: [...arrChat, msg],
+                        messagesNew: this.state.messagesNew.filter(item => !(item.uniqid === JSON.parse(msg).uniqid)),
+                        isLastMsg : true,
+                    })
+                    // console.log("NEWMESSAGES", this.props.newmessages, arrChat)
+                    // this.props.setstate({messagesNew : this.props.newmessages.filter(item => !(item.uniqid === JSON.parse(msg).uniqid)), localChatMessages : arrChat})
+
+                    // const todayMessages = arrChat.filter(item=>(new Date(item.msg_date).toLocaleDateString())===(new Date().toLocaleDateString()))
+                    // const homeworks = arrChat.filter(item=>(item.homework_date!==null)).filter(item=>toYYYYMMDD(new Date(item.homework_date))===toYYYYMMDD(addDay((new Date()), 1)))
+                    //
+                    // this.props.forceupdate(todayMessages.length, homeworks.length)
+                    // this.notifchats = new Map()
+                    // this.notifhws = new Map()
+                    if (!this.notifchats.has(JSON.parse(msg).id)&&JSON.parse(msg).userName!==userName)
+                        this.sendPush(JSON.parse(msg).text, "Чат", JSON.parse(msg).userName, JSON.parse(msg).id)
+
+                    this.notifchats.set(JSON.parse(msg).id, true)
+                })
+                .listen('ChatMessageSSLHomework', (e) => {
+                    // ToDO: Обновлять таблицу домашек и пересчитывать Label
+                    console.log("FILTER-SSL-HOMEWORK", e.message, e)
+                    // return
+                    let msg = prepareMessageToFormat(e.message), msgorig = e.message, isSideMsg = true
+                    let localChat = this.props.tempdata.localChatMessages
+                    // let arrChat = []
+                    // console.log("FILTER-NOT-SSL", this.state.localChatMessages)
+                    let arrChat = localChat.map(
+                        item => {
+                            // console.log("222", item)
+                            if (item.id === e.message.id) {
+
+                                return e.message
+                            }
+                            else {
+                                return item
+                            }
+                        }
+                    )
+                    // Если новое и стороннее!!!
+                    // if (isSideMsg) arrChat.push(msgorig)
+                    this.props.onReduxUpdate("ADD_CHAT_MESSAGES", arrChat)
+
+                    this.setState({
+                        localChatMessages: arrChat,
+                        // messages: [...arrChat, msg],
+                        messagesNew: this.state.messagesNew.filter(item => !(item.uniqid === JSON.parse(msg).uniqid))
+                    })
+                    // this.props.setstate({messagesNew : this.props.newmessages.filter(item => !(item.uniqid === JSON.parse(msg).uniqid)),
+                    //     localChatMessages : arrChat})
+
+                    // this.props.onReduxUpdate("ADD_CHAT_MESSAGES", arrChat)
+                    // const todayMessages = arrChat.filter(item=>(new Date(item.msg_date).toLocaleDateString())===(new Date().toLocaleDateString()))
+                    // const homeworks = arrChat.filter(item=>(item.homework_date!==null)).filter(item=>toYYYYMMDD(new Date(item.homework_date))===toYYYYMMDD(addDay((new Date()), 1)))
+                    //
+                    // this.props.forceupdate(todayMessages.length, homeworks.length)
+                    // this.notifhws = new Map()
+                    if (!this.notifhws.has(JSON.parse(msg).id)&&JSON.parse(msg).userName!==userName)
+                        this.sendPush(JSON.parse(msg).text, "Домашка", JSON.parse(msg).userName, JSON.parse(msg).id)
+
+                    this.notifhws.set(JSON.parse(msg).id, true)
+
+                })
+                .listen('ChatMessageSSLUpdated', (e) => {
+                    console.log("FILTER-SSL-UPDATED")
+                    // return
+                    let msg = prepareMessageToFormat(e.message), msgorig = e.message, isSideMsg = true
+                    let localChat = this.props.tempdata.localChatMessages
+                    let arrChat = []
+                    // console.log("FILTER-NOT-SSL"
+                    arrChat = localChat.map(
+                        item => {
+                            // console.log("254", item)
+                            if (item.id === e.message.id) {
+
+                                return e.message
+                            }
+                            else {
+                                return item
+                            }
+                        }
+                    )
+                    // Если новое и стороннее!!!
+                    // if (isSideMsg.log()) arrChat.push(msgorig)
+                    this.props.onReduxUpdate("ADD_CHAT_MESSAGES", arrChat)
+
+                    this.setState({
+                        localChatMessages: arrChat,
+                        // messages: [...arrChat, msg],
+                        messagesNew: this.state.messagesNew.filter(item => !(item.uniqid === JSON.parse(msg).uniqid))
+                    })
+                    // this.props.setstate({messagesNew : this.props.newmessages.filter(item => !(item.uniqid === JSON.parse(msg).uniqid)),
+                    //     localChatMessages : arrChat})
+                    //
+                    // const todayMessages = arrChat.filter(item=>(new Date(item.msg_date).toLocaleDateString())===(new Date().toLocaleDateString()))
+                    // const homeworks = arrChat.filter(item=>(item.homework_date!==null)).filter(item=>toYYYYMMDD(new Date(item.homework_date))===toYYYYMMDD(addDay((new Date()), 1)))
+                    //
+                    // this.props.forceupdate(todayMessages.length, homeworks.length)
+                })
+                .listen('NewsMessage', (e) => {
+                    let {classNews} = this.props.userSetup
+                    classNews.unshift(e.message)
+                    this.props.onReduxUpdate('UPDATE_NEWS', classNews)
+                    let {stat} = this.props
+                    stat.newsCnt++
+                    this.props.onReduxUpdate("UPDATE_VIEWSTAT", stat)
+                    console.log("NewsMessage-SSL")
+                })
+                .listenForWhisper('typing', (e) => {
+                    if (!this.props.tempdata.typingUsers.has(e.name)&&e.name!==userName) {
+                        let mp = this.props.tempdata.typingUsers
+                        mp.set(e.name, new Date())
+                        console.log('SetTypingState', e.name);
+                        this.props.onReduxUpdate("UPDATE_TYPING_USERS", mp)
+                        // this.setState({typingUsers: mp})
+                    }
+                    console.log('typing', e.name);
+                })
+                .here((users) => {
+                    //this.setState({users : users});
+                    this.props.onReduxUpdate("UPDATE_USERS", users)
+                    console.log("USERS.HERE", users)
+                })
+                .joining((user) => {
+                    console.log("USERS.JOIN", users, user)
+                    const arr = users.filter(item=>item !== user)
+                    {userName!==user?Toast.show({
+                        text: `${user} присоединился к чату`,
+                        buttonText: 'ОК',
+                        position : 'bottom',
+                        duration : 1500,
+                        style : {marginBottom : 100, fontSize : RFPercentage(1.8)}
+                        // type : 'success'
+                    }):null}
+                    this.props.onReduxUpdate("UPDATE_USERS", [...arr, user])
+                    // this.setState({users : [...arr, user]})
+                })
+                .leaving((person) => {
+                    // this.users = this.users.filter(item=>item !== person);
+                    if (person!==userName) {
+                        // Toast.show({
+                        //     text: `${person} покинул чат`,
+                        //     buttonText: 'ОК',
+                        //     position: 'bottom',
+                        //     duration: 2500,
+                        //     style: {marginBottom: 100, fontSize: RFPercentage(1.8)}
+                        //     // type : 'success'
+                        // })
+                    }
+                    console.log("USERS.LEAVE", users, person)
+                    const arr = users.filter(item=>item !== person)
+                    this.props.onReduxUpdate("UPDATE_USERS", arr)
+                    //this.setState({users : this.state.users.filter(item=>item !== person)})
+                });
+        }
+        else
+            echo.channel(channelName)
+                .listen('ChatMessage', (e) => {
+                    let msg = prepareMessageToFormat(e.message), msgorig = e.message, isSideMsg = true
+                    let arr = this.props.tempdata.localChatMessages
+                    let newArr = []
+                    console.log("FILTER-NOT-SSL")
+                    // console.log("FILTER-NOT-SSL: this.props", this.props)
+                    newArr = arr.map(
+                        item=>
+                        {
+                            // if (this.state.messagesNew.includes(item.uniqid)) {
+                            if (this.props.newmessages.filter(newmsg=>item.uniqid===newmsg.uniqid).length) {
+                                // Для своих новых
+                                if (JSON.parse(msg).uniqid === item.uniqid) {
+                                    // console.log("MSGORIG", msgorig, msgorig.id)
+                                    isSideMsg = false
+                                    let obj = item
+                                    obj.id = msgorig.id
+                                    return obj
+                                }
+                                else {
+                                    return item
+                                }
+                            }
+                            else {
+                                return item
+                            }
+                        }
+                    )
+                    // Если новое и стороннее!!!
+                    if  (isSideMsg) newArr.push(msgorig)
+
+                    this.props.onReduxUpdate("ADD_CHAT_MESSAGES", newArr)
+
+                    this.setState({
+                        localChatMessages : newArr,
+                        // messages: [...arr, msg],
+                        messagesNew : this.state.messagesNew.filter(item=>!(item.uniqid===JSON.parse(msg).uniqid))
+                    })
+                    // this.props.setstate({messagesNew : this.props.newmessages.filter(item => !(item.uniqid === JSON.parse(msg).uniqid)), localChatMessages : newArr})
+
+                    // this.props.onReduxUpdate("ADD_CHAT_MESSAGES", newArr)
+                    // this.props.updatemessage(msg)
+                })
     }
     render() {
-
-        const {marks, localChatMessages, userID, token, langLibrary, classID, classNews, selectedSubjects} = this.props.userSetup
+        const {marks, userID, token, langLibrary, classID, classNews, selectedSubjects} = this.props.userSetup
         const { theme, themeColor } = this.props.interface
-        const {online, loading} = this.props.tempdata
-        const {markID, markCnt, chatCnt, newsID} = this.props.stat
+        const {online, loading, localChatMessages} = this.props.tempdata
+        const {markCnt, chatCnt, newsID} = this.props.stat
         const {selectedFooter, showDrawer} = this.state
 
-        console.log("App:render", this.state.helpChat)
-
-        const hwarray = localChatMessages.filter(item=>(item.homework_date!==null))
+        // console.log("App:render")
+        const hwarray = localChatMessages!==undefined?localChatMessages.filter(item=>(item.homework_date!==null)):[]
         let {daysArr, initialDay} = this.state
         initialDay = initialDay?initialDay: getNextStudyDay(daysArr)[0]
 
@@ -790,15 +1387,15 @@ class App extends Component {
         if (!classID&&this.props.stat.gotStats) this.props.onReduxUpdate("INIT_STATDATA")
 
         const footerButtons = [
-            {   name : langLibrary===undefined?'':langLibrary.mobChat===undefined?'':langLibrary.mobChat,
+            {   name : getLangWord("mobChat", langLibrary),
                 icontype : 'material', iconname : 'message', badgestatus : 'primary', kind : 'chat', value : chatCnt },
-            {   name : langLibrary===undefined?'':langLibrary.mobHomework===undefined?'':langLibrary.mobHomework,
+            {   name : getLangWord("mobHomework", langLibrary),
                 icontype : 'material', iconname : 'notifications', badgestatus : 'error', kind : 'homework', value : homework },
-            {   name : langLibrary===langLibrary===undefined?'':langLibrary.mobMarks===undefined?'':langLibrary.mobMarks,
+            {   name : getLangWord("mobMarks", langLibrary),
                 icontype : 'material', iconname : 'timeline', badgestatus : 'success', kind : 'marks', value : markCnt },
             {   name : 'Info',
                 icontype : 'material', iconname : 'info', badgestatus : 'warning', kind : 'info', value : 0 },
-            {   name : langLibrary===undefined?'':langLibrary.mobCamera===undefined?'':langLibrary.mobCamera,
+            {   name : getLangWord("mobCamera", langLibrary),
                 icontype : 'material', iconname : 'camera', badgestatus : 'error', kind : '', value : 0 },
             {   name : 'etc',
                 icontype : 'material', iconname : 'apps', badgestatus : 'error', kind : '', value : 0 },
@@ -999,7 +1596,7 @@ class App extends Component {
                                     {/*enabled={this.state.selectedFooter === 0}*/}
                                     {/*disabled={this.state.showLogin} //  || (this.props.userSetup.userID === 0)*/}
                                     {/*onpress={this.setstate} // this.props.userSetup.userID?this.setstate:null*/}
-                                    {/*name={langLibrary===undefined?'':langLibrary.mobChat===undefined?'':langLibrary.mobChat}*/}
+                                    {/*name={getLangWord("mobChat", langLibrary)}*/}
                                     {/*icontype={'material'}*/}
                                     {/*iconname={'message'}*/}
                                     {/*badgestatus={'primary'}*/}
@@ -1013,7 +1610,7 @@ class App extends Component {
                                     {/*enabled={this.state.selectedFooter === 1}*/}
                                     {/*disabled={this.state.showLogin} //  || (this.props.userSetup.userID === 0)*/}
                                     {/*onpress={this.setstate} // this.props.userSetup.userID?this.setstate:null*/}
-                                    {/*name={langLibrary===undefined?'':langLibrary.mobHomework===undefined?'':langLibrary.mobHomework}*/}
+                                    {/*name={getLangWord("mobHomework", langLibrary)}*/}
                                     {/*icontype={'material'}*/}
                                     {/*iconname={'notifications'}*/}
                                     {/*badgestatus={'error'}*/}
@@ -1027,7 +1624,7 @@ class App extends Component {
                                     {/*enabled={this.state.selectedFooter === 2}*/}
                                     {/*disabled={this.state.showLogin} //  || (this.props.userSetup.userID === 0)*/}
                                     {/*onpress={this.setstate} // this.props.userSetup.userID?this.setstate:null*/}
-                                    {/*name={langLibrary===undefined?'':langLibrary.mobMarks===undefined?'':langLibrary.mobMarks}*/}
+                                    {/*name={getLangWord("mobMarks", langLibrary)}*/}
                                     {/*icontype={'material'}*/}
                                     {/*iconname={'timeline'}*/}
                                     {/*badgestatus={'success'}*/}
@@ -1055,7 +1652,7 @@ class App extends Component {
                                     {/*enabled={this.state.selectedFooter === 4}*/}
                                     {/*disabled={this.state.showLogin} //  || (this.props.userSetup.userID === 0)*/}
                                     {/*onpress={this.setstate} // this.props.userSetup.userID?this.setstate:null*/}
-                                    {/*name={langLibrary===undefined?'':langLibrary.mobCamera===undefined?'':langLibrary.mobCamera}*/}
+                                    {/*name={getLangWord("mobCamera", langLibrary)}*/}
                                     {/*icontype={'material'}*/}
                                     {/*iconname={'camera'}*/}
                                     {/*badgestatus={'error'}*/}
@@ -1107,7 +1704,7 @@ class App extends Component {
                                         {/*enabled={this.state.selectedFooter === 0}*/}
                                         {/*disabled={this.state.showLogin} //  || (this.props.userSetup.userID === 0)*/}
                                         {/*onpress={this.setstate} // this.props.userSetup.userID?this.setstate:null*/}
-                                        {/*name={langLibrary===undefined?'':langLibrary.mobChat===undefined?'ДЗ':'ДЗ'}*/}
+                                        {/*name={'ДЗ'}*/}
                                         {/*icontype={'material'}*/}
                                         {/*iconname={'message'}*/}
                                         {/*badgestatus={'primary'}*/}
@@ -1121,7 +1718,7 @@ class App extends Component {
                                         {/*enabled={false}*/}
                                         {/*disabled={this.state.showLogin} //  || (this.props.userSetup.userID === 0)*/}
                                         {/*onpress={this.setstate} // this.props.userSetup.userID?this.setstate:null*/}
-                                        {/*name={langLibrary===undefined?'':langLibrary.mobChat===undefined?'Родители':'Родители'}*/}
+                                        {/*name={'Родители'}*/}
                                         {/*icontype={'material'}*/}
                                         {/*iconname={'message'}*/}
                                         {/*badgestatus={'primary'}*/}
@@ -1135,7 +1732,7 @@ class App extends Component {
                                         {/*enabled={false}*/}
                                         {/*disabled={this.state.showLogin} //  || (this.props.userSetup.userID === 0)*/}
                                         {/*onpress={this.setstate} // this.props.userSetup.userID?this.setstate:null*/}
-                                        {/*name={langLibrary===undefined?'':langLibrary.mobChat===undefined?'+Учитель':'+Учитель'}*/}
+                                        {/*name={'+Учитель'}*/}
                                         {/*icontype={'material'}*/}
                                         {/*iconname={'message'}*/}
                                         {/*badgestatus={'primary'}*/}
@@ -1149,7 +1746,7 @@ class App extends Component {
                                         {/*enabled={false}*/}
                                         {/*disabled={this.state.showLogin} //  || (this.props.userSetup.userID === 0)*/}
                                         {/*onpress={this.setstate} // this.props.userSetup.userID?this.setstate:null*/}
-                                        {/*name={langLibrary===undefined?'':langLibrary.mobChat===undefined?'Личные':'Личные'}*/}
+                                        {/*name={'Личные'}*/}
                                         {/*icontype={'material'}*/}
                                         {/*iconname={'message'}*/}
                                         {/*badgestatus={'primary'}*/}
@@ -1163,7 +1760,7 @@ class App extends Component {
                                         {/*enabled={false}*/}
                                         {/*disabled={this.state.showLogin} //  || (this.props.userSetup.userID === 0)*/}
                                         {/*onpress={this.setstate} // this.props.userSetup.userID?this.setstate:null*/}
-                                        {/*name={langLibrary===undefined?'':langLibrary.mobChat===undefined?'Workflow':'Workflow'}*/}
+                                        {/*name={'Workflow'}*/}
                                         {/*icontype={'material'}*/}
                                         {/*iconname={'message'}*/}
                                         {/*badgestatus={'primary'}*/}

@@ -23,8 +23,6 @@ import Logo150 from '../../img/logo150.png'
 import {RFPercentage, RFValue} from "react-native-responsive-fontsize";
 import SvgUri from 'react-native-svg-uri-reborn';
 
-// import AntIcon from "react-native-vector-icons/AntDesign";
-
 // import AsyncStorage from '@react-native-community/async-storage';
 // import {AsyncStorage} from 'react-native';
 
@@ -219,6 +217,15 @@ class LoginBlock extends React.Component {
             }
         )
     }
+    getLangWord=keyword=>{
+        const {langLibrary} = this.props.userSetup
+        if (langLibrary!==undefined&&langLibrary[keyword]!==undefined)
+            return langLibrary[keyword]
+        else
+        // this.props.onReduxUpdate("UPDATE_LANGLIBRARY", true)
+            return keyword
+
+    }
     render() {
         if (!this.props.user.hasOwnProperty("loginmsg"))
             this.props.user.loginmsg = ''
@@ -388,7 +395,7 @@ class LoginBlock extends React.Component {
                     <Item rounded style={{marginLeft : 60, marginRight : 60, marginTop : 20, borderColor: 'transparent'}}>
                         <Input
                                style={{fontSize : RFPercentage(3), paddingLeft : 10, paddingRight : 0, color : theme.primaryTextColor, fontWeight : "600", borderWidth: 3, borderColor : theme.primaryBorderColor, borderRadius : 30}}
-                               value={this.state.username.length?this.state.username:""}
+                               value={this.state.username!==undefined?(this.state.username.length?this.state.username:""):''}
                                onChangeText={text =>this.onChangeText('username', text)}
                                onBlur={()=>console.log("Input:username:blur")}
                         />
@@ -416,26 +423,30 @@ class LoginBlock extends React.Component {
                             <CheckBox checked={this.state.checkSave} onPress={()=>{this.saveCredentials(!this.state.checkSave)}} color={theme.primaryDarkColor}/>
                         </View>
                         <View style={{ marginLeft : 20}}>
-                            <Text style={{color : theme.primaryDarkColor}}>{langLibrary===undefined?'':langLibrary.mobSaveCheckBox===undefined?'':langLibrary.mobSaveCheckBox}</Text>
+                            <Text style={{color : theme.primaryDarkColor}}>{this.getLangWord("mobSaveCheckBox")}</Text>
                         </View>
                     </Item>:null}
 
-                    {userID&&token ?   <Button style={{  marginLeft : 60, marginTop : 5, marginRight : 60, borderRadius : 30,
+                    {userID&&token ?   <Button style={{  marginLeft : 60, marginTop : Platform.OS !== 'ios'?5:10, marginRight : 60, borderRadius : 30,
                                                 justifyContent: "center",
                                                 alignItems: "center",
                                                 color : theme.primaryDarkColor, backgroundColor : theme.secondaryLightColor}}
                                         onPress={()=>{this.props.onReduxUpdate("INIT_STATDATA"); this.props.onReduxUpdate("UPDATE_KEYBOARD_SHOW", false); this.props.onUserLoggingOut(token, langLibrary, theme, themeColor)}}>
                                     <View style={{ justifyContent: "center", alignItems: "center" }}>
-                                        <Text style={{fontSize : RFPercentage(3), color : theme.primaryDarkColor, width : "100%", fontWeight : "800"}}>{langLibrary===undefined?'':langLibrary.mobExit===undefined?'':langLibrary.mobExit.toUpperCase()}</Text>
+                                        <Text style={{fontSize : RFPercentage(3), color : theme.primaryDarkColor, width : "100%", fontWeight : "800"}}>
+                                            {this.getLangWord("mobExit").toUpperCase()}
+                                        </Text>
                                     </View>
                                 </Button> :
-                                <Button style={{marginLeft : 60, marginTop : 5, marginRight : 60, borderRadius : 30,
+                                <Button style={{marginLeft : 60, marginTop : Platform.OS !== 'ios'?5:10, marginRight : 60, borderRadius : 30,
                                                 justifyContent: "center",
                                                 alignItems: "center",
                                                 color : theme.primaryDarkColor, backgroundColor : theme.primaryTextColor}}
                                         onPress={()=>{Keyboard.dismiss(); this.props.onReduxUpdate("UPDATE_KEYBOARD_SHOW", false);this.onLogin()}}>
                                     <View style={{ justifyContent: "center", alignItems: "center" }}>
-                                        <Text style={{fontSize : RFPercentage(3), color : theme.primaryDarkColor, width : "100%", fontWeight : "800"}}>{langLibrary===undefined?'':langLibrary.mobLogin===undefined?'':langLibrary.mobLogin.toUpperCase()}</Text>
+                                        <Text style={{fontSize : RFPercentage(3), color : theme.primaryDarkColor, width : "100%", fontWeight : "800"}}>
+                                            {this.getLangWord("mobLogin").toUpperCase()}
+                                        </Text>
                                     </View>
                                 </Button>}
 
@@ -447,7 +458,7 @@ class LoginBlock extends React.Component {
                                     <Text style={{  color : theme.primaryDarkColor,
                                                     textDecorationLine: 'underline'}} onPress={this.forgotPwd}
                                           disabled={this.state.sendMailButtonDisabled}>
-                                        {!this.state.sendMailButtonDisabled ? `${langLibrary===undefined?'':langLibrary.mobSendPwd===undefined?'':langLibrary.mobSendPwd}`: `${langLibrary===undefined?'':langLibrary.mobSendPwd===undefined?'':langLibrary.mobSendPwd}`}</Text>
+                                        {!this.state.sendMailButtonDisabled ? `${this.getLangWord("mobSendPwd")}`: `${this.getLangWord("mobSendPwd")}`}</Text>
                                         </View>
 
                                 <View style={{marginTop : 50,
@@ -534,7 +545,7 @@ class LoginBlock extends React.Component {
                     {/* Живой код*/}
 
                 </Form>
-                <View style={{position: "absolute", bottom: 120, marginLeft : Dimensions.get('window').width - 70}}>
+                <View style={{position: "absolute", bottom: Platform.OS !== 'ios'?120:70, marginLeft : Dimensions.get('window').width - 70}}>
                     <Icon onPress={() => this.setState({showVideo: true})} style={{fontSize : 54, color : theme.primaryLightColor}} name='videocam'/>
                 </View>
             </View>

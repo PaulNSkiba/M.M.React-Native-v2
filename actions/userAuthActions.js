@@ -29,6 +29,7 @@ export const userLoggedIn = (email, pwd, provider, provider_id, langLibrary, the
                         dispatch({type: 'SHOW_LOGIN',  payload : false})
                         dispatch ({type: 'USER_LOGGEDIN', payload: {data : res.data, langLibrary : langLibrary, theme : theme, themeColor : themeColor}});
                         dispatch({type: 'ADD_CHAT_MESSAGES', payload: res.data.chatrows});
+                        dispatch({type: 'PHOTO_PATH', payload: []});
                         // пробуем записать в LocalStorage имя пользователя, ID, имя и тип авторизации
 
                         // console.log("saveToLocalStorage", JSON.stringify(ls))
@@ -138,6 +139,7 @@ export const userLoggedOut = (token, langLibrary, theme, themeColor) => {
         .then(response => {
             console.log("logoutSuccess", response);
             dispatch({type: 'UPDATE_TOKEN',  payload : ''})
+            dispatch({type: 'PHOTO_PATH', payload: []});
             dispatch({type: 'USER_LOGGEDOUT', payload : {langLibrary : langLibrary, theme : theme, themeColor : themeColor}});
 
             let saveddata = {}

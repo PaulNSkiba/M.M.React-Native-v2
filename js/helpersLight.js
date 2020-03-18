@@ -4,11 +4,13 @@
 import store from '../store/configureStore'
 import axios from 'axios';
 import {Platform} from 'react-native'
+import {Toast} from 'native-base'
 import {AUTH_URL, API_URL, BASE_HOST, WEBSOCKETPORT, LOCALPUSHERPWD, HOMEWORK_ADD_URL} from '../config/config'
 import Echo from 'laravel-echo'
 import Pusher from 'pusher-js/react-native'
 import AsyncStorage from '@react-native-community/async-storage';
 import SInfo from "react-native-sensitive-info";
+import {RFPercentage, RFValue} from "react-native-responsive-fontsize";
 
 window.Pusher = Pusher
 
@@ -957,3 +959,27 @@ export const sendMail=(mail, text, userSetup, session_id)=>{
             // dispatch({type: 'UPDATE_STUDENTS_FAILED', payload: response.data})
         })
 }
+export const getLangWord=(keyword, langLibrary, update)=>{
+    if (langLibrary!==undefined&&langLibrary[keyword]!==undefined)
+        return langLibrary[keyword]
+    else {
+        // this.props.onReduxUpdate("UPDATE_LANGLIBRARY", true)
+        // alert("Необходимо Обновить словарь в настройках: "+ keyword)
+
+        // Toast.show({
+        //     text: `Внесены изменения в словарь программы для [${keyword}]. Обновите его в "Настройках", нажав на кнопку "Обновить словарь".`,
+        //     buttonText: 'ОК',
+        //     position: 'bottom',
+        //     duration: 2500,
+        //     style: {marginBottom: 100, fontSize: RFPercentage(1.8)}
+        //     // type : 'success'
+        // })
+
+        // console.log("Необходимо Обновить словарь в настройках: "+ keyword, store.getState().tempdata.updateLang)
+        // if (!(store.getState().tempdata.updateLang)) {
+        //     store.dispatch({type: "UPDATE_LANGLIBRARY", payload: true})
+        //     store.dispatch({type: "UPDATE_MISSLANGWORDS", payload: keyword})
+        // }
+        return keyword
+    }
+    }

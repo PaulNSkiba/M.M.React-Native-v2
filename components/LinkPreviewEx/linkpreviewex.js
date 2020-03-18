@@ -93,6 +93,7 @@ const styles = {
     container: {
         width: "100%",
         margin: 5,
+        height: 90,
     },
     preview: {
         width: 90,

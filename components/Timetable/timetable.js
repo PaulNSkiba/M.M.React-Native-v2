@@ -12,7 +12,7 @@ import {
 import {Avatar, Badge, Icon, withBadge} from 'react-native-elements'
 import {bindActionCreators} from 'redux';
 import {instanceAxios, mapStateToProps, addMonths, toYYYYMMDD, dateFromTimestamp,
-        arrOfWeekDaysLocal, getSubjFieldName} from '../../js/helpersLight'
+        arrOfWeekDaysLocal, getSubjFieldName, getLangWord} from '../../js/helpersLight'
 import {LOGINUSER_URL, version, API_URL} from '../../config/config'
 import {userLoggedIn, userLoggedInByToken, userLoggedOut} from '../../actions/userAuthActions'
 import LogginByToken from '../../components/LoggingByToken/loggingbytoken'
@@ -48,8 +48,10 @@ class Timetable extends Component {
         // console.log("getChatTagsObj")
         const   {timetable, langLibrary} = this.props.userSetup
         let     daysArr = []
-        const arrOfWeekDaysLocalLang = [langLibrary.wdMonday, langLibrary.wdTuesday, langLibrary.wdWednesday,
-            langLibrary.wdThursday, langLibrary.wdFriday, langLibrary.wdSaturday, langLibrary.wdSunday]
+        const arrOfWeekDaysLocalLang = [getLangWord("wdMonday", langLibrary), getLangWord("wdTuesday", langLibrary),
+            getLangWord("wdWednesday", langLibrary), getLangWord("wdThursday", langLibrary),
+            getLangWord("wdFriday", langLibrary), getLangWord("wdSaturday", langLibrary),
+            getLangWord("wdSunday", langLibrary)]
         for (let i = 0; i < arrOfWeekDaysLocalLang.length; i++){
                 let newObj = {};
                 newObj.label = `${arrOfWeekDaysLocalLang[i]}`;
@@ -63,12 +65,10 @@ class Timetable extends Component {
         return daysArr
     }
     getSubjArr=()=>{
-        // console.log("getChatTagsObj")
-        const   {timetable, langLibrary, selectedSubjects} = this.props.userSetup
+        const   {timetable, selectedSubjects} = this.props.userSetup
         let {langCode} = this.props.interface
         let     subjArr = []
-        // const arrOfWeekDaysLocalLang = [langLibrary.wdMonday, langLibrary.wdTuesday, langLibrary.wdWednesday,
-        //     langLibrary.wdThursday, langLibrary.wdFriday, langLibrary.wdSaturday, langLibrary.wdSunday]
+
         for (let i = 0; i < selectedSubjects.length; i++){
             let newObj = {};
             newObj.label = `${selectedSubjects[i][getSubjFieldName(langCode)]}`;
@@ -84,8 +84,10 @@ class Timetable extends Component {
     getDayItems=()=>{
         const   {timetable, langLibrary} = this.props.userSetup
         const {theme} = this.props.interface
-        const arrOfWeekDaysLocalLang = [langLibrary.wdMonday, langLibrary.wdTuesday, langLibrary.wdWednesday,
-            langLibrary.wdThursday, langLibrary.wdFriday, langLibrary.wdSaturday, langLibrary.wdSunday]
+        const arrOfWeekDaysLocalLang = [getLangWord("wdMonday", langLibrary), getLangWord("wdTuesday", langLibrary),
+            getLangWord("wdWednesday", langLibrary), getLangWord("wdThursday", langLibrary),
+            getLangWord("wdFriday", langLibrary), getLangWord("wdSaturday", langLibrary),
+            getLangWord("wdSunday", langLibrary)]
         let     daysArr = []
         for (let i = 0; i < arrOfWeekDaysLocalLang.length; i++){
             let newObj = {};
@@ -118,8 +120,10 @@ class Timetable extends Component {
     getSubjItems=()=>{
         const   {timetable, langLibrary, selectedSubjects} = this.props.userSetup
         const {theme, langCode} = this.props.interface
-        const arrOfWeekDaysLocalLang = [langLibrary.wdMonday, langLibrary.wdTuesday, langLibrary.wdWednesday,
-            langLibrary.wdThursday, langLibrary.wdFriday, langLibrary.wdSaturday, langLibrary.wdSunday]
+        const arrOfWeekDaysLocalLang = [getLangWord("wdMonday", langLibrary), getLangWord("wdTuesday", langLibrary),
+            getLangWord("wdWednesday", langLibrary), getLangWord("wdThursday", langLibrary),
+            getLangWord("wdFriday", langLibrary), getLangWord("wdSaturday", langLibrary),
+            getLangWord("wdSunday", langLibrary)]
         let     subjArr = []
         for (let i = 0; i < selectedSubjects.length; i++){
             let newObj = {};
@@ -163,7 +167,9 @@ class Timetable extends Component {
             <View style={styles.modalView}>
                 <View style={{height: (Dimensions.get('window').height - 100)}}>
                 <Tabs onChangeTab={({ i, ref, from }) => this.setActiveTab(i)}>
-                    <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{langLibrary.mobByWeekDays.toUpperCase()}</Text></TabHeading>}
+                    <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>
+                        {getLangWord("mobByWeekDays", langLibrary).toUpperCase()}
+                        </Text></TabHeading>}
                          onPress={()=>console.log("Tab1_Clicked")}>
                         <View style={[styles.modalView, {backgroundColor : theme.primaryLightColor, height : Dimensions.get('window').height}]}>
                             {/*<View style={{height : headerHeight, backgroundColor : theme.primaryLightColor}}>*/}
@@ -173,7 +179,9 @@ class Timetable extends Component {
                             </View>
                         </View>
                     </Tab>
-                    <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{langLibrary.mobBySubjects.toUpperCase()}</Text></TabHeading>}
+                    <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>
+                        {getLangWord("mobBySubjects", langLibrary).toUpperCase()}
+                        </Text></TabHeading>}
                          onPress={()=>console.log("Tab2_Clicked")}>
                         <View style={[styles.modalView, {backgroundColor : theme.primaryLightColor, height : Dimensions.get('window').height}]}>
                             {/*<View style={{height : headerHeight, backgroundColor : theme.primaryLightColor}}>*/}
@@ -188,9 +196,11 @@ class Timetable extends Component {
                 <View style={{flex: 1}}>
                     <Footer style={styles.header}>
                         <FooterTab style={styles.header}>
-                            <Button style={[styles.btnClose, {width : "100%"}]} vertical
+                            <Button style={[styles.btnClose, {width : "100%", backgroundColor : theme.primaryColor}]} vertical
                                     onPress={() => this.onExit()}>
-                                <Text style={{color : theme.primaryTextColor}}>{langLibrary.mobCancel.toUpperCase()}</Text>
+                                <Text style={{color : theme.primaryTextColor}}>
+                                    {getLangWord("mobCancel", langLibrary).toUpperCase()}
+                                    </Text>
                             </Button>
                         </FooterTab>
                     </Footer>

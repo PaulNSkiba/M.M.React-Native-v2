@@ -6,13 +6,13 @@
  */
 import React, { Component } from 'react'
 import { StyleSheet, Text, View, Image, ScrollView,
-    TouchableHighlight, Modal, Radio, TouchableOpacity } from 'react-native';
+    TouchableHighlight, Modal, Radio, TouchableOpacity, Dimensions} from 'react-native';
 import { Avatar, Badge, Icon, withBadge } from 'react-native-elements'
 import {    Container, Header, Left, Body, Right, Button,
     Title, Content, Card, CardItem,  Footer, FooterTab, TabHeading, Tabs, Tab,
     Form, Item, Input, Label, Textarea, CheckBox, ListItem, Thumbnail, Spinner, Toast } from 'native-base';
 import {API_URL} from '../../config/config'
-import {dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, addDay, toYYYYMMDD, daysList, instanceAxios} from '../../js/helpersLight'
+import { mapStateToProps, addDay, toYYYYMMDD, daysList, instanceAxios, getLangWord} from '../../js/helpersLight'
 import { RNCamera } from 'react-native-camera';
 import { connect } from 'react-redux'
 import RNFS from 'react-native-fs';
@@ -33,11 +33,12 @@ class CameraBlock extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            photoPath : this.props.userSetup.photoPath,
+            photoPath : this.props.tempdata.photoPath,
             showPreview : false,
             prevuri : '',
             uriAdded : [],
             isSpinner : false,
+            height : Dimensions.get('window').height,
         };
         this.addToChat = this.addToChat.bind(this)
     }
@@ -103,7 +104,7 @@ class CameraBlock extends Component {
                                 // type : 'success'
                             })
 
-                            arr.push({uri : data.uri, time : (new Date()), data: data, data100: data100})
+                            arr.unshift({uri : data.uri, time : (new Date()), data: data, data100: data100})
                             this.setState({photoPath : arr})
                             this.props.onReduxUpdate("PHOTO_PATH", arr)
                             console.log("PHOTO_DATA", data.uri);
@@ -158,13 +159,17 @@ class CameraBlock extends Component {
         // const initialDay = this.getNextStudyDay(daysArr)[0];
         // console.log("PhotoPath", this.state.photoPath, this.state.prevuri)
         const {langLibrary} = this.props.userSetup
-        const {theme} = this.props.interface
+        const {theme, headerHeight} = this.props.interface
+        let {height, keyboardHeight} = this.state
         console.log("uriAdded", this.state.uriAdded)
+        const msgBlockHeight = height - headerHeight - 120
         return (
             <Container>
                 <View style={styles.modalView}>
                     <Tabs>
-                        <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{langLibrary.mobCamera.toUpperCase()}</Text></TabHeading>}>
+                        <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>
+                            {getLangWord("mobCamera", langLibrary).toUpperCase()}
+                            </Text></TabHeading>}>
                             <View style={styles.cameraBlock}>
                                 {this.state.isSpinner ? <View
                                     style={{position: "absolute", flex: 1, alignSelf: 'center', marginTop: 240, zIndex: 100}}>
@@ -187,14 +192,17 @@ class CameraBlock extends Component {
                                 </View>
                             </View>
                         </Tab>
-                        <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text badge vertical style={{color: theme.primaryTextColor}}>{langLibrary.mobShapshot.toUpperCase()}</Text>
+                        <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text badge vertical style={{color: theme.primaryTextColor}}>
+                            {getLangWord("mobSnapshot", langLibrary).toUpperCase()}
+                            </Text>
                             {this.state.photoPath.length?
                                 <Badge value={this.state.photoPath.length}
                                        status={"warning"}
                                        containerStyle={{ position: 'absolute', top: -8, right: 10 }}>
                                 </Badge>:null}
                         </TabHeading>}>
-                            <View style={styles.homeworkSubjectList}>
+                            <View  style={{height : msgBlockHeight}}>
+                                <ScrollView>
                                 {this.state.showPreview?
                                     <View>
                                         <SingleImage
@@ -220,6 +228,7 @@ class CameraBlock extends Component {
                                         </TouchableOpacity>
 
                                     </View>:
+
                                     this.state.photoPath.map((item, key) => {
                                         console.log("photoPath", item)
                                         return (
@@ -251,6 +260,7 @@ class CameraBlock extends Component {
                                             </Card>)
                                     })
                                 }
+                                </ScrollView>
                             </View>
                         </Tab>
                     </Tabs>

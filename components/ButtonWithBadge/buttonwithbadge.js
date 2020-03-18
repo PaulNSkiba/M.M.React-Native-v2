@@ -18,33 +18,13 @@ class ButtonWithBadge extends Component {
         };
     }
     render () {
-        const {localChatMessages, userID, marks, classNews} = this.props.userSetup
+        const {userID, marks, classNews} = this.props.userSetup
+        const {localChatMessages} = this.props.tempdata
         const {chatID, markID, newsID, buildsID, newsCnt, buildsCnt, chatCnt, markCnt} = this.props.stat
         const {showFooter, showKeyboard, theme, themeColor, online, footerHeight} = this.props.interface
 
         const windowRatio = Dimensions.get('window').width? Dimensions.get('window').height / Dimensions.get('window').width : 1.9
         const buttonWidth = Dimensions.get('window').width/6
-        // const todayMessages = localChatMessages.filter(item=>(new Date(item.msg_date).toLocaleDateString())===(new Date().toLocaleDateString())).length
-
-        // let unreadMsgsCount = 0
-        // if (this.props.kind==='chat') {
-        //     // const {chatID} = this.props.stat
-        //     unreadMsgsCount = localChatMessages.filter(item => (item.id > chatID && item.user_id !== userID)).length
-        // }
-        // let unreadMarksCount = 0
-        // if (this.props.kind==='marks') {
-        //     unreadMarksCount = this.props.value//marks.filter(item =>(Number(item.id) > markID)).length
-        // }
-        // let unreadNewsCount = 0, unreadBuildsCount = 0
-        // if (this.props.kind==='info') {
-        //     unreadNewsCount = newsCnt //classNews.filter(item =>(item.is_news===2&&Number(item.id) > newsID)).length
-        //     unreadBuildsCount = buildsCnt //classNews.filter(item =>(item.is_news===1&&Number(item.id) > buildsID)).length
-        // }
-        // console.log("renderButtons", newsID, buildsID)
-
-        // onPress={()=> {
-        //     this.props.setstate({selectedFooter: this.props.stateid, showLogin: false, isSpinner : false})
-        // }}
         return (
             <TouchableOpacity   key={0} id={"msgarea-"+0}
                                         delayLongPress={300}

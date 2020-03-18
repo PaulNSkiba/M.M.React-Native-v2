@@ -5,7 +5,7 @@ import React from 'react';
 import {connect} from 'react-redux';
 import { StyleSheet, Text, View, Image, Modal, Dimensions, TouchableOpacity, TouchableWithoutFeedback} from 'react-native';
 import {axios2, mapStateToProps} from '../../js/helpersLight'
-import { Header, Left, Body, Right, Button, Title } from 'native-base';
+import { Header, Left, Body, Right, Button, Title, TabHeading, Tabs, Tab } from 'native-base';
 import { Icon } from 'react-native-elements'
 import styles from '../../css/styles'
 

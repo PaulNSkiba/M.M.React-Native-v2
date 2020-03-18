@@ -11,7 +11,8 @@ import {
 } from 'native-base';
 import {Avatar, Badge, Icon, withBadge} from 'react-native-elements'
 import {bindActionCreators} from 'redux';
-import {instanceAxios, mapStateToProps, addMonths, toYYYYMMDD, dateFromTimestamp, axios2} from '../../js/helpersLight'
+import {instanceAxios, mapStateToProps, addMonths, toYYYYMMDD,
+        dateFromTimestamp, axios2, getLangWord} from '../../js/helpersLight'
 import {LOGINUSER_URL, version, API_URL} from '../../config/config'
 import {userLoggedIn, userLoggedInByToken, userLoggedOut} from '../../actions/userAuthActions'
 import LogginByToken from '../../components/LoggingByToken/loggingbytoken'
@@ -35,7 +36,7 @@ class StatBlock extends Component {
     }
     initData=()=>{
         const {classID, studentId, token} = this.props.userSetup
-        console.log('initData', `${API_URL}class/getstatmob/${classID}/${studentId}`, token)
+        // console.log('initData', `${API_URL}class/getstatmob/${classID}/${studentId}`, token)
         axios2('post',`${API_URL}class/getstatmob/${classID}/${studentId}`,null)
             .then(res=>this.setState({reportData:res.data}))
             .catch(res=>console.log("GETSTAT:ERROR", res))
@@ -215,6 +216,7 @@ class StatBlock extends Component {
     }
     render() {
         const {showFooter, showKeyboard, theme, themeColor, online} = this.props.interface
+        const {langLibrary} = this.props.userSetup
         return (
             <View style={styles.modalView}>
                 <View style={{height: (Dimensions.get('window').height - 100)}}>
@@ -287,8 +289,10 @@ class StatBlock extends Component {
                 <View style={{flex: 1}}>
                     <Footer style={styles.header}>
                         <FooterTab style={styles.header}>
-                            <Button style={styles.btnClose} vertical onPress={() => this.onExit()}>
-                                <Text style={styles.btnCloseText}>ВЫХОД</Text>
+                            <Button style={[styles.btnClose, {backgroundColor : theme.primaryColor}]} vertical onPress={() => this.onExit()}>
+                                <Text style={{color : theme.primaryTextColor}}>
+                                    {getLangWord("mobCancel", langLibrary).toUpperCase()}
+                                </Text>
                             </Button>
                         </FooterTab>
                     </Footer>

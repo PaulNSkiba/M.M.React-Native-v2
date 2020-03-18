@@ -11,7 +11,8 @@ import {
 } from 'native-base';
 import {Avatar, Badge, Icon, withBadge} from 'react-native-elements'
 import {bindActionCreators} from 'redux';
-import {instanceAxios, mapStateToProps, addMonths, toYYYYMMDD, dateFromTimestamp, localDateTime} from '../../js/helpersLight'
+import {instanceAxios, mapStateToProps, addMonths, toYYYYMMDD,
+        dateFromTimestamp, localDateTime, getLangWord} from '../../js/helpersLight'
 import {LOGINUSER_URL, version, API_URL} from '../../config/config'
 import {userLoggedIn, userLoggedInByToken, userLoggedOut} from '../../actions/userAuthActions'
 import LogginByToken from '../../components/LoggingByToken/loggingbytoken'
@@ -419,10 +420,10 @@ class Budget extends React.Component {
                 <View style={{flex: 1}}>
                     <Footer style={styles.header}>
                         <FooterTab style={styles.header}>
-                            <Button style={styles.btnClose} vertical /*active={this.state.selectedFooter===2}*/
+                            <Button style={[styles.btnClose, {backgroundColor : theme.primaryColor}]} vertical /*active={this.state.selectedFooter===2}*/
                                     onPress={() => this.onExit()}>
                                 {/*<Icon active name="ios-bookmarks" />*/}
-                                <Text style={styles.btnCloseText}>{langLibrary.mobCancel.toUpperCase()}</Text>
+                                <Text style={styles.btnCloseText}>{getLangWord("mobCancel", langLibrary).toUpperCase()}</Text>
                             </Button>
                         </FooterTab>
                     </Footer>

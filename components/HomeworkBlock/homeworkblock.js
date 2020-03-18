@@ -9,7 +9,7 @@ import { Container, Header, Left, Body, Right, Button,
     Tab, Badge, Form, Item, Input, Label, Textarea, CheckBox, ListItem, Spinner } from 'native-base';
 import RadioForm from 'react-native-radio-form';
 import { toLocalDate, dateFromYYYYMMDD, mapStateToProps, prepareMessageToFormat, addDay, toYYYYMMDD, daysList,
-        instanceAxios, getSubjFieldName, arrOfWeekDaysLocal, axios2} from '../../js/helpersLight'
+        instanceAxios, getSubjFieldName, arrOfWeekDaysLocal, axios2, getLangWord} from '../../js/helpersLight'
 import {SingleImage, wrapperZoomImages, ImageInWraper} from 'react-native-zoom-lightbox';
 import SingleImageZoomViewer from 'react-native-single-image-zoom-viewer'
 import ImageViewer from 'react-native-image-zoom-viewer';
@@ -123,7 +123,8 @@ class HomeworkBlock extends Component {
             )
     }
     getDaysArrMap=()=>{
-        const homeworkorig = this.props.userSetup.localChatMessages.filter(item=>(item.homework_date!==null))
+        const {localChatMessages} = this.props.tempdata
+        const homeworkorig = localChatMessages.filter(item=>(item.homework_date!==null))
 
         let daysArr =  daysList().map(item => {
             let newObj = {};
@@ -141,7 +142,7 @@ class HomeworkBlock extends Component {
             })
             daysArr[i].count = arr.length
         }
-        console.log("HomeWorkblock: daysArr")
+        // console.log("HomeWorkblock: daysArr")
         return daysArr
     }
     onSelectDay = item => {
@@ -177,8 +178,97 @@ class HomeworkBlock extends Component {
         const {langCode, theme} = this.props.interface
         // console.log("getHomeworkItems:timetable", tt, arr)
         if (tt.length) {
+            // let arr2 = arr.filter(item=>tt.filter(ttItem=>item.homework_subj_key!==ttItem.subj_key).length)
+            // if (arr2.length) {
+            //     return ( arr2.map((item, key) => {
+            //             let msg = prepareMessageToFormat(item, true)
+            //             let hw = msg.hasOwnProperty('hwdate') && (!(msg.hwdate === undefined)) ? msg.subjname : ''
+            //             let i = key
+            //             let isImage = false
+            //             let username = msg.hasOwnProperty('userID')?msg.userName:msg.senderId
+            //             // console.log("homeWork", item, msg)
+            //
+            //             if (item !== undefined && item.attachment3 !== null && item.attachment3 !== undefined) {
+            //                 isImage = true
+            //             }
+            //
+            //             return (
+            //                 <View key={key} id={"msg-" + msg.id} style={{marginTop: 5}}>
+            //                     <View key={msg.id}
+            //                         // style={(hw.length ? [styles.msgRightSide, styles.homeworkBorder] : [styles.msgRightSide, styles.homeworkNoBorder])}
+            //                           style={
+            //                               (hw.length ? [styles.msgRightSide, {
+            //                                   borderWidth: 2,
+            //                                   borderColor: theme.primaryMsgColor,
+            //                                   backgroundColor: "#D8FBFF"
+            //                               }] : [styles.msgRightSide, styles.homeworkNoBorder, {backgroundColor: "#D8FBFF"}])}
+            //                     >
+            //                         {/*<View key={'id' + i} style={styles.msgRightAuthor}><Text style={styles.msgAuthorText}>{item.student_name ? item.student_name : this.props.userSetup.userName}</Text></View>*/}
+            //                         <View key={'id' + i} style={[[styles.msgRightAuthor, {
+            //                             borderColor: theme.primaryColor,
+            //                             backgroundColor: theme.primaryColor
+            //                         }], msg.tagid ? styles.authorBorder : '']}>{<Text
+            //                             style={{color: theme.primaryTextColor}}>{item.student_name ? item.student_name : username}</Text>}</View>
+            //                         {isImage ?
+            //                             <View style={{display: "flex", flex: 1, flexDirection: "row"}}>
+            //                                 <TouchableOpacity onPress={() => {
+            //                                     this.getImage(msg.id)
+            //                                 }}>
+            //                                     <View style={{flex: 1}}>
+            //                                         <Image
+            //                                             source={{uri: `data:image/png;base64,${JSON.parse(item.attachment3).base64}`}}
+            //                                             style={{
+            //                                                 width: 100, height: 100,
+            //                                                 // marginBottom : 15,
+            //                                                 borderRadius: 15,
+            //                                                 overflow: "hidden", margin: 7
+            //                                             }}/>
+            //                                     </View>
+            //                                 </TouchableOpacity>
+            //                                 <View key={'msg' + i} id={"msg-text-" + i}
+            //                                       style={[styles.msgText,
+            //                                           {flex: 3, marginLeft: 20, marginTop: 5}]}>
+            //                                     <Text>{msg.text}</Text>
+            //                                 </View>
+            //                             </View>
+            //                             : <View key={'msg' + i} id={"msg-text-" + i} style={styles.msgText}>
+            //                                 <Text>{msg.text}</Text>
+            //                             </View>}
+            //                         <View style={msg.id ? styles.btnAddTimeDone : styles.btnAddTime}>
+            //                             <Text style={msg.id ? styles.btnAddTimeDone : styles.btnAddTime}>{msg.time}</Text>
+            //                         </View>
+            //                         {hw.length ?
+            //                             <View key={'idhw' + i} style={[styles.msgRightIshw, {
+            //                                 color: theme.primaryTextColor,
+            //                                 backgroundColor: theme.primaryMsgColor
+            //                             }]}>
+            //                                 <Text style={{color: 'white'}}>{ttItem.position+': '+hw}</Text>
+            //                             </View> : null}
+            //                     </View>
+            //                 </View>
+            //             )
+            //         })
+            //     )
+            // }
+            const arrUnPlanned = arr.filter(item=>(tt.filter(ttItem=>item.homework_subj_id===ttItem.subj_id).length===0))
+            let mp = new Map()
+            // console.log("TimeTable", arr, tt, arrUnPlanned)
+            if (arrUnPlanned.length){
+                arrUnPlanned.forEach(item=>{
+                    if (!mp.has(item.homework_subj_key)) {
+                        mp.set(item.homework_subj_key, item.homework_subj_key)
+                        tt.unshift({
+                            subj_id: item.homework_subj_id,
+                            subj_key: item.homework_subj_key,
+                            subj_name_ua: item.homework_subj_name,
+                            position: 0
+                        })
+                    }
+                }
+                )
+            }
             return (tt.map((ttItem, ttKey)=>{
-                let arr2 = arr.filter(item=>item.homework_subj_key===ttItem.subj_key)
+                const arr2 = arr.filter(item=>item.homework_subj_key===ttItem.subj_key)
                 //console.log("arr2", ttItem, arr2)
                 if (arr2.length) {
                     return ( arr2.map((item, key) => {
@@ -496,7 +586,8 @@ class HomeworkBlock extends Component {
 
     }
     getHomeWorksForAccordion=()=>{
-        let {timetable, localChatMessages} = this.props.userSetup
+        let {timetable} = this.props.userSetup
+        let {localChatMessages} = this.props.tempdata
         const {theme} = this.props.interface
         const homeworkorig = localChatMessages.filter(item=>(item.homework_date!==null))
         const daysArr = daysList().map(item => {
@@ -508,7 +599,7 @@ class HomeworkBlock extends Component {
         })
         timetable = timetable===undefined || timetable===null?[]:timetable
         // По умолчанию выбираем домашку на завтра...
-        console.log("getHomeWorksForAccordion: daysArr", daysArr)
+        // console.log("getHomeWorksForAccordion: daysArr", daysArr)
         return daysArr.map((itemDate, key)=>{
             let curweekday = (new Date(itemDate.date).getDay())===0?6:((new Date(itemDate.date)).getDay()-1)
             tt = timetable.filter(item=>item!==null).filter(item=>curweekday===item.weekday)
@@ -535,14 +626,15 @@ class HomeworkBlock extends Component {
         })
     }
     getTagsForAccordion=()=>{
-        const origChat = this.props.userSetup.localChatMessages.filter(item=>item.tagid!==null)
-        const chatTags = this.props.userSetup.chatTags.map(item => {
+        const {localChatMessages} = this.props.tempdata
+        const {chatTags : chatTgs} = this.props.userSetup
+        const origChat = localChatMessages.filter(item=>item.tagid!==null)
+        const chatTags = chatTgs.map(item => {
             let newObj = {};
             newObj.label = `${item.name}[${item.short}]`;
             newObj.value = item.id;
             return newObj;
         })
-        // const { localChatMessages: homeworkorig } = this.props.userSetup
         // По умолчанию выбираем домашку на завтра...
         // console.log("getTagsForAccordion: chatTags", chatTags)
         return chatTags.map((itemTag, key)=>{
@@ -564,9 +656,11 @@ class HomeworkBlock extends Component {
         })
     }
     getChatTagsObj=()=>{
-        console.log("getChatTagsObj", this.props.userSetup.localChatMessages.filter(item=>(item.tagid!==null)))
-        const tags = this.props.userSetup.localChatMessages.filter(item=>(item.tagid!==null), this.props.userSetup.chatTags)
-        let chatTags = this.props.userSetup.chatTags.map(item => {
+        const {localChatMessages} = this.props.tempdata
+        const {chatTags : chatTgs} = this.props.userSetup
+        console.log("getChatTagsObj", localChatMessages.filter(item=>(item.tagid!==null)))
+        const tags = localChatMessages.filter(item=>(item.tagid!==null))
+        let chatTags = chatTgs.map(item => {
         let newObj = {};
             newObj.label = `${item.name}[${item.short}]`;
             newObj.value = item.id;
@@ -587,7 +681,8 @@ class HomeworkBlock extends Component {
     }
 
     render() {
-        const {langLibrary, localChatMessages} = this.props.userSetup
+        const {langLibrary} = this.props.userSetup
+        const {localChatMessages} = this.props.tempdata
         const {theme, headerHeight, footerHeight} = this.props.interface
         const {daysArr, initialDay, chatTags, homeworkItems, tagItems} = this.state
 
@@ -668,16 +763,21 @@ class HomeworkBlock extends Component {
                         </Modal>
                         <Container>
                             <Tabs>
-                                <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{langLibrary.mobTasks.toUpperCase()}</Text></TabHeading>}>
+                                <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>
+                                    {getLangWord("mobTasks", langLibrary).toUpperCase()}
+                                    </Text></TabHeading>}>
                                     <View style={{height : Dimensions.get('window').height - headerHeight - 120}}>
                                         <AccordionCustom data={daysArr}  data2={homeworkItems} usersetup={this.props.userSetup} ishomework={true} index={index}/>
                                     </View>
                                 </Tab>
-                                <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{langLibrary.mobInClass!==undefined?langLibrary.mobInClass.toUpperCase():"В классе"}</Text></TabHeading>}>
+                                <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>
+                                    {getLangWord("mobInClass", langLibrary).toUpperCase()}
+                                    </Text></TabHeading>}>
                                     <View style={{height : Dimensions.get('window').height - headerHeight - 120}}>
                                         {/*<AccordionCustom data={daysArr}  data2={homeworkItems} usersetup={this.props.userSetup} ishomework={true} index={index}/>*/}
                                         <CalendarPicker
                                             weekdays={arrOfWeekDaysLocal}
+                                            startFromMonday={true}
                                             months={["Янв","Фев","Мар","Апр","Май","Июн","Июл","Авг","Сен","Окт","Ноя","Дек"]}
                                             previousTitle={"Пред"}
                                             nextTitle={"След"}
@@ -695,7 +795,9 @@ class HomeworkBlock extends Component {
                                     </View>
 
                                 </Tab>
-                                <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>{langLibrary.mobTags.toUpperCase()}</Text><Icon type="Entypo" style={{fontSize: 15, color: theme.primaryTextColor, top : 0}} name="pin"/></TabHeading>}>
+                                <Tab heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor}}>
+                                    {getLangWord("mobTags", langLibrary).toUpperCase()}
+                                    </Text><Icon type="Entypo" style={{fontSize: 15, color: theme.primaryTextColor, top : 0}} name="pin"/></TabHeading>}>
                                     <View style={{height : Dimensions.get('window').height - headerHeight - footerHeight - 20}}>
                                         <AccordionCustom data={chatTags} data2={tagItems} usersetup={this.props.userSetup} ishomework={true}/>
                                     </View>

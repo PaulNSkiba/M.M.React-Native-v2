@@ -36,12 +36,11 @@ import {RFPercentage, RFValue} from "react-native-responsive-fontsize";
 // import AddMsgContainer from '../AddMsgContainer/addmsgcontainer'
 // import addMsg from '../../img/addMsg.svg'
 // import { Picker, emojiIndex } from 'emoji-mart';
-
-window.Pusher = Pusher
 // import { default as uniqid } from 'uniqid'
-
 // import '../../css/colors.css'
 // import './chatmobile.css'
+
+// window.Pusher = Pusher
 
 // export default
 class ChatMobile extends Component {
@@ -73,7 +72,7 @@ class ChatMobile extends Component {
             newMessage: '',
             messagesNew : [],
             // typingUsers : new Map(),
-            localChatMessages : this.props.userSetup.localChatMessages,
+            localChatMessages : this.props.tempdata.localChatMessages,
             curMessage : '',
             modalVisible: false,
             isConnected: true,
@@ -118,22 +117,24 @@ class ChatMobile extends Component {
         }
 
         NetInfo.isConnected.addEventListener('connectionChange', this.handleConnectivityChange);
+
         AppState.addEventListener('change', this._handleAppStateChange);
 
         this.keyboardDidShowSub = Keyboard.addListener('keyboardDidShow', this.handleKeyboardDidShow);
         this.keyboardDidHideSub = Keyboard.addListener('keyboardDidHide', this.handleKeyboardDidHide);
 
-        this.props.onStartLoading()
+        // this.props.onStartLoading()
 
-        if (this.props.isnew&&classID)
-            this.initLocalPusher()
-        else {
-            this.initNetPusher()
-        }
+        // if (this.props.isnew&&classID)
+        //     this.initLocalPusher()
+        // else {
+        //     this.initNetPusher()
+        // }
+
         // console.log("initChat:start", (new Date()).toLocaleTimeString())
 
         // await
-        if (classID) this.initChatMessages()
+        // if (classID) this.initChatMessages()
 
         // if (this.typingTimer) clearTimeout(this.typingTimer)
 
@@ -161,6 +162,7 @@ class ChatMobile extends Component {
     }
     componentWillUnmount() {
         if (this.typingTimer) clearInterval(this.typingTimer)
+
         NetInfo.isConnected.removeEventListener('connectionChange', this.handleConnectivityChange);
         AppState.removeEventListener('change', this._handleAppStateChange);
 
@@ -170,21 +172,22 @@ class ChatMobile extends Component {
     shouldComponentUpdate(nextProps, nextState) {
         // console.log("shouldComponentUpdate:chatMobile", nextProps.userSetup.classID, this.props.userSetup.classID)
 
-        if (nextProps.userSetup.userID&&this.state.Echo===null) {
-            if (this.props.isnew) {
-                console.log("shouldUpdateEcho", nextProps.userSetup.userID, this.state.Echo)
-                if (!this.state.isChatConnected) this.initLocalPusher()
-            }
-            else {
-                this.initNetPusher()
-            }
-        }
-        else {
-            if ((!nextProps.userSetup.userID) && this.state.Echo!==null) {
-                this.state.Echo.disconnect()
-                this.state.Echo = null
-            }
-        }
+        // if (nextProps.userSetup.userID&&this.state.Echo===null) {
+        //     if (this.props.isnew) {
+        //         console.log("shouldUpdateEcho", nextProps.userSetup.userID, this.state.Echo)
+        //         if (!this.state.isChatConnected) this.initLocalPusher()
+        //     }
+        //     else {
+        //         this.initNetPusher()
+        //     }
+        // }
+        // else {
+        //     if ((!nextProps.userSetup.userID) && this.state.Echo!==null) {
+        //         this.state.Echo.disconnect()
+        //         this.state.Echo = null
+        //     }
+        // }
+
         if (nextProps.userSetup.classID!==this.props.userSetup.classID)
             this.renewStat(nextProps.userSetup.classID)
 
@@ -245,9 +248,10 @@ class ChatMobile extends Component {
         // ).start();
     }
     _handleAppStateChange = (nextAppState) => {
-        const {classID, studentId, localChatMessages, markscount} = this.props.userSetup
+        const {classID, studentId, markscount} = this.props.userSetup
+        const {localChatMessages} = this.props.tempdata
         if (this.state.appState.match(/inactive|background/) && nextAppState === 'active') {
-            console.log('ChatState: ', 'App has come to the foreground!', this.state.appState, nextAppState);
+            // console.log('ChatState: ', 'App has come to the foreground!', this.state.appState, nextAppState);
             // ToDO: Вначале проверим, вернулись ли мы в онлайн, если да, то запрос
             let {offlineMsgs} = this.props.userSetup
             hasAPIConnection()
@@ -276,64 +280,64 @@ class ChatMobile extends Component {
                     })
             // ToDO: Если есть неотправленные сообщения, то пытаемся отправить и чистить отправленные...
 
-            if (classID) {
-                instanceAxios().get(API_URL + `class/getstat/${classID}/${studentId}'/0`)
-                    .then(res => {
-                        // homeworks: 13
-                        // marks: 0
-                        // msgs: 250
-                        // news: 3
-                        // ToDO: News исправим позже
-                        const today = toYYYYMMDD(new Date())
-                        const {msgs, marks, homeworks} = res.data
-                        const homeworks_count = localChatMessages.filter(item=>(item.homework_date!==null&&(toYYYYMMDD(new Date(item.homework_date))>=today))).length
-                        console.log("OFF_LINE_UPDATE", msgs, localChatMessages.slice(-1)[0].id, markscount, marks, homeworks_count, homeworks)
-
-                        if ((res.data.msgs!==localChatMessages.slice(-1)[0].id)||(markscount!==marks)||(homeworks_count!==homeworks)) {
-                            console.log('UPDATE_OFFLINE')
-                            instanceAxios().get(API_URL + `class/getstat/${classID}/${studentId}'/1`)
-                                .then(res => {
-                                    const msgs = res.data.msgs
-                                    let arr = localChatMessages//this.props.localchatmessages //this.state.localChatMessages
-                                    // console.log("GetStatMsgs", res.data.marks)
-                                    if (msgs.length) {
-                                        msgs.forEach(msgitem=>{
-                                            let isinmsg = false
-                                            arr = arr.map(item=>{
-                                                if (item.id === msgitem.id) {
-                                                    item = msgitem
-                                                    isinmsg = true
-                                                }
-                                                return item
-                                            })
-                                            if (!isinmsg) {
-                                                if (toYYYYMMDD(new Date(msgitem.msg_date))>=toYYYYMMDD(new Date()))
-                                                    arr.push(msgitem)
-                                                else
-                                                    arr.unshift(msgitem)
-                                            }
-                                        })
-                                    }
-                                    this.setState({localChatMessages : arr})
-                                    this.props.setstate({localChatMessages : arr})
-                                    this.props.onReduxUpdate("ADD_CHAT_MESSAGES", arr)
-
-                                    // console.log("Загружено по оффлайну!")
-                                    this.props.onReduxUpdate("UPDATE_HOMEWORK", res.data.msgs.filter(item=>(item.homework_date!==null)))
-                                    // this.props.onReduxUpdate("ADD_CHAT_MESSAGES", res.data.msgs)
-                                    this.props.onReduxUpdate("ADD_MARKS", res.data.marks)
-
-                                    this.renewStat(classID)
-                                })
-                                .catch(response=> {
-                                    console.log("NewData_ERROR", response)
-                                })
-                        }
-                    })
-                    .catch(response=> {
-                        console.log("handleConnectivityChange_ERROR", response)
-                    })
-            }
+            // if (classID) {
+            //     axios2('get',`${API_URL}class/getstat/${classID}/${studentId}/0`)
+            //         .then(res => {
+            //             // homeworks: 13
+            //             // marks: 0
+            //             // msgs: 250
+            //             // news: 3
+            //             // ToDO: News исправим позже
+            //             const today = toYYYYMMDD(new Date())
+            //             const {msgs, marks, homeworks} = res.data
+            //             const homeworks_count = localChatMessages.filter(item=>(item.homework_date!==null&&(toYYYYMMDD(new Date(item.homework_date))>=today))).length
+            //             console.log("OFF_LINE_UPDATE", msgs, localChatMessages.slice(-1)[0].id, markscount, marks, homeworks_count, homeworks)
+            //
+            //             if ((res.data.msgs!==localChatMessages.slice(-1)[0].id)||(markscount!==marks)||(homeworks_count!==homeworks)) {
+            //                 console.log('UPDATE_OFFLINE')
+            //                 axios2('get',`${API_URL}class/getstat/${classID}/${studentId}/1`)
+            //                     .then(res => {
+            //                         const msgs = res.data.msgs
+            //                         let arr = localChatMessages//this.props.localchatmessages //this.state.localChatMessages
+            //                         // console.log("GetStatMsgs", res.data.marks)
+            //                         if (msgs.length) {
+            //                             msgs.forEach(msgitem=>{
+            //                                 let isinmsg = false
+            //                                 arr = arr.map(item=>{
+            //                                     if (item.id === msgitem.id) {
+            //                                         item = msgitem
+            //                                         isinmsg = true
+            //                                     }
+            //                                     return item
+            //                                 })
+            //                                 if (!isinmsg) {
+            //                                     if (toYYYYMMDD(new Date(msgitem.msg_date))>=toYYYYMMDD(new Date()))
+            //                                         arr.push(msgitem)
+            //                                     else
+            //                                         arr.unshift(msgitem)
+            //                                 }
+            //                             })
+            //                         }
+            //                         this.setState({localChatMessages : arr})
+            //                         this.props.setstate({localChatMessages : arr})
+            //                         this.props.onReduxUpdate("ADD_CHAT_MESSAGES", arr)
+            //
+            //                         // console.log("Загружено по оффлайну!")
+            //                         this.props.onReduxUpdate("UPDATE_HOMEWORK", res.data.msgs.filter(item=>(item.homework_date!==null)))
+            //                         // this.props.onReduxUpdate("ADD_CHAT_MESSAGES", res.data.msgs)
+            //                         this.props.onReduxUpdate("ADD_MARKS", res.data.marks)
+            //
+            //                         this.renewStat(classID)
+            //                     })
+            //                     .catch(response=> {
+            //                         console.log("NewData_ERROR", response)
+            //                     })
+            //             }
+            //         })
+            //         .catch(response=> {
+            //             console.log("handleConnectivityChange_ERROR", response)
+            //         })
+            // }
         }
         else {
             // console.log('AppState: ', nextAppState);
@@ -345,7 +349,8 @@ class ChatMobile extends Component {
         this.setState({calcStat : true})
         getViewStatStart(classID)
             .then(res=>{
-                const {marks, localChatMessages, userID, classNews} = this.props.userSetup
+                const {marks, userID, classNews} = this.props.userSetup
+                const {localChatMessages} = this.props.tempdata
                 console.log("RENEWSTAT2:then", new Date().toLocaleTimeString(), res)
                 res.markCnt = marks.filter(item=>(new Date(item.mark_date) >= getNearestSeptFirst())).filter(item =>(Number(item.id) > res.markID)).length
                 res.chatCnt = localChatMessages.filter(item => (item.id > res.chatID && item.user_id !== userID)).length
@@ -359,10 +364,11 @@ class ChatMobile extends Component {
             .catch(err=>console.log("renewStat:catch", err))
     }
     handleConnectivityChange = isConnected => {
-        const {classID, studentId, localChatMessages, markscount, classNews} = this.props.userSetup
+        const {classID, studentId, markscount, classNews} = this.props.userSetup
+        const {localChatMessages} = this.props.tempdata
         if ((this.state.isConnected!==isConnected)&&isConnected) {
             if (classID) {
-                instanceAxios().get(API_URL + `class/getstat/${classID}/${studentId}'/0`)
+                axios2('get',`${API_URL}class/getstat/${classID}/${studentId}/0`)
                     .then(response => {
                         console.log('handleConnectivityChange', response, this.props.userSetup)
                         // homeworks: 13
@@ -373,7 +379,7 @@ class ChatMobile extends Component {
                         const today = toYYYYMMDD(new Date())
                         const homeworks_count = localChatMessages.filter(item=>(item.homework_date!==null&&(toYYYYMMDD(new Date(item.homework_date))>=today)))
                         if ((response.data.msgs!==localChatMessages.slice(-1).id)||(markscount!==response.data.marks)||(homeworks_count!==response.data.homeworks)||(classNews.length!==response.data.news)) {
-                            instanceAxios().get(API_URL + `class/getstat/${classID}/${studentId}'/1`)
+                            axios2('get',`${API_URL}class/getstat/${classID}/${studentId}/1`)
                                 .then(response => {
                                      // this.props.onReduxUpdate("UPDATE_HOMEWORK", response.data.msgs.filter(item=>(item.homework_date!==null)))
                                     // this.props.onReduxUpdate("ADD_CHAT_MESSAGES", response.data.msgs)
@@ -437,10 +443,12 @@ class ChatMobile extends Component {
             // console.log("getChatMessages : Загрузка!", `${API_URL}chat/get/${classID}`, this.props.userSetup.token, new Date().toLocaleTimeString())
            axios2('get', `${API_URL}chat/get/${classID}`)
             .then(resp => {
+
                 this.setState({localChatMessages : resp.data})
                 this.props.setstate({localChatMessages : resp.data})
                 this.props.onReduxUpdate("ADD_CHAT_MESSAGES", resp.data)
                 this.props.onReduxUpdate("UPDATE_HOMEWORK", resp.data.filter(item=>(item.homework_date!==null)))
+
                 this.props.onStopLoading()
                 console.log("getChatMessages : Загружено!", new Date().toLocaleTimeString())
             })
@@ -482,7 +490,7 @@ class ChatMobile extends Component {
 
         echo.connector.pusher.connection.bind('connected', () => {
             //your code
-            console.log('Chat connected')
+            console.log('Chat connected', new Date().toLocaleTimeString())
             this.setState({isChatConnected : true})
             this.props.setstate({isChatConnected : true})
         });
@@ -514,7 +522,7 @@ class ChatMobile extends Component {
                     console.log("FILTER-SSL")
 
                     let msg = prepareMessageToFormat(e.message), msgorig = e.message, isSideMsg = true
-                    let localChat = this.props.userSetup.localChatMessages//this.props.localchatmessages //this.state.localChatMessages,
+                    let localChat = this.props.tempdata.localChatMessages//this.props.localchatmessages //this.state.localChatMessages,
                     let arrChat = []
                     console.log("FILTER-SSL")
 
@@ -594,7 +602,7 @@ class ChatMobile extends Component {
                     console.log("FILTER-SSL-HOMEWORK", e.message, e)
                     // return
                     let msg = prepareMessageToFormat(e.message), msgorig = e.message, isSideMsg = true
-                    let localChat = this.props.userSetup.localChatMessages //this.props.localchatmessages//this.state.localChatMessages,
+                    let localChat = this.props.tempdata.localChatMessages //this.props.localchatmessages//this.state.localChatMessages,
                     let arrChat = []
                     // console.log("FILTER-NOT-SSL", this.state.localChatMessages)
                     arrChat = localChat.map(
@@ -694,7 +702,7 @@ class ChatMobile extends Component {
                         text: `${user} присоединился к чату`,
                         buttonText: 'ОК',
                         position : 'bottom',
-                        duration : 3000,
+                        duration : 2500,
                         style : {marginBottom : 100, fontSize : RFPercentage(1.8)}
                         // type : 'success'
                     }):null}
@@ -709,7 +717,7 @@ class ChatMobile extends Component {
                             text: `${person} покинул чат`,
                             buttonText: 'ОК',
                             position: 'bottom',
-                            duration: 3000,
+                            duration: 2500,
                             style: {marginBottom: 100, fontSize: RFPercentage(1.8)}
                             // type : 'success'
                         })
@@ -1243,6 +1251,7 @@ class ChatMobile extends Component {
             });
     }
     sendMessage(text) {
+        const {localChatMessages} = this.props.tempdata
         const id = 0;
         console.log("sendMessage", API_URL + 'chat/add' + (id?`/${id}`:''), text)
         // const {userID} = this.props.userSetup
@@ -1250,6 +1259,27 @@ class ChatMobile extends Component {
         axios2('post',`${API_URL}chat/add` + (id?`/${id}`:''), text)
             .then(res => {
                 console.log('ADD_MSG', res)
+
+                // if (this.props.isnew)
+                    messages = localChatMessages
+                // else
+                //     messages = this.props.messages
+
+                messages = messages.map(item=>{
+                    if (res.data.id===item.id){
+                        item = res.data
+                    }
+                    return item
+                })
+                this.props.onReduxUpdate("ADD_CHAT_MESSAGES", messages)
+                // Toast.show({
+                //     text: `Изменения сохранены`,
+                //     buttonText: 'ОК',
+                //     position : 'bottom',
+                //     duration : 1500,
+                //     style : {marginBottom : 100}
+                //     // type : 'success'
+                // })
             })
             .catch(response=> {
                     console.log("AXIOUS_ERROR", response)
@@ -1318,7 +1348,7 @@ class ChatMobile extends Component {
                                                             text: `Сообщение добавлено: ${cnt} из ${results.length}`,
                                                             buttonText: 'ОК',
                                                             position : 'bottom',
-                                                            duration : 3000,
+                                                            duration : 2500,
                                                             style : {marginBottom : 100}
                                                             // type : 'success'
                                                         })
@@ -1371,7 +1401,7 @@ class ChatMobile extends Component {
         // let {localChatMessages} = this.state
 
         const {langLibrary, offlineMsgs, classID } = this.props.userSetup
-        let { localChatMessages } = this.props.userSetup
+        let { localChatMessages } = this.props.tempdata
 
         const {theme, footerHeight, headerHeight } = this.props.interface
         // const {loading} = this.props.tempdata
@@ -1500,7 +1530,7 @@ class ChatMobile extends Component {
                                           {/*onChangeText={text=>this.onChangeText('curMessage', text)}*/}
                                           {/*onFocus={()=>{this.props.inputenabled?this.props.onReduxUpdate('UPDATE_FOOTER_SHOW', true):null}}*/}
                                           {/*onBlur={()=>{this.props.inputenabled?this.props.onReduxUpdate('UPDATE_FOOTER_SHOW', true):null}}*/}
-                                          {/*placeholder={langLibrary===undefined?'':(langLibrary.mobMsgHint===undefined?'':langLibrary.mobMsgHint)}  type="text"*/}
+                                          {/*placeholder={getLangWord("mobMsgHint", langLibrary)}  type="text"*/}
                                           {/*ref={component => this._textarea = component}*/}
                                           {/*value={this.state.curMessage}*/}
                                 {/*/>:null}*/}

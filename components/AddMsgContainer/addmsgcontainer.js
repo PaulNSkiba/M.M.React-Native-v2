@@ -6,8 +6,9 @@
  */
 import React from 'react';
 import {connect} from 'react-redux';
-import { StyleSheet, Text, View, Image, Modal, Dimensions, TouchableOpacity, TouchableWithoutFeedback} from 'react-native';
-import {axios2, mapStateToProps} from '../../js/helpersLight'
+import { StyleSheet, Text, View, Image, Modal, Dimensions, Keyboard,
+         TouchableOpacity, TouchableWithoutFeedback} from 'react-native';
+import {axios2, mapStateToProps, getLangWord} from '../../js/helpersLight'
 import {    Container, Header, Left, Body, Right, Button,
     Title, Content,  Footer, FooterTab, Badge,
     Form, Item, Input, Label, Textarea, Toast, CheckBox} from 'native-base';
@@ -21,14 +22,27 @@ class AddMsgContainer extends React.Component {
         super(props);
         this.state = {
             curMessage : '',
+            keyboardHeight : 0,
         }
         this._handleKeyDown = this._handleKeyDown.bind(this)
     }
     componentDidMount() {
-
+        this.keyboardDidShowSub = Keyboard.addListener('keyboardDidShow', this.handleKeyboardDidShow);
+        this.keyboardDidHideSub = Keyboard.addListener('keyboardDidHide', this.handleKeyboardDidHide);
     }
     componentWillUnmount(){
-
+        this.keyboardDidShowSub&&this.keyboardDidShowSub.remove();
+        this.keyboardDidHideSub&&this.keyboardDidHideSub.remove();
+    }
+    handleKeyboardDidShow = (event) => {
+        // const { height } = Dimensions.get('window');
+        const keyboardHeight = event.endCoordinates.height;
+        this.setState({keyboardHeight})
+        // console.log("handleKeyboardDidShow")
+    }
+    handleKeyboardDidHide = () => {
+        // const { height } = Dimensions.get('window');
+        this.setState({keyboardHeight : 0})
     }
     _handleKeyDown = (e) => {
         const {classID, userName} = this.props.userSetup
@@ -66,20 +80,17 @@ class AddMsgContainer extends React.Component {
                 })
         }
     }
-
     render(){
         const {langLibrary, offlineMsgs, classID, isadmin, userID } = this.props.userSetup
         const {theme, footerHeight, headerHeight } = this.props.interface
 
         // placeholder={userID?"Задать вопрос разработчику..." : "Задавая вопрос без логина, пожалуйста, укажите в сообщении контактный email для связи)..."} type="text"
 
-        const placeholder = this.props.index===0?(langLibrary===undefined?'':(langLibrary.mobMsgHint===undefined?'':langLibrary.mobMsgHint)):
+        const placeholder = this.props.index===0?getLangWord("mobMsgHint", langLibrary):
             (userID?"Задать вопрос разработчику..." : "Задавая вопрос без логина, пожалуйста, укажите в сообщении контактный email для связи)..."
 )
 
-        return (<View style={[styles.addMsgContainer, {display: "flex", flex : 1, backgroundColor : theme.primaryLightColor
-            // , bottom : (Platform.OS==="ios"?keyboardHeight:0)
-            }]}>
+        return (<View style={[{bottom : (Platform.OS==="ios"?(this.state.keyboardHeight-(this.state.keyboardHeight>0?50:0)):0)}, styles.addMsgContainer, {display: "flex", alignItems : "center", flex : 1, backgroundColor : theme.primaryLightColor}]}>
             {/*<Button*/}
             {/*type="button"*/}
             {/*className="toggle-emoji"*/}
@@ -97,7 +108,7 @@ class AddMsgContainer extends React.Component {
                     </Body>
                 </View>
                 :null}
-            <View style={{flex: this.props.index===3?6.5:7.5, position : "relative"}}>
+            <View style={{flex: this.props.index===3?6.5:(Platform.OS==="ios"?7:7.5), position : "relative"}}>
                 <Textarea   style={styles.msgAddTextarea}
                             ref={component => this._textarea = component}
                             onKeyPress={this._handleKeyDown}
@@ -108,7 +119,8 @@ class AddMsgContainer extends React.Component {
                             value={this.state.curMessage}
                 />
                 {this.props.index===0?<TouchableWithoutFeedback
-                           onLongPress={()=>this.props.loadfile()}>
+                            delayLongPress={300}
+                            onLongPress={()=>this.props.loadfile()}>
                     <View  style={{right : 10, position : "absolute", zIndex : 50, top : 15}}>
                         <Icon name={'attach-file'}
                               type='Material Icons'

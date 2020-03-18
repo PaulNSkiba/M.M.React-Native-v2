@@ -131,8 +131,8 @@ android {
         applicationId "com.mymv2"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 15
-        versionName "1.08.288"
+        versionCode 17
+        versionName "1.08.290"
 		missingDimensionStrategy 'react-native-camera', 'general'
 		multiDexEnabled true
 		resConfigs "en", "US"
@@ -223,6 +223,7 @@ android {
 }
 
 dependencies {
+    implementation project(':react-native-push-notification')
     implementation project(':react-native-svg')
     implementation project(':react-native-sensitive-info')
 	//compile project(':react-native-video')
