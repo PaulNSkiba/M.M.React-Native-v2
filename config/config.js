@@ -1,12 +1,11 @@
 /**
  * Created by Paul on 17.08.2019.
  */
-// import axios from 'axios';
-
 // Global consts
 export const ISDEBUG = false;
-export const version = '1.08.290'
+export const version = '1.08.308'
 export const supportEmail = 'paul.n.skiba@gmail.com'
+export const ISCONSOLE = false
 // URL's
 export const AUTH_URL  = ISDEBUG?'https://sch-journal.dev':'https://mymarks.info'
 export const BASE_URL  = ISDEBUG?'https://localhost:3000':'https://mymarks.info'
@@ -18,6 +17,7 @@ export const CLIENTS_URL = AUTH_URL + '/oauth/clients'
 export const CREATEOAUTH_URL = AUTH_URL + '/oauth/clients'
 export const CREATEUSER_URL = AUTH_URL + '/api/signup'
 export const LOGINUSER_URL = AUTH_URL + '/api/loginex'
+export const LOGINUSERMOCK_URL = AUTH_URL + '/api/loginmock'
 export const LOGINUSERBYTOKEN_URL = AUTH_URL + '/api/user'
 export const LOGOUTUSER_URL = AUTH_URL + '/api/logoutex'
 export const UPDATESETUP_URL = AUTH_URL + '/api/usersetup/update'
@@ -47,7 +47,6 @@ export const HOMEWORK_ADD_URL = AUTH_URL + '/api/homework/class'
 export const HOMEWORK_GET_URL = AUTH_URL + '/api/homework/class'
 
 export const UPDATECLASS_URL = AUTH_URL + '/api/class/'
-
 
 // Personal access client created successfully.
 export const OAUTH_CLIENT_ID = 2

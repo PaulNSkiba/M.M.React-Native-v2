@@ -1,11 +1,65 @@
 /**
  * Created by Paul on 22.01.2019.
  */
-import { LOGINUSER_URL, LOGOUTUSER_URL, LOGINUSERBYTOKEN_URL  } from '../config/config'
+import { LOGINUSER_URL, LOGOUTUSER_URL, LOGINUSERBYTOKEN_URL, LOGINUSERMOCK_URL  } from '../config/config'
 import { instanceAxios, axios2, langLibrary as langLibraryF, getViewStat } from '../js/helpersLight'
 import { AsyncStorage, Platform } from 'react-native';
 // import axios from 'axios';
 
+export const userLoggedInMock = (langLibrary, theme, themeColor) => {
+    return dispatch => {
+
+        const data = {
+            "skey": "$#JLSDF#lkjDF#$:DDSDF",
+        };
+        // console.log('USER_LOGGIN', LOGINUSER_URL, JSON.stringify(data))
+        // document.body.style.cursor = 'progress';
+        dispatch ({type: 'USER_LOGGING'})
+        instanceAxios().post(`${LOGINUSERMOCK_URL}`, JSON.stringify(data), null)
+            .then(res => {
+                // console.log('USER_LOGGEDIN.1', response.data);
+                switch (res.data.loggedin) {
+                    case true :
+                        // alert('USER_LOGGEDIN.1')
+                        console.log('USER_LOGGIN', res.data.student) // , res.data.user.name, res.data.user.id, res.data
+                        dispatch({type: 'SHOW_LOGIN',  payload : false})
+                        dispatch ({type: 'USER_LOGGEDIN', payload: {data : res.data, langLibrary : null, theme : theme, themeColor : themeColor}});
+                        dispatch({type: 'ADD_CHAT_MESSAGES', payload: res.data.chatrows});
+                        dispatch({type: 'PHOTO_PATH', payload: []});
+                        // пробуем записать в LocalStorage имя пользователя, ID, имя и тип авторизации
+
+                        // const {name : userName, id : userID, class_id : classID } = res.data.user;
+                        /*
+                        let saveddata = {}
+                        saveddata.email = res.data.user.email
+                        saveddata.userName = res.data.user.student_nick.length?res.data.user.student_nick:res.data.user.name
+                        saveddata.userID = userID
+                        saveddata.classID = classID
+                        saveddata.token = res.data.token
+                        // console.log("saveddata", saveddata)
+                        dispatch({type : 'SAVE_DATA', payload : saveddata});
+                        */
+                        dispatch({type: 'USER_LOGGEDIN_DONE'})
+                        dispatch({type: 'APP_LOADED'})
+                        break;
+                    case false :
+                        dispatch({type: 'USER_PWD_MISSEDMATCH', payload: res.data.message})
+                        dispatch({type: 'LOG_BTN_UNCLICK', payload : false})
+                        dispatch({type: 'USER_LOGGEDIN_DONE'})
+                        // console.log("LOGGEDIN_FALSE", response.data.message)
+                        break;
+                }
+            })
+            .catch(error => {
+                // Список ошибок в отклике...
+                console.log("ERROR_LOGGEDIN", error, error.data)
+                // alert('ERROR_LOGGEDIN', email, pwd)
+                dispatch({type: 'USER_PWD_MISSEDMATCH'})
+                dispatch({type: 'APP_LOADED'})
+                dispatch({type: 'USER_LOGGEDIN_DONE'})
+            })
+    };
+}
 export const userLoggedIn = (email, pwd, provider, provider_id, langLibrary, theme, themeColor) => {
     return dispatch => {
 

@@ -13,6 +13,7 @@ import {Provider, connect} from 'react-redux';
 import {mapStateToProps, themeOptions } from './js/helpersLight'
 import { persistStore, persistReducer } from "redux-persist";
 import { Root } from "native-base";
+import {userLoggedInMock, userLoggedOut} from './actions/userAuthActions'
 
 // import thunk from 'redux-thunk';
 // import { withNetworkConnectivity, reducer as network, createNetworkMiddleware, networkSaga, ReduxNetworkProvider, NetworkProvider } from "react-native-offline";
@@ -38,6 +39,19 @@ const mapDispatchToProps = dispatch => { return {
     onReduxUpdate: (key, payload) => dispatch({type: key, payload: payload}),
     onStartLoading: () => dispatch({type: 'APP_LOADING'}),
     onStopLoading: () => dispatch({type: 'APP_LOADED'}),
+    onUserMockLogging: (langLibrary, theme, themeColor) => {
+        dispatch({type: 'APP_LOADING'})
+        console.log("OnUserMockLogging")
+        const asyncMockLoggedIn = (langLibrary, theme, themeColor) => {
+            return dispatch => {
+                dispatch(userLoggedInMock(langLibrary, theme, themeColor))
+            }
+        }
+        dispatch(asyncMockLoggedIn(langLibrary, theme, themeColor))
+    },
+    onUserLoggingOut: (token, langLibrary, theme, themeColor) => {
+        return dispatch(userLoggedOut(token, langLibrary, theme, themeColor))
+    },
 }}
 
 const MyApp = connect(mapStateToProps, mapDispatchToProps)(App)

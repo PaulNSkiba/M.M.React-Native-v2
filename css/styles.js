@@ -655,6 +655,14 @@ export default styles = StyleSheet.create({
         paddingLeft : 8,
         paddingRight : 8,
     },
+    buttonCircle: {
+        width: 50,
+        height: 50,
+        backgroundColor: 'rgba(0, 0, 0, .2)',
+        borderRadius: 25,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
     // subView: {
     //     position: "absolute",
     //     bottom: 50,

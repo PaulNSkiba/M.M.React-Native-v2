@@ -106,10 +106,13 @@ class HeaderBlock extends React.Component {
         // {"target":1105,"layout":{"y":0,"width":256,"x":32,"height":54.5}}
     }
     render(){
-        const {token, userID, markscount, userName, langLibary, classNumber} = this.props.userSetup
+        const {token, userID, markscount, userName, langLibary, classNumber, studentNick} = this.props.userSetup
         const {showFooter, showKeyboard, theme, themeColor, showLogin} = this.props.interface
         const {online} = this.props.tempdata
-        // console.log("headerBlock:render")
+        // let {studentNick} = this.props.userSetup
+        //console.log("headerBlock:render", studentNick, userName)
+       // studentNick = ''
+
         return (
             <View
                 onLayout={(event) =>this.measureView(event)}>
@@ -193,24 +196,9 @@ class HeaderBlock extends React.Component {
                         }]}>{version}</Text>
                         <View >
                             <Button transparent disabled={showLogin}>
-                                {userID?<Text style={{color: theme.primaryTextColor, fontWeight: "700", fontSize : userName.length > 10?RFPercentage(1.75):RFPercentage(2)}}>{userName}</Text>:null}
+                                {userID?<Text style={{color: theme.primaryTextColor, fontWeight: "700", fontSize : (studentNick.length?studentNick.length:userName.length) > 10?RFPercentage(1.75):RFPercentage(2)}}>{studentNick.length?studentNick:userName}</Text>:null}
                                 <Icon size={36} color={userID ? theme.primaryTextColor : theme.primaryLightColor}
                                       style={styles.menuIcon} name='person'
-                                      // onPress={ () => {
-                                      //     if (!showLogin) {
-                                      //         // this.props.updateState("showFooter", false)
-                                      //         this.props.onReduxUpdate('UPDATE_FOOTER_SHOW', false);
-                                      //         this.props.onReduxUpdate("USER_LOGGEDIN_DONE");
-                                      //         this.props.onReduxUpdate("SHOW_LOGIN", true);
-                                      //         this.props.updateState('selectedFooter', 0);
-                                      //         this.props.updateState('showLogin')
-                                      //     }
-                                      //     else {
-                                      //         // this.props.updateState("showFooter", true)
-                                      //         this.props.onReduxUpdate('UPDATE_FOOTER_SHOW', true);
-                                      //         this.props.onReduxUpdate("SHOW_LOGIN", false);
-                                      //     }
-                                      // }}/>
                                       onPress={userID?()=>{this.setState({showDrawer:!this.state.showDrawer});this.props.showdrawer()}:null}
                                 />
                             </Button>

@@ -8,7 +8,7 @@
 import React, {Component} from 'react';
 import {SafeAreaView, StyleSheet, ScrollView, View, Text, StatusBar,
         TouchableOpacity, TouchableWithoutFeedback, Image, Dimensions,
-        AppState, Platform, Animated, Checkbox } from 'react-native';
+        AppState, Platform, Animated, Checkbox, Linking } from 'react-native';
 import {setStorageData, getStorageData, getNextStudyDay, daysList, toYYYYMMDD,
         themeOptions, hasAPIConnection, axios2, getViewStat, getViewStatStart,
         getNearestSeptFirst, prepareJSON, prepareMessageToState, dateFromYYYYMMDD,
@@ -16,7 +16,7 @@ import {setStorageData, getStorageData, getNextStudyDay, daysList, toYYYYMMDD,
 import axios from 'axios';
 import {API_URL, arrLangs, supportEmail}        from './config/config'
 import { Container, Content, Body, Footer, FooterTab, Spinner,
-        Button, Tabs, Tab, TabHeading, Toast, Icon } from 'native-base';
+        Button, Tabs, Tab, TabHeading, Toast, Icon, Input, Item } from 'native-base';
 import HeaderBlock from './components/HeaderBlock/headerBlock'
 import ChatBlock from './components/ChatBlock/chatblock'
 import ChatMobile from './components/ChatMobile/chatmobile'
@@ -44,6 +44,7 @@ import DocumentPicker from 'react-native-document-picker';
 import RNFS from 'react-native-fs';
 import ImageResizer from 'react-native-image-resizer';
 import PushNotification, {PushNotificationIOS} from "react-native-push-notification";
+import AppIntroSlider from 'react-native-app-intro-slider';
 
 window.Pusher = Pusher
 
@@ -88,6 +89,61 @@ PushNotification.configure({
      */
     requestPermissions: true
 });
+const slidesClass = [
+    {
+        key: 1.1,
+        title: 'КЛАСС',
+        text: 'Выберите новых класс',
+        image: null,
+        backgroundColor: '#59b2ab',
+    },
+    // {
+    //     key: 1.2,
+    //     title: 'КОЛИЧЕСТВО УЧЕНИКОВ',
+    //     text: 'Выберите количество учеников',
+    //     image: null,
+    //     backgroundColor: '#febe29',
+    // }
+    // ,{
+    //     key: 1.3,
+    //     title: 'СИСТЕМА ОЦЕНИВАНИЯ',
+    //     text: 'Выберите систему оценивания',
+    //     image: null,
+    //     backgroundColor: '#22bcb5',
+    // }
+    // ,{
+    //     key: 1.4,
+    //     title: 'ДАННЫЕ ДЛЯ РЕГИСТРАЦИИ',
+    //     text: 'Введите данные для регистрации',
+    //     image: null,
+    //     backgroundColor: '#59b2ab',
+    // }
+];
+const slidesUserLoggedin = [
+    {
+        key: 2.2,
+        title: 'СОЗДАНИЕ СТУДЕНТА/РОДИТЕЛЯ',
+        text: 'Выберите способ регистрации студента',
+        image: null,
+        backgroundColor: '#febe29',
+    }
+];
+const slidesUserNotLoggedin = [
+    {
+        key: 2.1,
+        title: 'ВЫБОР КЛАССА',
+        text: 'Выберите способ привязки к классу',
+        image: null,
+        backgroundColor: '#59b2ab',
+    },
+    {
+        key: 2.2,
+        title: 'СОЗДАНИЕ СТУДЕНТА/РОДИТЕЛЯ',
+        text: 'Выберите способ регистрации студента',
+        image: null,
+        backgroundColor: '#febe29',
+    }
+];
 
 // import * as Animatable from 'react-native-animatable';
 // import BottomDrawer from 'rn-bottom-drawer';
@@ -132,11 +188,23 @@ class App extends Component {
             selectedFooter: 0,
             showLogin: false,
             showDrawer : false,
+            showRegisterDrawer : false,
             username: '',
             userID: 0,
             userName: '',
             userEmail: '',
             userToken: '',
+            registerStep : 0,
+            initialPage : 0,
+            activeTab : 0,
+            emailToLinkStudent : '',
+            emailToRegisterStudent : '',
+            realNameOfNewStudent : '',
+            nickOfNewStudent : '',
+            isCheckedNewStudent : false,
+            newStudentID : 0,
+            addUserToken : this.props.userSetup.addUserToken,
+            userCreated : false
         }
         let {langCode} = this.props.interface
         this.defLang = langCode && arrLangs.includes(this.props.userSetup.langCode)?langCode : "UA"
@@ -152,6 +220,9 @@ class App extends Component {
         this.notifhws = new Map()
         this.notifmarks = new Map()
         this.initLocalPusher = this.initLocalPusher.bind(this)
+        this.findUserByEmail = this.findUserByEmail.bind(this)
+        this.registerNewUser = this.registerNewUser.bind(this)
+        this.onLoginMock = this.onLoginMock.bind(this)
     }
     componentWillMount(){
     //     (async ()=> {
@@ -217,7 +288,7 @@ class App extends Component {
     }
 
     shouldComponentUpdate(nextProps, nextState) {
-        // console.log("shouldComponentUpdate:chatMobile", nextProps.userSetup.classID, this.props.userSetup.classID)
+        // console.log("shouldComponentUpdate:chatMobile", nextProps.userSetup.userID, this.state.Echo)
 
         if (nextProps.userSetup.userID&&this.state.Echo===null) {
             if (this.isnew) {
@@ -497,6 +568,10 @@ class App extends Component {
     showDrawer(){
         this.setState({showDrawer : !this.state.showDrawer})
     }
+    onChangeText = (key, val) => {
+        // console.log("onChangeText", key, val)
+        this.setState({[key]: val})
+    }
     renderPalette = (color) => {
         return <View>
                     <TouchableOpacity key={color} onPress={() => this.props.onReduxUpdate('CHANGE_THEME', color)}>
@@ -505,31 +580,330 @@ class App extends Component {
                     </TouchableOpacity>
             </View>
     };
+    // renderRegisterDrawer(){
+    //     return <View><Text>RegisterBlock</Text></View>
+    // }
+    setActiveTab=i=>{
+        this.setState({activeTab:i})
+    }
+    isReadyToRegister(){
+        return this.state.emailToRegisterStudent.length && this.state.realNameOfNewStudent.length && this.state.nickOfNewStudent.length
+    }
+    findUserByEmail() {
+        const {classID} = this.props.userSetup
+
+        const json = {
+            kind: "user",
+            type: "email",
+            email: this.state.emailToLinkStudent,
+            classID : classID
+        }
+
+        // console.log("classID", classID, json)
+
+        axios2('post', `${API_URL}find`, JSON.stringify(json))
+            .then(res => {
+                // console.log('FIND_USER', res)
+                // alert(res.data.id)
+                if (res.data.id)
+                    this.setState({
+                    realNameOfNewStudent : res.data.student_name + ' [copy]',
+                    nickOfNewStudent : res.data.student_nick,
+                    isCheckedNewStudent : true,
+                    newStudentID : res.data.student_id})
+                else {
+                    this.setState({isCheckedNewStudent : false, newStudentID : 0})
+                }
+            })
+            .catch(res => {
+                    console.log("AXIOUS_ERROR", res, text)
+                    this.setState({isCheckedNewStudent : false, newStudentID : 0})
+                }
+            )
+    }
+    onLoginMock=()=>{
+        const {langLibrary, classID, userID} = this.props.userSetup
+        const {theme, themeColor} = this.props.interface
+        // this.props.updateState("showDrawer", false)
+        console.log("onLoginMock", userID)
+
+        this.props.onReduxUpdate("SHOW_LOGIN", false)
+        this.props.onReduxUpdate("USER_LOGGING")
+        this.props.onReduxUpdate("LOG_BTN_CLICK")
+        // if (userID) this.props.onUserLoggingOut();
+        this.props.onUserMockLogging(langLibrary, theme, themeColor);
+        this.setState({showDrawer : false})
+        // this.showDrawer()
+    }
+    registerNewUser=()=>{
+
+        const {addUserToken, newStudentID, realNameOfNewStudent, nickOfNewStudent, emailToRegisterStudent} = this.state
+        const {classID} = this.props.userSetup
+
+        // alert (addUserToken)
+        // return
+        if (newStudentID) {
+            let json = {
+                'class_id': classID,
+                'email': emailToRegisterStudent,
+                'token' : addUserToken,
+                'stud_id' : newStudentID,
+                'name' : realNameOfNewStudent
+            }
+            axios2('post', `${API_URL}student/clone`, JSON.stringify(json))
+                .then(res => {
+                    this.setState({userCreated : true})
+                    Toast.show({
+                        text: `Пользователь ${realNameOfNewStudent} создан: проверьте почту ${emailToRegisterStudent}`,
+                        buttonText: 'ОК',
+                        position : 'bottom',
+                        duration : 5000,
+                        style : {marginBottom : 100}
+                        // type : 'success'
+                    })
+                })
+                .catch(err=>{
+                    console.log("Error:newStudentClone", err)
+                })
+        }
+        else {
+            let json = {
+                'email': emailToRegisterStudent,
+                'student_nick' : nickOfNewStudent,
+                'name' : realNameOfNewStudent,
+                'notwebadding' : null,
+                'provider' : null,
+                'mobversion' : true
+            }
+            axios2('post', `${API_URL}students/add/${addUserToken}`, JSON.stringify(json))
+                .then(res => {
+                    this.setState({userCreated : true})
+                    Toast.show({
+                        text: `Пользователь ${realNameOfNewStudent} создан: проверьте почту ${emailToRegisterStudent}`,
+                        buttonText: 'ОК',
+                        position : 'bottom',
+                        duration : 5000,
+                        style : {marginBottom : 100}
+                        // type : 'success'
+                    })
+                })
+                .catch(err=>{
+                    console.log("Error:createdNewStudent", err)
+                })
+
+        }
+    }
+    _renderItem = ({ item }) => {
+        const {theme} = this.props.interface
+        const {langLibrary} = this.props.userSetup
+
+        // console.log("Item", item)
+        // alert(item.id)
+        switch (item.key) {
+            case  2.2:
+               return (
+                   <View style={[styles.slide, {backgroundColor: theme.primaryDarkColor, height: "100%"}]}>
+                       {/*<Text style={[styles.title, {marginLeft : 30, marginTop : 5, color: theme.primaryLightColor, fontSize : RFPercentage(2)}]}>{item.title}</Text>*/}
+                       {/*<Image source={item.image}/>*/}
+                       <Text style={{color: theme.primaryLightColor, marginLeft : 30, marginRight : 20, marginTop : 10}}>
+                           Если Вы хотите просматривать оценки уже созданного раннее ученика, то присоединитесь к нему,
+                           указав в качестве проверочного уже зарегистрированный Email</Text>
+
+                       <Item rounded style={{marginLeft : 20, marginRight : 20, marginTop : 2, borderColor: 'transparent'}}>
+                           <Input
+                               style={{ fontSize : RFPercentage(3), paddingLeft : 10, paddingRight : 0,
+                                        color : theme.primaryTextColor, fontWeight : "600", borderWidth: 3,
+                                        borderColor : theme.primaryLightColor, borderRadius : 30, height : 50}}
+                               value={this.state.emailToLinkStudent.length?this.state.emailToLinkStudent:""}
+                               onChangeText={text =>this.onChangeText('emailToLinkStudent', text)}
+                               onBlur={this.findUserByEmail}
+                               placeholder=""
+                               placeholderTextColor={theme.primaryLightColor}
+                           />
+                           {this.state.isCheckedNewStudent?
+                               <Icon
+                                    name='checkmark-circle'
+                                    style={{color : theme.secondaryLightColor, position : "absolute", right : 0}}
+                               />:null
+                           }
+                       </Item>
+
+                       {/*||  this.state.emailToLinkStudent*/}
+
+                       {/*<View style={{backgroundColor : theme.primaryColor, padding : 20}}>*/}
+                       <Text style={{fontSize : RFPercentage(1.8), marginLeft : 30,  marginTop : 20, color : theme.primaryColor}}>
+                           Email-логин для регистрации
+                       </Text>
+                           <Item rounded style={{marginLeft : 20, marginRight : 20, marginTop : 2, borderColor: 'transparent'}}>
+                               <Input
+                                   style={{ fontSize : RFPercentage(3), paddingLeft : 10, paddingRight : 0,
+                                       color : theme.primaryTextColor, fontWeight : "600", borderWidth: 3,
+                                       borderColor : theme.primaryColor, borderRadius : 30, height : 50}}
+                                   value={this.state.emailToRegisterStudent.length?this.state.emailToRegisterStudent:""}
+                                   onChangeText={text =>this.onChangeText('emailToRegisterStudent', text)}
+                                   onBlur={()=>console.log("Input:emailToRegisterStudent:blur")}
+                                   placeholder=""
+                                   placeholderTextColor={theme.primaryColor}
+                                   placeholderFontSize={2}
+                               />
+                           </Item>
+                           <Text style={{fontSize : RFPercentage(1.8), marginLeft : 30,  marginTop : 10, color : theme.primaryColor}}>
+                               Настоящее имя студента (для учителя)
+                           </Text>
+                           <Item rounded style={{marginLeft : 20, marginRight : 20, marginTop : 2, borderColor: 'transparent'}}>
+                               <Input
+                                   style={{ fontSize : RFPercentage(3), paddingLeft : 10, paddingRight : 0,
+                                       color : theme.primaryTextColor, fontWeight : "600", borderWidth: 3,
+                                       borderColor : theme.primaryColor, borderRadius : 30, height : 50}}
+                                   value={this.state.realNameOfNewStudent.length?this.state.realNameOfNewStudent:""}
+                                   onChangeText={text =>this.onChangeText('realNameOfNewStudent', text)}
+                                   onBlur={()=>console.log("Input:realNameOfNewStudent:blur")}
+                                   placeholder=""
+                                   placeholderTextColor={theme.primaryColor}
+                                   placeholderFontSize={2}
+                               />
+                           </Item>
+                           <Text style={{fontSize : RFPercentage(1.8), marginLeft : 30,  marginTop : 10, color : theme.primaryColor}}>
+                               Ник студента (для общеклассных данных)
+                           </Text>
+                           <Item rounded style={{marginLeft : 20, marginRight : 20, marginTop : 2, borderColor: 'transparent'}}>
+                               <Input
+                                   style={{ fontSize : RFPercentage(3), paddingLeft : 10, paddingRight : 0,
+                                       color : theme.primaryTextColor, fontWeight : "600", borderWidth: 3,
+                                       borderColor : theme.primaryColor, borderRadius : 30, height : 50}}
+                                   value={this.state.nickOfNewStudent.length?this.state.nickOfNewStudent:""}
+                                   onChangeText={text =>this.onChangeText('nickOfNewStudent', text)}
+                                   onBlur={()=>console.log("Input:nickOfNewStudent:blur")}
+                                   placeholder=""
+                                   placeholderTextColor={theme.primaryColor}
+                                   placeholderFontSize={2}
+                               />
+                           </Item>
+                       {/*</View>*/}
+                       {/*<Text style={[styles.text, {color: theme.primaryLightColor}]}>{item.text}</Text>*/}
+                       <Button style={{marginLeft : 20, marginRight : 20, marginTop : Platform.OS !== 'ios'?25:30, borderRadius : 30,
+                           justifyContent: "center",
+                           alignItems: "center",
+                           color : theme.primaryDarkColor, backgroundColor : !this.isReadyToRegister()? "#E0E0E0": theme.primaryTextColor}}
+                               onPress={!this.isReadyToRegister()&&!this.state.userCreated?null:this.registerNewUser}>
+                           <View style={{ justifyContent: "center", alignItems: "center" }}>
+                               <Text style={{fontSize : RFPercentage(3), color : theme.primaryDarkColor, width : "100%", fontWeight : "800"}}>
+                                   {this.state.userCreated?"Cоздан. Проверьте email":!this.isReadyToRegister()? "Заполните данные студента": this.state.isCheckedNewStudent ||  this.state.emailToLinkStudent?"Присоединиться к студенту":"Создать нового студента"}
+                               </Text>
+                           </View>
+                       </Button>
+
+                   </View>
+               )
+            case 1.1 :
+               return (
+                   <View style={[styles.slide, {backgroundColor: theme.primaryDarkColor, marginLeft : 30, height: "100%", justifyContent: "center", alignItems: "center"}]}>
+                       <Text style={{fontSize : RFPercentage(2.5), color : theme.primaryTextColor}}
+                             onPress={() => Linking.openURL('https://mymarks.info')}>
+                           {getLangWord("mobLinkTo", langLibrary)}
+                       </Text>
+                       <Button style={{marginLeft : 60, padding : 20, marginTop : Platform.OS !== 'ios'?5:10, marginRight : 60, borderRadius : 30,
+                           justifyContent: "center",
+                           alignItems: "center",
+                           color : theme.primaryDarkColor, backgroundColor : theme.primaryTextColor}}
+                               onPress={() => Linking.openURL('https://mymarks.info')}>
+                           <View style={{ justifyContent: "center", alignItems: "center" }}>
+                               <Text style={{fontSize : RFPercentage(3), color : theme.primaryDarkColor, width : "100%", fontWeight : "800"}}>
+                                   {"mymarks.info"}
+                               </Text>
+                           </View>
+                       </Button>
+                       {/*<Text style={{fontSize : RFPercentage(2.5), color : theme.secondaryLightColor, fontWeight : "800"}}*/}
+                             {/*onPress={() => Linking.openURL('https://mymarks.info')}>*/}
+                           {/*mymarks.info*/}
+                       {/*</Text>*/}
+                       <Text style={{fontSize : RFPercentage(2.5), color : theme.primaryTextColor}}
+                             onPress={() => Linking.openURL('https://mymarks.info')}>
+                           {getLangWord("mobLinkTo2", langLibrary)}
+                       </Text>
+                   </View>)
+            default :
+            return
+                (
+                    <View style={[styles.slide, {backgroundColor: theme.primaryDarkColor, height: "100%"}]}>
+                        <Text style={[styles.title, {color: theme.primaryLightColor}]}>{item.title}</Text>
+                        <Image source={item.image}/>
+                        <Text style={[styles.text, {color: theme.primaryLightColor}]}>{item.text}</Text>
+                    </View>
+                );
+        }
+    }
+    _renderPrevButton = () => {
+        return (
+            <View style={[styles.buttonCircle, {marginLeft : 20}]}>
+                <Ionicons
+                    name="md-arrow-round-back"
+                    color="rgba(255, 255, 255, .9)"
+                    size={40}
+                />
+            </View>
+        );
+    };
+    _renderNextButton = () => {
+        return (
+            <View style={[styles.buttonCircle, {marginRight : 20}]}>
+                <Ionicons
+                    name="md-arrow-round-forward"
+                    color="rgba(255, 255, 255, .9)"
+                    size={40}
+                />
+            </View>
+        );
+    };
+    _renderDoneButton = () => {
+        return (
+            <View style={styles.buttonCircle}>
+                <Ionicons
+                    name="md-checkmark"
+                    color="rgba(255, 255, 255, .9)"
+                    size={40}
+                />
+            </View>
+        );
+    };
     renderDrawer(){
-        const {langLibrary, userName, classID} = this.props.userSetup
+        const {langLibrary, userName, classID, userID, token} = this.props.userSetup
         const {showFooter, showKeyboard, theme, themeColor} = this.props.interface
         const {online} = this.props.tempdata
         const colorOptions = Object.keys(themeOptions)
+        const {registerStep} = this.state
         let {stat} = this.props
 
         // console.log("renderDrawer")
-        return  <Tabs initialPage={0} page={0}>
-            <Tab key={"tab1"} heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor, fontSize : RFPercentage(1.8)}}>
+        return  <Tabs initialPage={this.state.initialPage}
+                      page={this.state.activeTab}
+                      onChangeTab={({ i, ref, from }) => this.setActiveTab(i)}>
+
+            <Tab key={"tab1"} heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor, fontSize : RFPercentage(1.4)}}>
                 {getLangWord("mobLogin", langLibrary).toUpperCase()}
                 </Text></TabHeading>}>
                 <View>
                     <LoginBlock updateState={this.updateState}/>
                 </View>
             </Tab>
-            <Tab key={"tab2"} heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor, fontSize : RFPercentage(1.8)}}>
+
+            <Tab key={"tab2"} heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor, fontSize : RFPercentage(1.4)}}>
                 {getLangWord("mobRegister", langLibrary).toUpperCase()}
-            </Text></TabHeading>}>
+                </Text></TabHeading>}>
                 <View style={{height : "100%", width : "100%", backgroundColor : theme.primaryDarkColor,
                     display : "flex",
                     flexDirection : "column",
                     // justifyContent : "center",
                     alignItems : "center"
                 }}>
+
+                    {(!registerStep)?<View style={{width : "100%", backgroundColor : theme.primaryDarkColor,
+                        display : "flex",
+                        flexDirection : "column",
+                        alignItems : "center",
+                        marginLeft : 30,
+                        marginRight : 30
+                    }}>
                         <View style={{width : "100%", backgroundColor : theme.primaryDarkColor,
                             display : "flex",
                             flexDirection : "column",
@@ -541,17 +915,15 @@ class App extends Component {
                             <View style={{
                                 display : "flex",
                                 flexDirection : "column",
-                                // justifyContent : "space-around",
                                 alignItems : "center"
                                 }}>
                                 <Icon type="Ionicons" style={{fontSize: 70, color: theme.primaryLightColor}} name="ios-people"/>
                             </View>
-                            <View style={{width : "80%", display : "flex",
-                                flexDirection : "row",
-                                justifyContent : "space-between",
-                                alignItems : "center"
-                            }}>
-                                <Text style={{fontSize : RFPercentage(4), color : theme.primaryLightColor}}>НОВЫЙ КЛАСС</Text>
+                            <View style={{  width : "80%", display : "flex",
+                                            flexDirection : "row",
+                                            justifyContent : "space-between",
+                                            alignItems : "center"}}>
+                                <Text style={{fontSize : RFPercentage(4), color : theme.primaryLightColor}}>{getLangWord("mobNewClass", langLibrary).toUpperCase()}</Text>
                                 <TouchableOpacity
                                     style={{ borderWidth:1,
                                         borderColor:    theme.secondaryLightColor,
@@ -560,14 +932,55 @@ class App extends Component {
                                         width:40,
                                         height:40,
                                         backgroundColor: theme.secondaryLightColor,
-                                        // opacity : .6,
                                         borderRadius: 40,
-                                        // position : "absolute",
-                                        // bottom : 20,
-                                        // right : 20,
                                         zIndex : 21,
                                     }}
-                                    onPress={()=>alert(">")}
+                                    onPress={()=>{this.setState({registerStep : 1})}}>
+                                    <Icon
+                                        name='ios-arrow-forward'
+                                        type='Ionicons'
+                                        color={theme.primaryDarkColor}
+                                        size={50}
+                                    />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+
+                        <View style={{width : "100%", backgroundColor : theme.primaryDarkColor,
+                            display : "flex",
+                            flexDirection : "column",
+                            alignItems : "center",
+                            marginTop : 40,
+                            marginLeft : 30,
+                            marginRight : 30
+                        }}>
+                            <View style={{
+                                display : "flex",
+                                flexDirection : "column",
+                                // justifyContent : "space-around",
+                                alignItems : "center"
+                            }}>
+                                <Icon type="Ionicons" style={{fontSize: 70, color: theme.primaryLightColor}} name="ios-person-add"/>
+                            </View>
+                            <View style={{width : "80%", display : "flex",
+                                flexDirection : "row",
+                                justifyContent : "space-between",
+                                alignItems : "center"
+                            }}>
+                                {/*<Icon type="Ionicons" style={{fontSize: 40, color: theme.secondaryLightColor}} name="ios-person-add"/>*/}
+                                <Text style={{fontSize : RFPercentage(4), color : theme.primaryLightColor}}>{getLangWord("mobNewStudent", langLibrary).toUpperCase()}</Text>
+                                <TouchableOpacity
+                                    style={{ borderWidth:1,
+                                        borderColor:    theme.secondaryLightColor,
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        width:40,
+                                        height:40,
+                                        backgroundColor: theme.secondaryLightColor,
+                                        borderRadius: 40,
+                                        zIndex : 21,
+                                    }}
+                                    onPress={()=>{this.setState({registerStep : 2})}}
                                     // delayLongPress={300}
                                     // onLongPress={()=>{this._scrollView.scrollToEnd()}}
                                 >
@@ -582,64 +995,80 @@ class App extends Component {
                                     {/*</View>*/}
                                 </TouchableOpacity>
                             </View>
-                    </View>
-                    <View style={{width : "100%", backgroundColor : theme.primaryDarkColor,
-                        display : "flex",
-                        flexDirection : "column",
-                        alignItems : "center",
-                        marginTop : 40,
-                        marginLeft : 30,
-                        marginRight : 30
-                    }}>
-                        <View style={{
-                            display : "flex",
-                            flexDirection : "column",
-                            // justifyContent : "space-around",
-                            alignItems : "center"
-                        }}>
-                            <Icon type="Ionicons" style={{fontSize: 70, color: theme.primaryLightColor}} name="ios-person-add"/>
                         </View>
-                    <View style={{width : "80%", display : "flex",
-                        flexDirection : "row",
-                        justifyContent : "space-between",
-                        alignItems : "center"
-                    }}>
-                        {/*<Icon type="Ionicons" style={{fontSize: 40, color: theme.secondaryLightColor}} name="ios-person-add"/>*/}
-                        <Text style={{fontSize : RFPercentage(4), color : theme.primaryLightColor}}>НОВЫЙ СТУДЕНТ</Text>
-                        <TouchableOpacity
-                            style={{ borderWidth:1,
-                                borderColor:    theme.secondaryLightColor,
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                width:40,
-                                height:40,
-                                backgroundColor: theme.secondaryLightColor,
-                                // opacity : .6,
-                                borderRadius: 40,
-                                // position : "absolute",
-                                // bottom : 20,
-                                // right : 20,
-                                zIndex : 21,
-                            }}
-                            onPress={()=>alert(">")}
-                            // delayLongPress={300}
-                            // onLongPress={()=>{this._scrollView.scrollToEnd()}}
-                        >
-                            <Icon
-                                name='ios-arrow-forward'
-                                type='Ionicons'
-                                color={theme.primaryDarkColor}
-                                size={50}
+                </View>
+                        :<View style={{width : "100%", height : "100%"}}>
+
+                            <AppIntroSlider renderItem={this._renderItem}
+                                            data={registerStep===1?slidesClass:(registerStep===2&&userID?slidesUserLoggedin:slidesUserNotLoggedin)}
+                                            onDone={()=>{this.setState({registerStep : 0})}}
+                                            renderDoneButton={this._renderDoneButton}
+                                            renderNextButton={this._renderNextButton}
+                                            renderPrevButton={this._renderPrevButton}
+                                            showPrevButton={true}
                             />
-                            {/*<View style={{position : "absolute", right : 7, bottom : 7, fontSize : RFPercentage(1.2), color : theme.secondaryColor}}>*/}
-                                {/*<Text style={{fontSize : RFPercentage(1.7), fontWeight : "800", color : theme.primaryDarkColor, opacity : 1}}>{messages.filter(item=>item.id>this.state.currentMsgID).length}</Text>*/}
-                            {/*</View>*/}
-                        </TouchableOpacity>
-                    </View>
-                    </View>
+
+                        </View>}
                 </View>
             </Tab>
-            <Tab key={"tab3"} heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor, fontSize : RFPercentage(1.8)}}>
+
+            {/*<TouchableOpacity*/}
+                {/*style={{ borderWidth:1,*/}
+                    {/*borderColor:    theme.secondaryLightColor,*/}
+                    {/*alignItems: 'center',*/}
+                    {/*justifyContent: 'center',*/}
+                    {/*width:40,*/}
+                    {/*height:40,*/}
+                    {/*backgroundColor: theme.secondaryLightColor,*/}
+                    {/*borderRadius: 40,*/}
+                    {/*zIndex : 21,*/}
+                {/*}}*/}
+                {/*onPress={()=>{alert("<"), this.setState({registerStep : 0})}}*/}
+            {/*>*/}
+                {/*<Icon*/}
+                {/*name='ios-arrow-back'*/}
+                {/*type='Ionicons'*/}
+                {/*color={theme.primaryDarkColor}*/}
+                {/*size={50}*/}
+            {/*/>*/}
+            {/*</TouchableOpacity>*/}
+            <Tab key={"tab2_1"} heading={
+                <TabHeading style={{backgroundColor : theme.primaryColor}}>
+                    <Text style={{color: theme.primaryDarkColor, backgroundColor: theme.secondaryLightColor, borderRadius : 5, padding: 5, fontSize : RFPercentage(1.4)}}>
+                        {getLangWord("mobTest", langLibrary).toUpperCase()}
+                    </Text>
+                </TabHeading>}>
+                    <View style={{
+                        backgroundColor : theme.primaryColor,
+                        height : Dimensions.get('window').height,
+                        width : Dimensions.get('window').width,
+                        flex: 1,
+                        flexDirection : 'column',
+                        zIndex : 102,
+                    }}>
+
+                        <View style={[styles.slide, {backgroundColor: theme.primaryDarkColor, height: "100%", justifyContent: "center", alignItems: "center"}]}>
+                            <Text style={{fontSize : RFPercentage(2.1), color : theme.primaryTextColor, marginLeft : 30}}>
+                                {getLangWord("mobTestText", langLibrary)}
+                            </Text>
+
+                            <Button style={{marginLeft : 60, padding : 20, marginTop : Platform.OS !== 'ios'?5:10, marginRight : 60, borderRadius : 30,
+                                justifyContent: "center",
+                                alignItems: "center",
+                                color : theme.primaryDarkColor, backgroundColor : theme.primaryTextColor}}
+                                    onPress={()=>{!userID?this.onLoginMock():this.props.onUserLoggingOut(token, langLibrary, theme, themeColor)}}>
+                                <View style={{ justifyContent: "center", alignItems: "center" }}>
+                                    <Text style={{fontSize : RFPercentage(3), color : theme.primaryDarkColor, width : "100%", fontWeight : "800"}}>
+                                        {!userID?getLangWord("mobLogin", langLibrary).toUpperCase():getLangWord("mobExit", langLibrary).toUpperCase()}
+                                    </Text>
+                                </View>
+                            </Button>
+                        </View>
+                    </View>
+            </Tab>
+
+
+            <Tab key={"tab3"} heading={<TabHeading style={{backgroundColor : theme.primaryColor}}><Text style={{color: theme.primaryTextColor, fontSize : RFPercentage(1.4)}}>
                     {getLangWord("mobSettings", langLibrary).toUpperCase()}
                     </Text></TabHeading>}>
                     <Container>
@@ -1051,11 +1480,11 @@ class App extends Component {
 
     }
     initLocalPusher=()=>{
-        const {chatSSL, token, userName, classID} = this.props.userSetup
+        const {chatSSL, token, userName, classID, studentNick, userID} = this.props.userSetup
         const {users} = this.props.tempdata
         const echo = echoClient(token, chatSSL)
 
-        console.log("INIT_LOCAL_PUSHER")
+        console.log("INIT_LOCAL_PUSHER", userID, userName)
 
         // echo.connector.pusher.logToConsole = true
         // echo.connector.pusher.log = (msg) => {console.log(msg);};
@@ -1258,22 +1687,22 @@ class App extends Component {
                     console.log("NewsMessage-SSL")
                 })
                 .listenForWhisper('typing', (e) => {
-                    if (!this.props.tempdata.typingUsers.has(e.name)&&e.name!==userName) {
+                    if (!this.props.tempdata.typingUsers.has(e.name)&&e.name!==(userName)) {
                         let mp = this.props.tempdata.typingUsers
                         mp.set(e.name, new Date())
-                        console.log('SetTypingState', e.name);
+                        console.log('SetTypingState: App', '#', e.name, '#', userName);
                         this.props.onReduxUpdate("UPDATE_TYPING_USERS", mp)
                         // this.setState({typingUsers: mp})
                     }
-                    console.log('typing', e.name);
+                    // console.log('typing', e.name);
                 })
                 .here((users) => {
                     //this.setState({users : users});
                     this.props.onReduxUpdate("UPDATE_USERS", users)
-                    console.log("USERS.HERE", users)
+                    // console.log("USERS.HERE", users)
                 })
                 .joining((user) => {
-                    console.log("USERS.JOIN", users, user)
+                    // console.log("USERS.JOIN", users, user)
                     const arr = users.filter(item=>item !== user)
                     {userName!==user?Toast.show({
                         text: `${user} присоединился к чату`,
@@ -1357,7 +1786,7 @@ class App extends Component {
         const {markCnt, chatCnt, newsID} = this.props.stat
         const {selectedFooter, showDrawer} = this.state
 
-        // console.log("App:render")
+        // console.log("App:render", showDrawer)
         const hwarray = localChatMessages!==undefined?localChatMessages.filter(item=>(item.homework_date!==null)):[]
         let {daysArr, initialDay} = this.state
         initialDay = initialDay?initialDay: getNextStudyDay(daysArr)[0]
@@ -1400,7 +1829,7 @@ class App extends Component {
             {   name : 'etc',
                 icontype : 'material', iconname : 'apps', badgestatus : 'error', kind : '', value : 0 },
         ]
-        const modalButtons = [{name : 'ДЗ'}, {name : 'Родители'}, {name : '+Учитель'}, {name : 'Личные'}, {name : 'Workflox'}]
+        const modalButtons = [{name : 'ДЗ'}, {name : 'Родители'}, {name : '+Учитель'}, {name : 'Личные'}, {name : 'Workflow'}]
         return (
                 <Container>
                     <StatusBar backgroundColor={theme.primaryDarkColor} hidden={false}/>
@@ -1415,7 +1844,11 @@ class App extends Component {
                     {this.state.isSpinner||(loading&&loading!==-1) ? <View style={{position : "absolute", flex: 1, alignSelf : 'center', marginTop : 240, zIndex : 100 }}>
                         <Spinner color={theme.secondaryColor}/>
                     </View> : null}
-
+                    {/*<Drawer*/}
+                        {/*open={this.state.showRegisterDrawer}*/}
+                        {/*content={this.renderRegisterDrawer()}*/}
+                        {/*tapToClose={true}*/}
+                        {/*/>*/}
                     <Drawer
                         open={!userID||this.state.showDrawer}
                         type="overlay"
@@ -1587,193 +2020,6 @@ class App extends Component {
                             </TouchableWithoutFeedback>
                         </Modal>
                     </View>
-
-                    {/*{showFooter ?*/}
-                        {/*<View style={{position : "relative"}} onLayout={(event) =>this.measureView(event)}>*/}
-                        {/*<Footer style={{elevation: 0, borderWidth : .5, borderColor : theme.secondaryColor, zIndex : 51}}>*/}
-                            {/*<FooterTab style={{elevation: 0, borderWidth : .5, borderColor : theme.secondaryColor}}>*/}
-                                {/*<ButtonWithBadge*/}
-                                    {/*enabled={this.state.selectedFooter === 0}*/}
-                                    {/*disabled={this.state.showLogin} //  || (this.props.userSetup.userID === 0)*/}
-                                    {/*onpress={this.setstate} // this.props.userSetup.userID?this.setstate:null*/}
-                                    {/*name={getLangWord("mobChat", langLibrary)}*/}
-                                    {/*icontype={'material'}*/}
-                                    {/*iconname={'message'}*/}
-                                    {/*badgestatus={'primary'}*/}
-                                    {/*kind={'chat'}*/}
-                                    {/*value={chatCnt}*/}
-                                    {/*setstate={this.setstate}*/}
-                                    {/*stateid={0}*/}
-                                    {/*longpress={this.onLongPress}*/}
-                                {/*/>*/}
-                                {/*<ButtonWithBadge*/}
-                                    {/*enabled={this.state.selectedFooter === 1}*/}
-                                    {/*disabled={this.state.showLogin} //  || (this.props.userSetup.userID === 0)*/}
-                                    {/*onpress={this.setstate} // this.props.userSetup.userID?this.setstate:null*/}
-                                    {/*name={getLangWord("mobHomework", langLibrary)}*/}
-                                    {/*icontype={'material'}*/}
-                                    {/*iconname={'notifications'}*/}
-                                    {/*badgestatus={'error'}*/}
-                                    {/*kind={'homework'}*/}
-                                    {/*value={homework}*/}
-                                    {/*setstate={this.setstate}*/}
-                                    {/*stateid={1}*/}
-                                    {/*longpress={this.onLongPress}*/}
-                                {/*/>*/}
-                                {/*<ButtonWithBadge*/}
-                                    {/*enabled={this.state.selectedFooter === 2}*/}
-                                    {/*disabled={this.state.showLogin} //  || (this.props.userSetup.userID === 0)*/}
-                                    {/*onpress={this.setstate} // this.props.userSetup.userID?this.setstate:null*/}
-                                    {/*name={getLangWord("mobMarks", langLibrary)}*/}
-                                    {/*icontype={'material'}*/}
-                                    {/*iconname={'timeline'}*/}
-                                    {/*badgestatus={'success'}*/}
-                                    {/*kind={'marks'}*/}
-                                    {/*value={markCnt}*/}
-                                    {/*setstate={this.setstate}*/}
-                                    {/*stateid={2}*/}
-                                    {/*longpress={this.onLongPress}*/}
-                                {/*/>*/}
-                                {/*<ButtonWithBadge*/}
-                                    {/*enabled={this.state.selectedFooter === 3}*/}
-                                    {/*disabled={this.state.showLogin} //  || (this.props.userSetup.userID === 0)*/}
-                                    {/*onpress={this.setstate} // this.props.userSetup.userID?this.setstate:null*/}
-                                    {/*name={"Info"}*/}
-                                    {/*icontype={'material'}*/}
-                                    {/*iconname={'info'}*/}
-                                    {/*badgestatus={'warning'}*/}
-                                    {/*kind={'info'}*/}
-                                    {/*value={0}*/}
-                                    {/*setstate={this.setstate}*/}
-                                    {/*stateid={3}*/}
-                                    {/*longpress={this.onLongPress}*/}
-                                {/*/>*/}
-                                {/*<ButtonWithBadge*/}
-                                    {/*enabled={this.state.selectedFooter === 4}*/}
-                                    {/*disabled={this.state.showLogin} //  || (this.props.userSetup.userID === 0)*/}
-                                    {/*onpress={this.setstate} // this.props.userSetup.userID?this.setstate:null*/}
-                                    {/*name={getLangWord("mobCamera", langLibrary)}*/}
-                                    {/*icontype={'material'}*/}
-                                    {/*iconname={'camera'}*/}
-                                    {/*badgestatus={'error'}*/}
-                                    {/*kind={''}*/}
-                                    {/*value={0}*/}
-                                    {/*setstate={this.setstate}*/}
-                                    {/*stateid={4}*/}
-                                    {/*longpress={this.onLongPress}*/}
-                                {/*/>*/}
-                                {/*<ButtonWithBadge*/}
-                                    {/*enabled={this.state.selectedFooter === 5}*/}
-                                    {/*disabled={this.state.showLogin} //  || (this.props.userSetup.userID === 0)*/}
-                                    {/*onpress={this.setstate} // this.props.userSetup.userID?this.setstate:null*/}
-                                    {/*name={"etc"}*/}
-                                    {/*icontype={'material'}*/}
-                                    {/*iconname={'apps'}*/}
-                                    {/*badgestatus={'error'}*/}
-                                    {/*kind={''}*/}
-                                    {/*value={0}*/}
-                                    {/*setstate={this.setstate}*/}
-                                    {/*stateid={5}*/}
-                                    {/*longpress={this.onLongPress}*/}
-                                {/*/>*/}
-                            {/*</FooterTab>*/}
-                        {/*</Footer>*/}
-                        {/*<Modal*/}
-                            {/*isVisible={!this.state.isHidden}*/}
-                            {/*backdropOpacity={0.1}*/}
-                            {/*style={{position : "absolute", height : 65, margin : 0,*/}
-                                    {/*padding : 0, bottom : footerHeight + 5,*/}
-                                    {/*width : buttonWidth * 5,*/}
-                                    {/*marginLeft : 5, marginRight : 5,*/}
-                                    {/*// borderWidth : .5, borderColor : theme.primaryDarkColor,*/}
-                                    {/*borderRadius : 8,*/}
-                                    {/*backgroundColor : theme.secondaryColor}}*/}
-                            {/*onBackdropPress={() => this.setState({ isHidden : true })}>*/}
-                            {/*<TouchableWithoutFeedback  onPress={()=>this.setState({isHidden : true})}>*/}
-                                {/*<View style={{  height : 60,*/}
-                                                {/*// borderWidth : .5, borderColor : theme.primaryDarkColor, borderRadius : 10,*/}
-                                                {/*backgroundColor : theme.secondaryColor,*/}
-                                                {/*bottom : 0, margin : 0,*/}
-                                                {/*flex : 1,*/}
-                                                {/*justifyContent : "space-between",*/}
-                                                {/*flexDirection : "row",*/}
-                                                {/*alignItems : "center",*/}
-                                                {/*borderRadius : 8,*/}
-                                    {/*}}>*/}
-                                    {/*<ButtonWithBadge*/}
-                                        {/*enabled={this.state.selectedFooter === 0}*/}
-                                        {/*disabled={this.state.showLogin} //  || (this.props.userSetup.userID === 0)*/}
-                                        {/*onpress={this.setstate} // this.props.userSetup.userID?this.setstate:null*/}
-                                        {/*name={'ДЗ'}*/}
-                                        {/*icontype={'material'}*/}
-                                        {/*iconname={'message'}*/}
-                                        {/*badgestatus={'primary'}*/}
-                                        {/*kind={'chat'}*/}
-                                        {/*value={chatCnt}*/}
-                                        {/*setstate={this.setstate}*/}
-                                        {/*stateid={0}*/}
-                                        {/*longpress={null}*/}
-                                    {/*/>*/}
-                                    {/*<ButtonWithBadge*/}
-                                        {/*enabled={false}*/}
-                                        {/*disabled={this.state.showLogin} //  || (this.props.userSetup.userID === 0)*/}
-                                        {/*onpress={this.setstate} // this.props.userSetup.userID?this.setstate:null*/}
-                                        {/*name={'Родители'}*/}
-                                        {/*icontype={'material'}*/}
-                                        {/*iconname={'message'}*/}
-                                        {/*badgestatus={'primary'}*/}
-                                        {/*kind={'chat'}*/}
-                                        {/*value={chatCnt}*/}
-                                        {/*setstate={this.setstate}*/}
-                                        {/*stateid={0}*/}
-                                        {/*longpress={null}*/}
-                                    {/*/>*/}
-                                    {/*<ButtonWithBadge*/}
-                                        {/*enabled={false}*/}
-                                        {/*disabled={this.state.showLogin} //  || (this.props.userSetup.userID === 0)*/}
-                                        {/*onpress={this.setstate} // this.props.userSetup.userID?this.setstate:null*/}
-                                        {/*name={'+Учитель'}*/}
-                                        {/*icontype={'material'}*/}
-                                        {/*iconname={'message'}*/}
-                                        {/*badgestatus={'primary'}*/}
-                                        {/*kind={'chat'}*/}
-                                        {/*value={chatCnt}*/}
-                                        {/*setstate={this.setstate}*/}
-                                        {/*stateid={0}*/}
-                                        {/*longpress={null}*/}
-                                    {/*/>*/}
-                                    {/*<ButtonWithBadge*/}
-                                        {/*enabled={false}*/}
-                                        {/*disabled={this.state.showLogin} //  || (this.props.userSetup.userID === 0)*/}
-                                        {/*onpress={this.setstate} // this.props.userSetup.userID?this.setstate:null*/}
-                                        {/*name={'Личные'}*/}
-                                        {/*icontype={'material'}*/}
-                                        {/*iconname={'message'}*/}
-                                        {/*badgestatus={'primary'}*/}
-                                        {/*kind={'chat'}*/}
-                                        {/*value={chatCnt}*/}
-                                        {/*setstate={this.setstate}*/}
-                                        {/*stateid={0}*/}
-                                        {/*longpress={null}*/}
-                                    {/*/>*/}
-                                    {/*<ButtonWithBadge*/}
-                                        {/*enabled={false}*/}
-                                        {/*disabled={this.state.showLogin} //  || (this.props.userSetup.userID === 0)*/}
-                                        {/*onpress={this.setstate} // this.props.userSetup.userID?this.setstate:null*/}
-                                        {/*name={'Workflow'}*/}
-                                        {/*icontype={'material'}*/}
-                                        {/*iconname={'message'}*/}
-                                        {/*badgestatus={'primary'}*/}
-                                        {/*kind={'chat'}*/}
-                                        {/*value={chatCnt}*/}
-                                        {/*setstate={this.setstate}*/}
-                                        {/*stateid={0}*/}
-                                        {/*longpress={null}*/}
-                                    {/*/>*/}
-                                {/*</View>*/}
-                            {/*</TouchableWithoutFeedback>*/}
-                        {/*</Modal>*/}
-                     {/*</View> : null}*/}
 
                 </Container>
         )

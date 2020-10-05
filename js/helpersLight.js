@@ -5,7 +5,7 @@ import store from '../store/configureStore'
 import axios from 'axios';
 import {Platform} from 'react-native'
 import {Toast} from 'native-base'
-import {AUTH_URL, API_URL, BASE_HOST, WEBSOCKETPORT, LOCALPUSHERPWD, HOMEWORK_ADD_URL} from '../config/config'
+import {AUTH_URL, API_URL, BASE_HOST, WEBSOCKETPORT, LOCALPUSHERPWD, HOMEWORK_ADD_URL, ISCONSOLE} from '../config/config'
 import Echo from 'laravel-echo'
 import Pusher from 'pusher-js/react-native'
 import AsyncStorage from '@react-native-community/async-storage';
@@ -737,7 +737,7 @@ export function getViewStatStart(classID){
                     QandAs = obj.QandAs
                 }
 
-                console.log("getViewStat2", Number(Number.isNaN(Number(chatID)) ? 0 : chatID === null ? 0 : chatID),
+                ISCONSOLE && console.log("getViewStat2", Number(Number.isNaN(Number(chatID)) ? 0 : chatID === null ? 0 : chatID),
                     Number(Number.isNaN(Number(tagID)) ? 0 : tagID === null ? 0 : tagID),
                     Number(Number.isNaN(Number(markID)) ? 0 : markID === null ? 0 : markID),
                     Number(Number.isNaN(Number(newsID)) ? 0 : newsID === null ? 0 : newsID),
@@ -847,8 +847,9 @@ export const prepareImageJSON=(data, data100, classID, userName, userID, student
     return JSON.stringify(obj)
 }
 export const prepareJSON=(txt, userSetup, isnew, selSubjkey, selSubjname, curDate)=>{
-    console.log("prepareJSON", selSubjkey)
-    let {classID, userName, userID, studentId, studentName} = userSetup
+
+    let {classID, userName, userID, studentId, studentName, studentNick} = userSetup
+    console.log("prepareJSON", userName, studentName, studentNick)
     let text = txt //this.state.curMessage
     let obj = {}
     switch (isnew) {
@@ -865,7 +866,7 @@ export const prepareJSON=(txt, userSetup, isnew, selSubjkey, selSubjname, curDat
                 addHomeWork(obj.text, selSubjkey, selSubjname, curDate, 0, userSetup)
             }
             obj.user_id = userID
-            obj.user_name = userName
+            obj.user_name = studentNick.length?studentNick:userName
             obj.student_id = studentId
             obj.student_name = studentName
             obj.uniqid = new Date().getTime() + userName //uniqid()

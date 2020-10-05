@@ -14,7 +14,7 @@ import {instanceAxios, mapStateToProps, msgTimeOut, setStorageData, getStorageDa
 import {userLoggedIn, userLoggedInByToken, userLoggedOut} from '../../actions/userAuthActions'
 import Dialog, {DialogFooter, DialogButton, DialogContent} from 'react-native-popup-dialog';
 import styles from '../../css/styles'
-import {LOGINUSER_URL, API_URL} from '../../config/config'
+import {LOGINUSER_URL, API_URL, ISCONSOLE} from '../../config/config'
 import FacebookLogin from '../FacebookLogin/facebooklogin'
 import {LoginButton, AccessToken, LoginManager} from 'react-native-fbsdk';
 import Video from 'react-native-video';
@@ -116,7 +116,7 @@ class LoginBlock extends React.Component {
     //     console.log( save)
     // }
     getSavedCreds=async()=>{
-        console.log("creds")
+        ISCONSOLE && console.log("creds")
         const store = await getStorageData("creds")
         const creds = JSON.parse(store)
         const {userName, password, email} = this.props.saveddata

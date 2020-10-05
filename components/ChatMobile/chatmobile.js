@@ -17,7 +17,7 @@ import { ChatManager, TokenProvider } from '@pusher/chatkit-client'
 import arrow_down from '../../img/ARROW_DOWN.png'
 import arrow_up from '../../img/ARROW_UP.png'
 import { API_URL, BASE_HOST, WEBSOCKETPORT, LOCALPUSHERPWD, HOMEWORK_ADD_URL,
-        instanceLocator, testToken, chatUserName, arrLangs } from '../../config/config'
+        instanceLocator, testToken, chatUserName, arrLangs, ISCONSOLE } from '../../config/config'
 import {dateFromYYYYMMDD, addDay, arrOfWeekDays, dateDiff,
         toYYYYMMDD, instanceAxios, mapStateToProps, prepareMessageToFormat,
         echoClient, axios2, hasAPIConnection, getLangAsyncFunc, getViewStatStart,
@@ -144,7 +144,7 @@ class ChatMobile extends Component {
                 now = (new Date())
 
             for (let user of mp.keys()) {
-                console.log("setInterval", user, now, mp.get(user),
+                ISCONSOLE && console.log("setInterval", user, now, mp.get(user),
                     Math.abs(now.getUTCSeconds() - mp.get(user).getUTCSeconds()),
                     Math.floor((Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) - Date.UTC(mp.get(user).getFullYear(), mp.get(user).getMonth(), mp.get(user).getDate()) ) /(1000)))
 
@@ -345,13 +345,13 @@ class ChatMobile extends Component {
         this.setState({appState: nextAppState});
     };
     renewStat=classID=>{
-        console.log("RENEWSTAT2:start", new Date().toLocaleTimeString())
+        ISCONSOLE && console.log("RENEWSTAT2:start", new Date().toLocaleTimeString())
         this.setState({calcStat : true})
         getViewStatStart(classID)
             .then(res=>{
                 const {marks, userID, classNews} = this.props.userSetup
                 const {localChatMessages} = this.props.tempdata
-                console.log("RENEWSTAT2:then", new Date().toLocaleTimeString(), res)
+                ISCONSOLE && console.log("RENEWSTAT2:then", new Date().toLocaleTimeString(), res)
                 res.markCnt = marks.filter(item=>(new Date(item.mark_date) >= getNearestSeptFirst())).filter(item =>(Number(item.id) > res.markID)).length
                 res.chatCnt = localChatMessages.filter(item => (item.id > res.chatID && item.user_id !== userID)).length
                 res.newsCnt = classNews.filter(item =>(item.is_news===2&&Number(item.id) > res.newsID)).length
@@ -478,7 +478,7 @@ class ChatMobile extends Component {
     initLocalPusher=()=>{
         const {chatSSL, token, userName, classID} = this.props.userSetup
         const {users, typingUsers} = this.props.tempdata
-        // console.log("initLocalPusher")
+        console.log("initLocalPusher: chatMobile")
         // const larasocket = pusherClient(store.getState().user.token, chatSSL)
         const echo = echoClient(token, chatSSL)
 
@@ -684,7 +684,7 @@ class ChatMobile extends Component {
                     if (!this.props.tempdata.typingUsers.has(e.name)&&e.name!==userName) {
                         let mp = this.props.tempdata.typingUsers
                         mp.set(e.name, new Date())
-                        console.log('SetTypingState', e.name);
+                        console.log('SetTypingState: chatMobile', e.name, userName);
                         this.props.onReduxUpdate("UPDATE_TYPING_USERS", mp)
                         // this.setState({typingUsers: mp})
                     }
@@ -815,10 +815,12 @@ class ChatMobile extends Component {
         }
     }
     prepareJSON=(txt, userSetup)=>{
-        console.log("prepareJSON", this.state.selSubjkey)
-        let {classID, userName, userID, studentId, studentName} = userSetup
+
+        let {classID, userName, userID, studentId, studentName, studentNick} = userSetup
+
+        console.log("prepareJSON", userName, userID, studentId, studentName, studentNick)
         const {curDate, selSubjkey, selSubjname} = this.state
-        let text = txt//this.state.curMessage
+        let text = txt //this.state.curMessage
         let obj = {}
         switch (this.props.isnew) {
             case true :
@@ -834,7 +836,7 @@ class ChatMobile extends Component {
                     this.addHomeWork(obj.text, selSubjkey, selSubjname, curDate, 0, userSetup)
                 }
                 obj.user_id = userID
-                obj.user_name = userName
+                obj.user_name = studentNick.length?studentNick:userName
                 obj.student_id = studentId
                 obj.student_name = studentName
                 obj.uniqid = new Date().getTime() + userName //uniqid()
@@ -845,7 +847,7 @@ class ChatMobile extends Component {
                 obj.text = text//this.inputMessage.value
                 obj.time = (new Date()).toLocaleTimeString().slice(0, 5)
                 obj.userID = userID
-                obj.userName = userName
+                obj.userName = studentNick.length?studentNick:userName
                 if (!(this.state.selSubjkey === null)) {
                     obj.hwdate = toYYYYMMDD(this.state.curDate)
                     obj.subjkey = this.state.selSubjkey
@@ -1411,7 +1413,7 @@ class ChatMobile extends Component {
         if (offlineMsgsLocal.length){
             localChatMessages = localChatMessages.concat(offlineMsgsLocal)
         }
-        // console.log("CHATMOBILE")
+        console.log("CHATMOBILE", Dimensions.get('window').width, Dimensions.get('window').height, Dimensions.get('window').width/Dimensions.get('window').height)
 
         // const msgBlockHeight = chatViewHeight - footerHeight - headerHeight - 25
         const msgBlockHeight = height - (50+70+20) - headerHeight - 25
@@ -1483,7 +1485,6 @@ class ChatMobile extends Component {
                                         setstate={this.props.setstate}
                                     />
                     </View>
-
                 </View>
 
                 {/*<TouchableWithoutFeedback delayLongPress={500} onLongPress={()=>this.setState({showUserList : !this.state.showUserList})}>*/}

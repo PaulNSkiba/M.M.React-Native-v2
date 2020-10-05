@@ -19,7 +19,7 @@ const initialState = {
             subjects_list : [], markBlank : {id: "", alias: "", pk: 1},
             currentPeriodDateCount : 5, marks : [], direction : "UPDOWN", titlekind : "NICK",
             withoutholidays : true, token: "", userName: "",
-            isadmin: 0, studentName : "", studentId : 0,
+            isadmin: 0, studentName : "", studentNick : "", studentId : 0,
             studSubj : new Map(), mark_dates : [], best_lines : [], avg_lines : [], avg_marks : [],
             addUserToken : "", cnt_marks : 0, stud_cnt : 0, subj_cnt : 0,
             lastmarkssent : "", emails : [], homework : [],
@@ -77,23 +77,40 @@ export function userSetupReducer(state = initialState, action) {
             let {   class_number, pupil_count, year_name, perioddayscount,
                     markblank_id, markblank_alias, selected_marker, titlekind,
                     direction, class_id } = action.payload.data.usersetup;
-            let {   id : studentId, student_name : studentName} = action.payload.data.student;
+            let {   id : studentId, student_name : studentName, student_nick : studentNick } = action.payload.data.student;
             let {   cnt_marks, stud_cnt, subj_cnt } = action.payload.data.stats[0];
                     studentId = studentId?studentId:0;
+                    studentName = studentId&&studentName!==null&&studentName!==undefined?studentName:''
+                    studentNick = studentId&&studentNick!==null&&studentNick!==undefined?studentNick:''
 
-            setup = {...state, userName, userID, token,
-                curClass: class_number, classNumber : class_number, classID : class_id, pupilCount: pupil_count,
-                currentYear: year_name, currentPeriodDateCount: perioddayscount,
-                markBlank:{id: markblank_id, alias: markblank_alias, pk: selected_marker},
-                titlekind: titlekind, direction : direction,
-                subjCount: subj_count, subjects_list: subjects_list, selectedSubjects : selected_subjects,
-                selectedSubj : selected_subj, students : students?students:[], classObj,
-                isadmin, studentName, studentId, marks, mark_dates, best_lines, avg_lines, avg_marks, addUserToken,
-                cnt_marks, stud_cnt, subj_cnt, lastmarkssent, emails, homework, stats2 : stats2[0], stats3 : stats3[0],
-                mark_date, avgclassmarks, langLibrary : action.payload.langLibrary, localChatMessages : [], markscount,
-                classNews, chatTags : tags, statsBudget, statsBudgetPays, timetable, subjects, school_id,
-                theme : action.payload.theme?action.payload.theme:themeOptions['#46b5be'], themeColor : action.payload.themeColor?action.payload.themeColor:'#46b5be'}
-            return setup
+            if (action.payload.langLibrary!==null)
+                setup = {...state, userName, userID, token,
+                    curClass: class_number, classNumber : class_number, classID : class_id, pupilCount: pupil_count,
+                    currentYear: year_name, currentPeriodDateCount: perioddayscount,
+                    markBlank:{id: markblank_id, alias: markblank_alias, pk: selected_marker},
+                    titlekind: titlekind, direction : direction,
+                    subjCount: subj_count, subjects_list: subjects_list, selectedSubjects : selected_subjects,
+                    selectedSubj : selected_subj, students : students?students:[], classObj,
+                    isadmin, studentName, studentNick, studentId, marks, mark_dates, best_lines, avg_lines, avg_marks, addUserToken,
+                    cnt_marks, stud_cnt, subj_cnt, lastmarkssent, emails, homework, stats2 : stats2[0], stats3 : stats3[0],
+                    mark_date, avgclassmarks, langLibrary : action.payload.langLibrary, localChatMessages : [], markscount,
+                    classNews, chatTags : tags, statsBudget, statsBudgetPays, timetable, subjects, school_id,
+                    theme : action.payload.theme?action.payload.theme:themeOptions['#46b5be'], themeColor : action.payload.themeColor?action.payload.themeColor:'#46b5be'}
+            else
+                setup = {...state, userName, userID, token,
+                    curClass: class_number, classNumber : class_number, classID : class_id, pupilCount: pupil_count,
+                    currentYear: year_name, currentPeriodDateCount: perioddayscount,
+                    markBlank:{id: markblank_id, alias: markblank_alias, pk: selected_marker},
+                    titlekind: titlekind, direction : direction,
+                    subjCount: subj_count, subjects_list: subjects_list, selectedSubjects : selected_subjects,
+                    selectedSubj : selected_subj, students : students?students:[], classObj,
+                    isadmin, studentName, studentNick, studentId, marks, mark_dates, best_lines, avg_lines, avg_marks, addUserToken,
+                    cnt_marks, stud_cnt, subj_cnt, lastmarkssent, emails, homework, stats2 : stats2[0], stats3 : stats3[0],
+                    mark_date, avgclassmarks, localChatMessages : [], markscount,
+                    classNews, chatTags : tags, statsBudget, statsBudgetPays, timetable, subjects, school_id,
+                    theme : action.payload.theme?action.payload.theme:themeOptions['#46b5be'], themeColor : action.payload.themeColor?action.payload.themeColor:'#46b5be'}
+
+                return setup
             }
         case "USER_SETUP" :
             return {...state}
